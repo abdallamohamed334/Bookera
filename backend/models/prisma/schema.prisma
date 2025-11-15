@@ -4,33 +4,52 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://myuser:password@localhost:5432/evento_database"
+  url      = "postgresql://neondb_owner:npg_aX6CdsESTO2U@ep-wandering-dust-aetw28nj-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 }
-
 model WeddingVenue {
-  id           String   @id @default(uuid())
-  name         String
-  type         String
-  category     String
-  governorate  String
-  city         String
-  capacity     Int
-  price        Int
-  image        String
-  images       String[]
-  features     String[]
-  description  String
-  available    Boolean   @default(true)
-  rating       Float?    @default(0)
-  contact      String
-  email        String
-  address      String
-  amenities    String[]
-  rules        String[]
+  id              String        @id @default(uuid())
+  name            String
+  type            String
+  category        String
+  governorate     String
+  city            String
+  address         String
+
+  capacity        Int
+  minCapacity     Int?          // الحد الأدنى للحضور
+  maxCapacity     Int?          // الحد الأقصى للحضور
+
+  price           Int
+  minPrice        Int?          // أقل سعر
+  maxPrice        Int?          // أعلى سعر
+  pricingType     String?       // سعر فرد / سعر قاعة / حسب الموسم
+
+  image           String
+  images          String[]
+
+  features        String[]
+  amenities       String[]
+  rules           String[]
+
+  description     String
+  available       Boolean        @default(true)
+
+  rating          Float?         @default(0)
+  reviewCount     Int?           @default(0)
+
+  contact         String
+  email           String
+  whatsapp        String?        // وسيلة مهمة في الحجز
+  website         String?        // لو ليهم موقع
+
+  locationLat     Float?         // خط العرض
+  locationLng     Float?         // خط الطول
+  mapLink         String?        // لينك موقع القاعة على Google Maps
+
   weddingSpecific Json?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   @@map("wedding_venues")
 }
