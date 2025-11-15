@@ -6,50 +6,165 @@ datasource db {
   provider = "postgresql"
   url      = "postgresql://neondb_owner:npg_aX6CdsESTO2U@ep-wandering-dust-aetw28nj-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 }
+
 model WeddingVenue {
   id              String        @id @default(uuid())
   name            String
-  type            String
-  category        String
+  type            String        // قاعة_أفراح، قصر، فندق، إلخ
+  category        String        // فاخرة، عادية، اقتصادية
   governorate     String
   city            String
   address         String
 
+  // السعة
   capacity        Int
   minCapacity     Int?          // الحد الأدنى للحضور
   maxCapacity     Int?          // الحد الأقصى للحضور
 
-  price           Int
+  // الأسعار
+  price           Int           // السعر الأساسي
   minPrice        Int?          // أقل سعر
   maxPrice        Int?          // أعلى سعر
-  pricingType     String?       // سعر فرد / سعر قاعة / حسب الموسم
+  pricingType     String?       // سعر_قاعة، سعر_فرد، حسب_الموسم
+  originalPrice   Int?          // السعر الأصلي قبل الخصم
+  specialOffer    String?       // عرض خاص
 
-  image           String
-  images          String[]
+  // الوسائط
+  image           String        // الصورة الرئيسية
+  images          String[]      // معرض الصور
+  videos          String[]      // فيديوهات القاعة
 
-  features        String[]
-  amenities       String[]
-  rules           String[]
+  // المميزات والخدمات
+  features        String[]      // المميزات العامة
+  amenities       String[]      // المرافق
+  rules           String[]      // الشروط والأحكام
 
+  // المعلومات العامة
   description     String
-  available       Boolean        @default(true)
+  available       Boolean       @default(true)
+  isFeatured      Boolean       @default(false) // قاعة مميزة
 
-  rating          Float?         @default(0)
-  reviewCount     Int?           @default(0)
+  // التقييمات
+  rating          Float?        @default(0)
+  reviewCount     Int?          @default(0)
 
+  // معلومات التواصل
   contact         String
   email           String
-  whatsapp        String?        // وسيلة مهمة في الحجز
-  website         String?        // لو ليهم موقع
+  whatsapp        String?
+  website         String?
 
-  locationLat     Float?         // خط العرض
-  locationLng     Float?         // خط الطول
-  mapLink         String?        // لينك موقع القاعة على Google Maps
+  // الموقع
+  locationLat     Float?
+  locationLng     Float?
+  mapLink         String?
 
+  // مميزات خاصة بالأفراح
   weddingSpecific Json?
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  // إحصائيات المشاهدة
+  viewCount       Int?          @default(0)
+
+  // التواريخ
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // العلاقات
+  bookings        Booking[]
+  reviews         Review[]
+  favorites       Favorite[]
 
   @@map("wedding_venues")
+  @@index([governorate])
+  @@index([city])
+  @@index([type])
+  @@index([price])
+  @@index([rating])
+  @@index([isFeatured])
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  venueId     String
+  venueName   String
+  type        String   // direct, inspection
+  userName    String
+  userPhone   String
+  userEmail   String
+  date        String
+  time        String
+  guests      Int?
+  notes       String?
+  status      String   @default("pending") // pending, confirmed, cancelled
+  smsSent     Boolean  @default(false)
+  
+  // علاقة مع User
+  userId      String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // العلاقات
+  venue       WeddingVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  venueId     String
+  userName    String
+  userEmail   String
+  rating      Int      // 1-5
+  comment     String
+  isVerified  Boolean  @default(false)
+  
+  // علاقة مع User
+  userId      String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // العلاقات
+  venue       WeddingVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  venueId   String
+  
+  // علاقة مع User
+  userId    String
+  
+  createdAt DateTime @default(now())
+
+  // العلاقات
+  venue     WeddingVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, venueId])
+  @@map("favorites")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  name        String
+  email       String    @unique
+  phone       String?
+  password    String
+  role        String    @default("user") // user, admin
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // العلاقات
+  bookings    Booking[]
+  reviews     Review[]
+  favorites   Favorite[]
+
+  @@map("users")
 }

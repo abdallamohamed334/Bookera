@@ -48,6 +48,7 @@ const WeddingHallsPage = () => {
   const imageRefs = useRef(new Map());
   const observerRef = useRef(null);
   const sectionRefs = useRef({});
+  const stickyRef = useRef(null);
 
   // محافظات مصر - الغربية فقط
   const governorates = {
@@ -656,7 +657,7 @@ const WeddingHallsPage = () => {
     );
   };
 
-  // مكون بطاقة القاعة
+  // مكون بطاقة القاعة - معدل
   const VenueCard = ({ venue }) => {
     const isFavorite = favorites.includes(venue.id || venue._id);
     const [imageLoaded, setImageLoaded] = useState(false);
@@ -703,7 +704,7 @@ const WeddingHallsPage = () => {
             </div>
           )}
           
-          {/* السعر */}
+          {/* السعر - معدل الموقع */}
           <div className="absolute top-3 left-3 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
             {parseInt(venue.price)?.toLocaleString()} ج
           </div>
@@ -718,8 +719,8 @@ const WeddingHallsPage = () => {
             {renderStars(venue.rating)}
           </div>
           
-          {/* أزرار المفضلة والمشاركة */}
-          <div className="absolute top-3 left-12 flex gap-2">
+          {/* أزرار المفضلة والمشاركة - معدل الموقع */}
+          <div className="absolute top-12 left-3 flex flex-col gap-2">
             <button
               onClick={(e) => toggleFavorite(venue.id || venue._id, e)}
               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all transform hover:scale-110 ${
@@ -757,6 +758,16 @@ const WeddingHallsPage = () => {
           </div>
           
           <p className="text-gray-600 text-sm mb-3 line-clamp-1">{venue.city}، {venue.governorate}</p>
+          
+          {/* عرض نطاق السعر */}
+          <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-blue-700 font-medium">نطاق السعر:</span>
+              <span className="text-blue-800 font-bold">
+                {parseInt(venue.minPrice)?.toLocaleString()} - {parseInt(venue.maxPrice)?.toLocaleString()} ج
+              </span>
+            </div>
+          </div>
           
           {/* الوصف */}
           <p className="text-gray-700 text-sm mb-3 line-clamp-2 flex-grow">
@@ -1014,7 +1025,7 @@ const WeddingHallsPage = () => {
     </div>
   );
 
-  // صفحة تفاصيل القاعة
+  // صفحة تفاصيل القاعة - معدلة
   const VenueDetails = ({ venue }) => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [autoSlide, setAutoSlide] = useState(true);
@@ -1022,11 +1033,25 @@ const WeddingHallsPage = () => {
     const [showAllFeatures, setShowAllFeatures] = useState(false);
     const [showAllAmenities, setShowAllAmenities] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
+    const [isSticky, setIsSticky] = useState(false);
     
     const isFavorite = favorites.includes(venue.id || venue._id);
     const images = venue.images || [venue.image];
     const hasMultipleImages = images.length > 1;
     const hasVideos = venue.videos && venue.videos.length > 0;
+
+    // Sticky effect for booking card
+    useEffect(() => {
+      const handleScroll = () => {
+        if (stickyRef.current) {
+          const rect = stickyRef.current.getBoundingClientRect();
+          setIsSticky(rect.top <= 100);
+        }
+      };
+
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Auto slide for images
     useEffect(() => {
@@ -1111,7 +1136,7 @@ const WeddingHallsPage = () => {
             </button>
           ))}
           
-          {/* فيديوهات القاعة */}
+          {/* فيديوهات القاعة - معدل الموقع */}
           {hasVideos && venue.videos.map((video, index) => (
             <button
               key={`video-${index}`}
@@ -1261,11 +1286,22 @@ const WeddingHallsPage = () => {
                 <DetailImageGallery />
               </div>
 
+              {/* نطاق السعر في الأعلى */}
+              <div className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold mb-2">🎉 نطاق أسعار القاعة</h3>
+                  <div className="text-3xl font-bold mb-2">
+                    {parseInt(venue.minPrice)?.toLocaleString()} - {parseInt(venue.maxPrice)?.toLocaleString()} جنيه
+                  </div>
+                  <p className="text-blue-100">السعر يختلف حسب عدد الضيوف والخدمات الإضافية</p>
+                </div>
+              </div>
+
               {/* Tabs Navigation */}
               <div className="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div className="border-b border-gray-200">
                   <nav className="flex -mb-px">
-                    {['details', 'features', 'location', 'reviews'].map((tab) => (
+                    {['details', 'features', 'location', 'reviews', 'gallery'].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -1279,6 +1315,7 @@ const WeddingHallsPage = () => {
                         {tab === 'features' && 'المميزات والخدمات'}
                         {tab === 'location' && 'الموقع'}
                         {tab === 'reviews' && 'التقييمات'}
+                        {tab === 'gallery' && 'معرض الصور'}
                       </button>
                     ))}
                   </nav>
@@ -1365,6 +1402,25 @@ const WeddingHallsPage = () => {
                                   </span>
                                 </div>
                               </div>
+                            </div>
+                          </div>
+
+                          {/* إضافات جديدة تجعل العميل مبسوط */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                            <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-orange-100 rounded-xl border border-orange-200">
+                              <div className="text-2xl mb-2">🎵</div>
+                              <h5 className="font-semibold text-gray-900">صوتيات احترافية</h5>
+                              <p className="text-sm text-gray-600">أحدث أنظمة الصوت</p>
+                            </div>
+                            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-100 rounded-xl border border-blue-200">
+                              <div className="text-2xl mb-2">💡</div>
+                              <h5 className="font-semibold text-gray-900">إضاءة متطورة</h5>
+                              <p className="text-sm text-gray-600">تجهيز إضاءة احترافية</p>
+                            </div>
+                            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
+                              <div className="text-2xl mb-2">🚗</div>
+                              <h5 className="font-semibold text-gray-900">مواقف سيارات</h5>
+                              <p className="text-sm text-gray-600">مساحة كافية للسيارات</p>
                             </div>
                           </div>
                         </div>
@@ -1542,6 +1598,59 @@ const WeddingHallsPage = () => {
                           </button>
                         </div>
                       )}
+
+                      {activeTab === 'gallery' && (
+                        <div className="space-y-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-3">معرض الصور والفيديوهات</h4>
+                          
+                          {/* صور القاعة */}
+                          <div>
+                            <h5 className="font-medium text-gray-900 mb-3">الصور ({images.length})</h5>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              {images.map((image, index) => (
+                                <div key={index} className="relative group cursor-pointer">
+                                  <img 
+                                    src={image}
+                                    alt={`${venue.name} ${index + 1}`}
+                                    className="w-full h-32 object-cover rounded-lg hover:opacity-80 transition-opacity"
+                                    onClick={() => setSelectedImage(index)}
+                                    onError={(e) => {
+                                      e.target.src = "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=300";
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* فيديوهات القاعة - معدل الموقع */}
+                          {hasVideos && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-3">الفيديوهات ({venue.videos.length})</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {venue.videos.map((video, index) => (
+                                  <div 
+                                    key={index}
+                                    className="relative group cursor-pointer bg-gray-100 rounded-lg overflow-hidden"
+                                    onClick={() => setSelectedVideo(video)}
+                                  >
+                                    <div className="aspect-video bg-gray-200 flex items-center justify-center">
+                                      <svg className="w-16 h-16 text-gray-400 group-hover:text-blue-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                    <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                                      <div className="bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                                        انقر لمشاهدة الفيديو
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -1550,8 +1659,13 @@ const WeddingHallsPage = () => {
 
             {/* Right Column - Booking & Contact */}
             <div className="space-y-6">
-              {/* Booking Card */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm sticky top-24">
+              {/* Booking Card - Sticky */}
+              <div 
+                ref={stickyRef}
+                className={`bg-white rounded-2xl border border-gray-200 p-6 shadow-sm transition-all duration-300 ${
+                  isSticky ? 'sticky top-24 z-30' : ''
+                }`}
+              >
                 {/* Price */}
                 <div className="text-center mb-6">
                   {venue.specialOffer ? (
@@ -1742,6 +1856,27 @@ const WeddingHallsPage = () => {
                   </div>
                 </div>
               )}
+
+              {/* إضافات جديدة تجعل العميل مبسوط */}
+              <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+                <div className="text-center">
+                  <div className="text-2xl mb-3">✨ مميزات إضافية</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-center gap-2">
+                      <span>✅ استشارة مجانية</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <span>✅ مساعدة في التخطيط</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <span>✅ خيارات دفع مرنة</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <span>✅ دعم فني متكامل</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2020,7 +2155,7 @@ const WeddingHallsPage = () => {
                       <div className="flex items-center gap-2">
                         {smsStatus === "success" ? (
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         ) : smsStatus === "error" ? (
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
