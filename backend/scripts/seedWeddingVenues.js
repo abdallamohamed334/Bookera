@@ -2,70 +2,85 @@ import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 
 dotenv.config();
-
 const prisma = new PrismaClient();
 
-// بيانات القاعة مطابقة للموديل
+// ========== بيانات القاعة ==========
 const newVenue = {
-  name: "قاعة السراج AL SERAG - Wedding hall",
+  id: "AFR-1",
+  name: "قاعة رويال بالاس Royal Palace - Wedding Hall",
   type: "قاعة_أفراح",
-  category: "فاخرة",
-  governorate: "الغربية",
-  city: "السنطه",
-  address: "بجوار ماما نونا والنساجون الشرقيون وامام مول نصار، طريق طنطا زفتي - السنطة، محافظة الغربية",
+  category: "فاخرة جدًا",
+  governorate: "القاهرة",
+  city: "مدينة نصر",
+  address: "شارع مصطفى النحاس – بجوار ماستر بلازا – مدينة نصر – القاهرة",
 
-  // السعة
-  capacity: 250,
-  minCapacity: 100,
-  maxCapacity: 300,
+  capacity: 600,
+  minCapacity: 250,
+  maxCapacity: 650,
 
-  // الأسعار
-  price: 30000,
-  minPrice: 20000,
-  maxPrice: 50000,
-  pricingType: "سعر_قاعة",
-  originalPrice: 37500,
-  specialOffer: "خصم 20% للحجز المبكر",
+  price: 65000,
+  minPrice: 45000,
+  maxPrice: 90000,
+  pricingType: "سعر_لليلة",
+  originalPrice: 78000,
+  specialOffer: "خصم 25% على الحجوزات من الأحد إلى الأربعاء",
 
-  // الوسائط
-  image: "https://plus.unsplash.com/premium_photo-1761827497586-2876ff7548e8?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwyfHx8ZW58MHx8fHx8&auto=format&fit=crop&q=60&w=500",
+  image: "https://images.unsplash.com/photo-1607082349566-18796e998e8d?w=800",
+
   images: [
-    "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSyGto1t5xdJCUJqRQ8U4fvYs01bfB9R_nFix7QVxaei9viB0_317EMHlBHuSGLA4l_PFh_RRjfv7LxmQhZYru6wBYkIkFLiIAvmWR8IC7eP2SUwIP9kNMYc3O2ixPRkd6xQJq6vtw=s680-w680-h510-rw", 
-    "https://lh3.googleusercontent.com/p/AF1QipNlA6z96gUARapnCb-pDV9b6r01_y6MBWBWtxSV=s680-w680-h510-rw",
-    "https://lh3.googleusercontent.com/ggs/AF1QipN1KPwsiv8VLL8IM_iPnRvhryvW7fHfTfPCV3-l=m18",
-    "https://lh3.googleusercontent.com/ggs/AF1QipMkRekHZim8rLI9RgygvU7XST6Wp33n3SjgoIVu=m18"
+    "https://images.unsplash.com/photo-1508711040457-1ecb5c11b212?w=800",
+    "https://images.unsplash.com/photo-1529634806980-bf0c935d221f?w=800",
+    "https://images.unsplash.com/photo-1520857014576-2c4f4c972b57?w=800",
+    "https://images.unsplash.com/photo-1612801789187-d9bd143e1e89?w=800"
   ],
+
   videos: [
-    "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+    "https://youtu.be/FQZzJ7gS5jQ?si=hall-video"
   ],
 
-  // المميزات والخدمات
-  features: ["اضاءة ممتازه", "تنظيم علي اعلي مستوي", "ديكور فاخر", "مساحة واسعة"],
-  amenities: ["واي فاي مجاني", "موقف سيارات", "تكييف مركزي", "خدمات نظافة", "حمامات فاخرة"],
-  rules: ["التزام بموعد الحفل", "ممنوع التدخين في الأماكن المغلقة", "الحجز المسبق مطلوب"],
+  features: [
+    "ديكور ملكي فاخر",
+    "نظام صوت احترافي",
+    "إضاءة ليزر وسبوتات حديثة",
+    "منصة للعروسين",
+    "شاشات LED عملاقة",
+    "تنظيم كامل للحفل"
+  ],
 
-  // المعلومات العامة
-  description: "استعداد تام لإقامة حفلات الزفاف والخطوبة وكتب الكتاب والمؤتمرات للحجز والاستعلام 01095952888 01555255352",
+  amenities: [
+    "موقف سيارات يسع 150 سيارة",
+    "تكييف مركزي",
+    "إنترنت فائق السرعة",
+    "غرفة VIP",
+    "غرفة عروس مجهزة",
+    "بوفيه فاخر"
+  ],
+
+  rules: [
+    "الدخول بالبطاقات الشخصية",
+    "الالتزام بالموعد",
+    "يمنع إدخال معدات تصوير خارجية بدون إذن"
+  ],
+
+  description:
+    "قاعة رويال بالاس تُعد واحدة من أفخم قاعات الزفاف بمدينة نصر، تقدم أفضل خدمات الضيافة، الديكور، الإضاءة، وتنظيم الحفلات.",
+
   available: true,
   isFeatured: true,
 
-  // التقييمات
-  rating: 4.5,
-  reviewCount: 47,
+  rating: 4.8,
+  reviewCount: 123,
 
-  // معلومات التواصل
-  contact: "01095952888",
-  email: "alserag@example.com",
-  whatsapp: "+201095952888",
-  website: "https://alserag.com",
+  contact: "01234567890",
+  email: "royalpalace.weddinghall@gmail.com",
+  whatsapp: "+201234567890",
+  website: "https://royalpalace-eg.com",
 
-  // الموقع
-  locationLat: 30.9695,
-  locationLng: 31.0158,
-  mapLink: "https://maps.google.com/?q=السنطة+الغربية+مصر",
+  locationLat: 30.0561,
+  locationLng: 31.3457,
+  mapLink: "https://maps.google.com/?q=Royal+Palace+Wedding+Hall,+Nasr+City",
 
-  // مميزات خاصة بالأفراح - محولة لـ JSON
-  weddingSpecific: JSON.stringify({
+  weddingSpecific: {
     brideRoom: true,
     groomRoom: true,
     photography: true,
@@ -75,102 +90,140 @@ const newVenue = {
     weddingEvents: true,
     engagementEvents: true,
     katbKitaabEvents: true,
-    maxGuests: 250,
-    minGuests: 100,
-    photographyAreas: 3,
-    cateringOptions: ["بوفيه مفتوح", "مقبلات", "حلويات"],
-    decorationOptions: ["كلاسيكي", "حديث", "عربي", "أوروبي"],
+
+    maxGuests: 650,
+    minGuests: 250,
+
+    photographyAreas: 5,
+    cateringOptions: ["بوفيه مفتوح", "مقبلات", "سواريه", "حلويات شرقية وغربية"],
+    decorationOptions: ["كلاسيكي", "ملكي", "Modern Luxury", "Crystal Theme"],
+
     soundSystem: true,
     lightingSystem: true,
-    parkingCapacity: 50,
+    parkingCapacity: 150,
     hasGarden: false,
     hasPool: false,
     weddingPlanner: true,
     cateringService: true,
     decorationService: true,
     photographyService: true
-  }),
+  },
 
-  // إحصائيات المشاهدة
   viewCount: 0
 };
 
+// ========== الريفيوز ==========
+const reviews = [
+  {
+    userName: "محمود السيد",
+    userEmail: "mahmoud.sayed@example.com",
+    rating: 5,
+    comment: "قاعة ممتازة بكل معنى الكلمة.. الإضاءة والصوت كانوا فوق الرائع!",
+    isVerified: true
+  },
+  {
+    userName: "دينا مصطفى",
+    userEmail: "dina.mostafa@example.com",
+    rating: 4,
+    comment: "المكان تحفة والتنظيم محترم جدًا.. بس البوفيه محتاج يكون أفضل.",
+    isVerified: true
+  },
+  {
+    userName: "كريم أحمد",
+    userEmail: "karim.ahmed@example.com",
+    rating: 5,
+    comment: "اتجوزت هنا.. أحسن يوم في حياتي! كل حاجة كانت perfect.",
+    isVerified: true
+  }
+];
+
+// ========== الباكدجات ==========
+const packages = [
+  {
+    name: "الباكدج الأساسي",
+    price: 30000,
+    originalPrice: 35000,
+    discount: 15,
+    features: [
+      "استخدام القاعة لمدة 5 ساعات",
+      "نظام صوتي أساسي",
+      "ديكور بسيط",
+      "طاقم خدمة (5 أفراد)"
+    ],
+    additionalServices: ["تصوير فوتوغرافي - 1500 جنيه"],
+    description: "باكدج مناسب للحفلات البسيطة والمتوسطة",
+    notes: "يمكن زيادة الوقت بتكلفة إضافية"
+  },
+  {
+    name: "الباكدج الفاخر",
+    price: 50000,
+    originalPrice: 60000,
+    discount: 17,
+    features: [
+      "استخدام القاعة لمدة 7 ساعات",
+      "نظام صوت احترافي",
+      "ديكور فاخر",
+      "شاشة LED",
+      "طاقم خدمة كامل (8 أفراد)"
+    ],
+    additionalServices: ["فيديو عالي الجودة - 2500 جنيه"],
+    description: "الأفضل لحفلات الزفاف الكبيرة",
+    notes: "يشمل ديكور إضافي مجاني"
+  },
+  {
+    name: "الباكدج البلاتيني",
+    price: 80000,
+    originalPrice: 100000,
+    discount: 20,
+    features: [
+      "استخدام القاعة لمدة 10 ساعات",
+      "نظام صوت ودي جي",
+      "إضاءة ليزر حديثة",
+      "ديكور كامل ملكي",
+      "فريق خدمة (12 فرد)"
+    ],
+    additionalServices: ["تصوير درون - 3000 جنيه"],
+    description: "أعلى مستوى من الفخامة",
+    notes: "يشمل بوفيه فاخر جداً"
+  }
+];
+
+// ========== عملية الإضافة ==========
 const addVenue = async () => {
   try {
-    console.log("🚀 بدء إضافة قاعة الأفراح...");
-    console.log("🔍 جاري التحقق من وجود القاعة...");
-    
-    // التحقق من وجود القاعة
-    const existingVenue = await prisma.weddingVenue.findFirst({
-      where: { 
-        OR: [
-          { name: newVenue.name },
-          { 
-            AND: [
-              { contact: newVenue.contact },
-              { governorate: newVenue.governorate }
-            ]
-          }
-        ]
-      }
+    console.log("🚀 بدء إضافة القاعة...");
+
+    // لو القاعة موجودة من قبل
+    const existing = await prisma.weddingVenue.findFirst({
+      where: { name: newVenue.name },
     });
 
-    if (existingVenue) {
-      console.log("⚠️ القاعة موجودة بالفعل في قاعدة البيانات!");
-      console.log(`🏷️ اسم القاعة: ${existingVenue.name}`);
-      console.log(`🆔 الرقم: ${existingVenue.id}`);
-      console.log(`📍 الموقع: ${existingVenue.city}، ${existingVenue.governorate}`);
+    if (existing) {
+      console.log(`⚠️ القاعة موجودة بالفعل: ${existing.name}`);
       return;
     }
 
-    console.log(`🌱 جاري إضافة قاعة جديدة: ${newVenue.name}`);
-    console.log(`📍 الموقع: ${newVenue.city}، ${newVenue.governorate}`);
-    console.log(`💰 السعر: ${newVenue.price.toLocaleString()} جنيه`);
-
-    // إضافة القاعة الجديدة
-    const createdVenue = await prisma.weddingVenue.create({
-      data: newVenue
+    // إنشاء القاعة مع الريفيوز والباكدجات
+    const venue = await prisma.weddingVenue.create({
+      data: {
+        ...newVenue,
+        reviews: { create: reviews },
+        packages: { create: packages }
+      },
+      include: { reviews: true, packages: true }
     });
 
-    console.log("\n✅ تم إضافة القاعة بنجاح!");
-    console.log("=".repeat(50));
-    console.log(`🆔 رقم القاعة: ${createdVenue.id}`);
-    console.log(`🏷️ الاسم: ${createdVenue.name}`);
-    console.log(`📍 الموقع: ${createdVenue.city}، ${createdVenue.governorate}`);
-    console.log(`💰 السعر: ${createdVenue.price.toLocaleString()} جنيه`);
-    console.log(`⭐ مميزة: ${createdVenue.isFeatured ? 'نعم' : 'لا'}`);
-    console.log(`📞 للتواصل: ${createdVenue.contact}`);
-    console.log(`👥 السعة: ${createdVenue.capacity} شخص`);
-    console.log(`📊 التقييم: ${createdVenue.rating} ⭐ (${createdVenue.reviewCount} تقييم)`);
-    console.log("=".repeat(50));
-    
+    console.log("✅ تم إضافة القاعة بنجاح!");
+    console.log(`🏷️ الاسم: ${venue.name}`);
+    console.log(`⭐ عدد الريفيوز: ${venue.reviews.length}`);
+    console.log(`🎁 عدد الباكدجات: ${venue.packages.length}`);
+
   } catch (error) {
-    console.error("❌ خطأ في إضافة القاعة:");
-    console.error("📋 تفاصيل الخطأ:", error.message);
-    
-    if (error.code) {
-      console.error(`🔧 كود الخطأ: ${error.code}`);
-    }
-    
-    // طباعة المزيد من التفاصيل للمساعدة في التشخيص
-    if (error.meta) {
-      console.error("🔍 ميتاداتا الخطأ:", error.meta);
-    }
-    
-    throw error;
+    console.error("❌ خطأ:", error);
   } finally {
     await prisma.$disconnect();
     console.log("🔌 تم فصل الاتصال بقاعدة البيانات");
   }
 };
 
-// تشغيل السكريبت مع معالجة الأخطاء
-addVenue()
-  .then(() => {
-    console.log("🎉 تم تنفيذ السكريبت بنجاح!");
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error("💥 فشل تنفيذ السكريبت!");
-    process.exit(1);
-  });
+addVenue();

@@ -5,18 +5,8 @@ const Navigation = ({ user, onLogout, onBackToHome, navigate }) => {
     <nav className="bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50 w-full">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-purple-600">قاعات الأفراح في مصر</h1>
-          </div>
           
-          <div className="hidden md:flex space-x-8">
-            <button 
-              onClick={onBackToHome}
-              className="text-gray-600 hover:text-purple-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
-            >
-              الصفحة الرئيسية
-            </button>
-          </div>
+          
 
           <div className="flex items-center space-x-4">
             {user ? (

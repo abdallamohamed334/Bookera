@@ -12,7 +12,9 @@ import PhotographersPage from './pages/PhotographersPage';
 import LoadingSpinner from "./components/LoadingSpinner";
 import WeddingHallsPage from './pages/WeddingHallsPage';
 import ConferenceHallsPage from './pages/ConferenceHallsPage';
-import AdminDashboard from './pages/AdminDashboard'; // إضافة صفحة الأدمن
+import AdminDashboard from './pages/AdminDashboard';
+import JoinUsPage from './pages/JoinUsPage'; // الجديد
+import FavoritesPage from './pages/FavoritesPage'; // الجديد
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
@@ -105,16 +107,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
-        {/* صفحة بديلة للرئيسية */}
-        <Route
-          path='/homepage'
-          element={
-            <ProtectedRoute>
-              <HomePage/>
-            </ProtectedRoute>
-          }
-        />
 
         {/* صفحة الديكور */}
         <Route path="/decorations" element={<DecorationsPage />} />
@@ -133,6 +125,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ConferenceHallsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* صفحة انضم إلينا - مسار عام */}
+        <Route
+          path='/join-us'
+          element={<JoinUsPage />}
+        />
+
+        {/* صفحة المفضلة - تتطلب تسجيل دخول */}
+        <Route
+          path='/favorites'
+          element={
+            <ProtectedRoute>
+              <FavoritesPage />
             </ProtectedRoute>
           }
         />

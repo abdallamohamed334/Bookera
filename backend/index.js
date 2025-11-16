@@ -10,7 +10,7 @@ import { connectDB } from "./db/connectDB.js";
 import authRoutes from "./routes/auth.route.js";
 import weddingVenuesRoutes from "./routes/weddingVenues.route.js";
 import photographersRoutes from "./routes/photographers.route.js";
- // الجديد
+import bookingsRoutes from "./routes/bookings.route.js"; // الجديد
 
 dotenv.config();
 
@@ -28,7 +28,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/wedding-venues", weddingVenuesRoutes); // قاعات الأفراح
 app.use("/api/photographers", photographersRoutes);
 app.use("/api/admin", adminRoutes);
-console.log("✅ Admin routes loaded: /api/admin"); // المصورين - المضاف جديد
+app.use("/api/bookings", bookingsRoutes); // الجديد
+console.log("✅ Bookings routes loaded: /api/bookings");
+
 
 // Health check route
 app.get("/api/health", (req, res) => {
