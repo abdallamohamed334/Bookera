@@ -104,7 +104,7 @@ const WeddingHallsPage = () => {
         setLoading(true);
         setError(null);
         
-     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wedding-venues`, {
+     const response = await fetch(`${process.env.VITE_API_URL}/api/wedding-venues`, {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json',
