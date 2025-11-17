@@ -96,6 +96,7 @@ const WeddingHallsPage = () => {
     "capacity": "السعة: من الأكبر للأصغر",
     "newest": "الأحدث"
   };
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // جلب البيانات من الـ API
   useEffect(() => {
@@ -104,7 +105,7 @@ const WeddingHallsPage = () => {
         setLoading(true);
         setError(null);
         
-     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wedding-venues`, {
+     const response = await fetch(`${API_URL}/api/wedding-venues`, {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json',
