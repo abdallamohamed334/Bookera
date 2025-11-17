@@ -104,7 +104,7 @@ const WeddingHallsPage = () => {
         setLoading(true);
         setError(null);
         
-     const response = await fetch(`${process.env.VITE_API_URL}/api/wedding-venues`, {
+     const response = await fetch(`https://bookera-production.up.railway.app/api/wedding-venues`, {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json',

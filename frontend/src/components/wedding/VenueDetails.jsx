@@ -54,7 +54,7 @@ const VenueDetails = ({ venue, onBack, onShareVenue }) => {
 
   try {
     setLoadingReviews(true);
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wedding-venues/${venue.id}/reviews`);
+    const response = await fetch(`https://bookera-production.up.railway.app/api/wedding-venues/${venue.id}/reviews`);
 
 
     if (response.ok) {
@@ -196,7 +196,7 @@ const fallbackShare = (shareText, venueUrl) => {
       console.log('📤 بيانات الحجز المرسلة:', bookingData);
 
       // 1. حفظ في قاعدة البيانات
-      const dbResponse = await fetch('http://localhost:5000/api/bookings', {
+      const dbResponse = await fetch('https://bookera-production.up.railway.app/api/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
