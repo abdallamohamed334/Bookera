@@ -54,7 +54,8 @@ const VenueDetails = ({ venue, onBack, onShareVenue }) => {
 
   try {
     setLoadingReviews(true);
-    const response = await fetch(`http://localhost:5000/api/wedding-venues/${venue.id}/reviews`);
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wedding-venues/${venue.id}/reviews`);
+
 
     if (response.ok) {
       const data = await response.json();
