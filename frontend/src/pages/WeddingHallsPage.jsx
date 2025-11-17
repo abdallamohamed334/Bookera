@@ -104,12 +104,13 @@ const WeddingHallsPage = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('http://localhost:5000/api/wedding-venues', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wedding-venues`, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
 
         if (response.ok) {
           const data = await response.json();
