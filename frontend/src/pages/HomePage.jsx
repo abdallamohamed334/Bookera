@@ -197,16 +197,37 @@ const CompanyHomePage = () => {
   }, [darkMode]);
 
   // حفظ المفضلات في localStorage
-
+  useEffect(() => {
+    localStorage.setItem('userFavorites', JSON.stringify(favorites));
+  }, [favorites]);
 
   // تبديل وضع الدارك مود
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
 
-  // التنقل مع تأثير بسيط
-  const handleNavigateToCategory = (route) => {
-    navigate(route);
+  // التنقل لصفحة المصورين
+  const handleNavigateToPhotographers = () => {
+    navigate('/photographers');
+  };
+
+  // التنقل لصفحة القاعات
+  const handleNavigateToVenues = () => {
+    navigate('/wedding-venues');
+  };
+
+  // التنقل مع تأثير بسيط - معدلة
+  const handleNavigateToCategory = (item) => {
+    if (item.category === 'photographers') {
+      // إذا كان من فئة المصورين، اذهب لصفحة المصورين
+      handleNavigateToPhotographers();
+    } else if (item.category === 'wedding-venues') {
+      // إذا كان من فئة القاعات، اذهب لصفحة القاعات
+      handleNavigateToVenues();
+    } else {
+      // إذا لم يكن ضمن التصنيفات المعروفة، استخدم الروت المباشر
+      navigate(item.route);
+    }
   };
 
   // التنقل للقسم المحدد
@@ -236,7 +257,20 @@ const CompanyHomePage = () => {
   };
 
   // إضافة/إزالة من المفضلة
-
+  const toggleFavorite = (item, e) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    const isFavorite = favorites.some(fav => fav.id === item.id);
+    if (isFavorite) {
+      setFavorites(favorites.filter(fav => fav.id !== item.id));
+    } else {
+      setFavorites([...favorites, item]);
+    }
+  };
 
   // الانتقال لصفحة التسجيل كشريك
   const handleJoinAsPartner = () => {
@@ -329,7 +363,7 @@ const CompanyHomePage = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.02, y: -5 }}
-                onClick={() => handleNavigateToCategory(item.route)}
+                onClick={() => handleNavigateToCategory(item)}
                 className="cursor-pointer group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700"
               >
                 <div className="relative h-48 overflow-hidden">
@@ -359,7 +393,7 @@ const CompanyHomePage = () => {
                       whileTap={{ scale: 0.8 }}
                       className="text-2xl text-gray-400 hover:text-red-500 transition-colors"
                     >
-                      
+                      {favorites.some(fav => fav.id === item.id) ? '❤️' : '🤍'}
                     </motion.button>
                   </div>
                 </div>
@@ -381,7 +415,7 @@ const CompanyHomePage = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.02, y: -5 }}
-            onClick={() => handleNavigateToCategory(item.route)}
+            onClick={() => handleNavigateToCategory(item)}
             className="cursor-pointer group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
           >
             <div className="relative h-40 overflow-hidden">
@@ -418,13 +452,13 @@ const CompanyHomePage = () => {
                   whileTap={{ scale: 0.8 }}
                   className="text-xl text-gray-400 hover:text-red-500 transition-colors"
                 >
-                  
+                  {favorites.some(fav => fav.id === item.id) ? '❤️' : '🤍'}
                 </motion.button>
                 
                 <motion.button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleNavigateToCategory(item.route);
+                    handleNavigateToCategory(item);
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -612,7 +646,7 @@ const CompanyHomePage = () => {
                     whileHover={{ scale: 1.05 }}
                     className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 relative"
                   >
-                    
+                    <span>❤️</span>
                     {favorites.length > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                         {favorites.length}
@@ -656,7 +690,7 @@ const CompanyHomePage = () => {
                   whileHover={{ scale: 1.1 }}
                   className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 relative"
                 >
-                  
+                  <span>❤️</span>
                   {favorites.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                       {favorites.length}

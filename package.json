@@ -30,9 +30,12 @@
     "mailtrap": "^3.4.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.2",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
     "pg": "^8.16.3",
-    "resend": "^6.3.0"
+    "resend": "^6.3.0",
+    "twilio": "^5.10.5",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@prisma/client": "^6.19.0",

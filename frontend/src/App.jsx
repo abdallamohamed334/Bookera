@@ -1,7 +1,7 @@
 // App.jsx
 import { Navigate, Route, Routes } from "react-router-dom";
-import FloatingShape from "./components/FloatingShape";
 import DecorationsPage from './pages/DecorationsPage';
+import VenueDetails from "./components/wedding/VenueDetails";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
@@ -13,8 +13,8 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import WeddingHallsPage from './pages/WeddingHallsPage';
 import ConferenceHallsPage from './pages/ConferenceHallsPage';
 import AdminDashboard from './pages/AdminDashboard';
-import JoinUsPage from './pages/JoinUsPage'; // الجديد
-import FavoritesPage from './pages/FavoritesPage'; // الجديد
+import JoinUsPage from './pages/JoinUsPage';
+import FavoritesPage from './pages/FavoritesPage';
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
@@ -24,43 +24,28 @@ import { useEffect } from "react";
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
 
-  if (!isAuthenticated) {
-    return <Navigate to='/login' replace />;
-  }
-
-  if (!user?.isVerified) {
-    return <Navigate to='/verify-email' replace />;
-  }
+  if (!isAuthenticated) return <Navigate to='/login' replace />;
+  if (!user?.isVerified) return <Navigate to='/verify-email' replace />;
 
   return children;
 };
 
-// حماية مسارات الأدمن فقط
+// حماية الأدمن
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, user, isAdmin } = useAuthStore();
 
-  if (!isAuthenticated) {
-    return <Navigate to='/login' replace />;
-  }
-
-  if (!user?.isVerified) {
-    return <Navigate to='/verify-email' replace />;
-  }
-
-  if (!isAdmin()) {
-    return <Navigate to='/' replace />;
-  }
+  if (!isAuthenticated) return <Navigate to='/login' replace />;
+  if (!user?.isVerified) return <Navigate to='/verify-email' replace />;
+  if (!isAdmin()) return <Navigate to='/' replace />;
 
   return children;
 };
 
-// إعادة توجيه المستخدمين المسجلين بالفعل
+// منع الدخول لو بالفعل مسجل
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
 
-  if (isAuthenticated && user?.isVerified) {
-    return <Navigate to='/' replace />;
-  }
+  if (isAuthenticated && user?.isVerified) return <Navigate to='/' replace />;
 
   return children;
 };
@@ -77,118 +62,72 @@ function App() {
   return (
     <div className="min-h-screen bg-white">
       <Routes>
-        {/* الصفحة الرئيسية */}
-        <Route
-          path='/'
-          element={
-            <ProtectedRoute>
-              <HomePage/>
-            </ProtectedRoute>
-          }
-        />
 
-        {/* صفحة الأدمن */}
-        <Route
-          path='/admin/dashboard'
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
+        {/* الصفحة الرئيسية غير محمية — ضروري للشير */}
+        <Route path='/' element={<HomePage />} />
 
-        {/* صفحة المصورين */}
-        <Route path="/photographers/:photographerId" element={<PhotographersPage />} />
-        <Route
-          path='/photographers'
-          element={
-            <ProtectedRoute>
-              <PhotographersPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* تفاصيل القاعة */}
+        <Route path="/venue/:venueId" element={<VenueDetails />} />
 
-        {/* صفحة الديكور */}
-        <Route path="/decorations" element={<DecorationsPage />} />
-
-        {/* صفحات أنواع القاعات */}
-        <Route
-          path='/wedding-halls'
-          element={
-            <ProtectedRoute>
-              <WeddingHallsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/conference-halls'
-          element={
-            <ProtectedRoute>
-              <ConferenceHallsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* صفحة انضم إلينا - مسار عام */}
-        <Route
-          path='/join-us'
-          element={<JoinUsPage />}
-        />
-
-        {/* صفحة المفضلة - تتطلب تسجيل دخول */}
-        <Route
-          path='/favorites'
-          element={
-            <ProtectedRoute>
-              <FavoritesPage />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* صفحات المصادقة */}
-        <Route
-          path='/signup'
-          element={
-            <PublicRoute>
-              <SignUpPage />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path='/login'
-          element={
-            <PublicRoute>
-              <LoginPage />
-            </PublicRoute>
-          }
-        />
-        
-        {/* صفحة التحقق من البريد الإلكتروني */}
+        {/* الأدمن */}
         <Route 
-          path='/verify-email' 
-          element={<EmailVerificationPage />} 
-        />
-        
-        <Route
-          path='/forgot-password'
-          element={
-            <PublicRoute>
-              <ForgotPasswordPage />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path='/reset-password/:token'
-          element={
-            <PublicRoute>
-              <ResetPasswordPage />
-            </PublicRoute>
-          }
+          path='/admin/dashboard' 
+          element={<AdminRoute><AdminDashboard /></AdminRoute>} 
         />
 
-        {/* جميع المسارات الأخرى */}
+        {/* المصورين */}
+        <Route path="/photographers/:photographerId" element={<PhotographersPage />} />
+        <Route 
+          path='/photographers' 
+          element={<ProtectedRoute><PhotographersPage /></ProtectedRoute>} 
+        />
+
+        {/* القاعات */}
+        <Route 
+          path='/wedding-halls' 
+          element={<ProtectedRoute><WeddingHallsPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path='/conference-halls' 
+          element={<ProtectedRoute><ConferenceHallsPage /></ProtectedRoute>} 
+        />
+
+        {/* انضم إلينا */}
+        <Route path='/join-us' element={<JoinUsPage />} />
+
+        {/* المفضلة */}
+        <Route 
+          path='/favorites' 
+          element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} 
+        />
+
+        {/* تسجيل ودخول */}
+        <Route 
+          path='/signup' 
+          element={<PublicRoute><SignUpPage /></PublicRoute>} 
+        />
+        <Route 
+          path='/login' 
+          element={<PublicRoute><LoginPage /></PublicRoute>} 
+        />
+
+        {/* التحقق */}
+        <Route path='/verify-email' element={<EmailVerificationPage />} />
+
+        {/* نسيان الباسورد */}
+        <Route 
+          path='/forgot-password' 
+          element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} 
+        />
+        <Route 
+          path='/reset-password/:token' 
+          element={<PublicRoute><ResetPasswordPage /></PublicRoute>} 
+        />
+
+        {/* أي مسار غلط */}
         <Route path='*' element={<Navigate to='/' replace />} />
       </Routes>
+
       <Toaster />
     </div>
   );
