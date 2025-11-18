@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../store/authStore";
-import { useNavigate } from "react-router-dom";
+
 
 // استيراد المكونات مباشرة بدون lazy loading
 import VenueDetails from "../components/wedding/VenueDetails";
@@ -10,6 +10,7 @@ import MobileFilters from "../components/wedding/MobileFilters";
 import BookingModal from "../components/wedding/BookingModal";
 import Navigation from "../components/shared/Navigation";
 import Footer from "../components/shared/Footer";
+import { useNavigate } from "react-router-dom";
 
 const WeddingHallsPage = () => {
   const { user, logout } = useAuthStore();
@@ -66,8 +67,10 @@ const WeddingHallsPage = () => {
   const venueTypes = {
     "all": "كل الأنواع",
     "قاعة_أفراح": "قاعة أفراح",
-    "اوبن اير": "اوبن اير",
-    " إن دور": " إن دور ",
+    "قصر": "قصر",
+    "فندق": "فندق",
+    "منتجع": "منتجع",
+    "نادي": "نادي"
   };
 
   const locationTypes = {
@@ -94,7 +97,7 @@ const WeddingHallsPage = () => {
     "capacity": "السعة: من الأكبر للأصغر",
     "newest": "الأحدث"
   };
-
+      
   // جلب البيانات من الـ API
   useEffect(() => {
     const fetchWeddingVenues = async () => {
@@ -482,9 +485,9 @@ const WeddingHallsPage = () => {
   };
 
   const handleVenueClick = (venue) => {
-    setSelectedVenue(venue);
-    setCurrentView("details");
-    window.scrollTo(0, 0);
+      const venueId = venue.id || venue._id;
+      // فتح في تبويب جديد
+      window.open(`/venue/${venueId}`, '_blank');
   };
 
   const handleBackToList = () => {
@@ -511,26 +514,27 @@ const WeddingHallsPage = () => {
 
   // مشاركة القاعة
   const shareVenue = async (venue, e) => {
-    if (e) e.stopPropagation();
-    
-    const shareUrl = `${window.location.origin}/venue/${venue.id || venue._id}`;
-    const shareText = `شوف قاعة ${venue.name} في ${venue.city} - ${venue.description?.substring(0, 100)}...`;
+  if (e) e.stopPropagation();
+  
+  const venueId = venue.id || venue._id;
+  const shareUrl = `${window.location.origin}/venue/${venueId}`;
+  const shareText = `شوف قاعة ${venue.name} في ${venue.city} - ${venue.description?.substring(0, 100)}...`;
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: venue.name,
-          text: shareText,
-          url: shareUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        alert('✅ تم نسخ رابط القاعة للحافظة');
-      }
-    } catch (error) {
-      console.log('المشاركة ألغيت');
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: venue.name,
+        text: shareText,
+        url: shareUrl,
+      });
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('✅ تم نسخ رابط القاعة للحافظة');
     }
-  };
+  } catch (error) {
+    console.log('المشاركة ألغيت');
+  }
+};
 
   // Render based on current view
   if (currentView === "details" && selectedVenue) {

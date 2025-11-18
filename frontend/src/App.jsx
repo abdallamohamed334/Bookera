@@ -15,6 +15,7 @@ import ConferenceHallsPage from './pages/ConferenceHallsPage';
 import AdminDashboard from './pages/AdminDashboard';
 import JoinUsPage from './pages/JoinUsPage';
 import FavoritesPage from './pages/FavoritesPage';
+import PhotographerDetailsPage from './components/photografer/PhotographerDetailsPage'; // تأكد من المسار الصحيح
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
@@ -67,7 +68,7 @@ function App() {
         <Route path='/' element={<HomePage />} />
 
         {/* تفاصيل القاعة */}
-        <Route path="/venue/:venueId" element={<VenueDetails />} />
+        <Route path="/venue/:id" element={<VenueDetails />} />
 
         {/* الأدمن */}
         <Route 
@@ -76,10 +77,18 @@ function App() {
         />
 
         {/* المصورين */}
-        <Route path="/photographers/:photographerId" element={<PhotographersPage />} />
+        {/* احذف هذا الراوت الخاطئ */}
+        {/* <Route path="/photographers/:photographerId" element={<PhotographersPage />} /> */}
+        
         <Route 
           path='/photographers' 
           element={<ProtectedRoute><PhotographersPage /></ProtectedRoute>} 
+        />
+        
+        {/* صفحة تفاصيل المصور - أضف هذا الراوت */}
+        <Route 
+          path='/photographer/:id' 
+          element={<ProtectedRoute><PhotographerDetailsPage /></ProtectedRoute>} 
         />
 
         {/* القاعات */}
@@ -99,6 +108,12 @@ function App() {
         <Route 
           path='/favorites' 
           element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} 
+        />
+
+        {/* الديكور */}
+        <Route 
+          path='/decorations' 
+          element={<ProtectedRoute><DecorationsPage /></ProtectedRoute>} 
         />
 
         {/* تسجيل ودخول */}
