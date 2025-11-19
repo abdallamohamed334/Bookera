@@ -28,16 +28,13 @@ const __dirname = path.dirname(__filename);
 // 🔥 إصلاح CORS للموبايل
 app.use(
   cors({
-    origin: [
-      'https://mern-advanced-auth-master-exzh.vercel.app',
-      'http://localhost:3000',
-      'http://localhost:5173'
-    ],
+    origin: true, // يسمح بجميع origins
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin"],
   })
 );
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
