@@ -74,36 +74,65 @@ export const signup = async (req, res) => {
 };
 
 export const verifyEmail = async (req, res) => {
-	const { code } = req.body;
-	try {
-		const user = await User.findOne({
-			verificationToken: code,
-			verificationTokenExpiresAt: { $gt: Date.now() },
-		});
+  const { code } = req.body;
+  
+  try {
+    // البحث عن المستخدم باستخدام verificationToken
+    const user = await User.findOne({
+      verificationToken: code,
+      verificationTokenExpiresAt: { $gt: Date.now() },
+    }).select('+verificationToken +verificationTokenExpiresAt');
 
-		if (!user) {
-			return res.status(400).json({ success: false, message: "Invalid or expired verification code" });
-		}
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired verification code" 
+      });
+    }
 
-		user.isVerified = true;
-		user.verificationToken = undefined;
-		user.verificationTokenExpiresAt = undefined;
-		await user.save();
+    // التحقق إذا كان البريد مُتحققاً بالفعل
+    if (user.isVerified) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email already verified" 
+      });
+    }
 
-		await sendWelcomeEmail(user.email, user.name);
+    // تحديث حالة المستخدم
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpiresAt = undefined;
+    await user.save();
 
-		res.status(200).json({
-			success: true,
-			message: "Email verified successfully",
-			user: {
-				...user._doc,
-				password: undefined,
-			},
-		});
-	} catch (error) {
-		console.log("error in verifyEmail ", error);
-		res.status(500).json({ success: false, message: "Server error" });
-	}
+    // إنشاء توكن جديد بعد التحقق
+    generateTokenAndSetCookie(res, user._id);
+
+    // إرسال بريد الترحيب
+    try {
+      await sendWelcomeEmail(user.email, user.name);
+    } catch (emailError) {
+      console.log("Failed to send welcome email:", emailError);
+    }
+
+    // إرجاع بيانات المستخدم بشكل آمن
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified
+      },
+    });
+  } catch (error) {
+    console.log("Error in verifyEmail:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error" 
+    });
+  }
 };
 
 export const login = async (req, res) => {

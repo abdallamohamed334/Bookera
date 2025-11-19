@@ -1,5 +1,32 @@
 import mongoose from 'mongoose';
 
+const portfolioItemSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    trim: true
+  },
+  description: {
+    type: String,
+    trim: true
+  },
+  category: {
+    type: String,
+    trim: true
+  },
+  coverImage: {
+    type: String,
+    required: true
+  },
+  images: [{
+    type: String,
+    required: true
+  }],
+  date: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const photographerSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -37,10 +64,7 @@ const photographerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  portfolio: [{
-    type: String,
-    required: true
-  }],
+  portfolio: [portfolioItemSchema],
   profileImage: {
     type: String,
     required: true

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const JoinUsPage = () => {
   const navigate = useNavigate();
@@ -13,48 +14,172 @@ const JoinUsPage = () => {
     location: "",
     description: "",
     experience: "",
-    portfolio: ""
+    portfolio: "",
+    status: "pending"
   });
 
+  const [attempts, setAttempts] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState("");
+
+  // أنواع الشركاء (القاعات والمصورين فقط)
   const partnerTypes = [
     { value: "hall_owner", label: "صاحب قاعة", icon: "🏢" },
-    { value: "photographer", label: "مصور محترف", icon: "📸" },
-    { value: "decorator", label: "مصمم ديكور", icon: "🎨" },
-    { value: "catering", label: "مقدم خدمات طعام", icon: "🍽️" },
-    { value: "entertainment", label: "مقدم خدمات ترفيهية", icon: "🎤" },
-    { value: "other", label: "خدمات أخرى", icon: "💼" }
+    { value: "photographer", label: "مصور محترف", icon: "📸" }
   ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // إذا كان الحقل هو البريد الإلكتروني، مسح رسالة الخطأ
+    if (name === "email") {
+      setEmailError("");
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
+  // التحقق من صحة البريد الإلكتروني
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // التحقق من عدد المحاولات
+    if (attempts >= 3) {
+      toast.error("لقد تجاوزت الحد الأقصى للمحاولات. يرجى المحاولة مرة أخرى لاحقاً.");
+      return;
+    }
+
+    // التحقق من صحة البريد الإلكتروني
+    if (!validateEmail(formData.email)) {
+      setEmailError("صيغة البريد الإلكتروني غير صحيحة");
+      toast.error("صيغة البريد الإلكتروني غير صحيحة");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      // هنا بتكون عملية الإرسال للداتابيز
-      const response = await fetch('/api/partners/register', {
+      // إرسال البيانات إلى API
+      const response = await fetch('https://bookera-production.up.railway.app/api/partners/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          registrationDate: new Date().toISOString()
+        })
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        alert('تم تقديم طلب الانضمام بنجاح! سنتواصل معك قريباً.');
-        navigate('/');
+        // نجاح التسجيل
+        toast.success(
+          <div className="text-right">
+            <div className="font-bold text-lg">🎉 تم تقديم طلب الانضمام بنجاح!</div>
+            <div className="text-sm mt-1">سنقوم بالتواصل معك خلال 24 ساعة</div>
+          </div>,
+          {
+            duration: 5000,
+            icon: '✅'
+          }
+        );
+        
+        // إعادة تعيين النموذج والمحاولات
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          partnerType: "",
+          businessName: "",
+          location: "",
+          description: "",
+          experience: "",
+          portfolio: "",
+          status: "pending"
+        });
+        setAttempts(0);
+        setEmailError("");
+        
+        // الانتقال للصفحة الرئيسية بعد تأخير
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
+        
       } else {
-        alert('حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.');
+        // زيادة عدد المحاولات
+        setAttempts(prev => prev + 1);
+        
+        // معالجة الأخطاء المختلفة
+        if (response.status === 409) {
+          // البريد الإلكتروني مسجل مسبقاً
+          setEmailError("هذا البريد الإلكتروني مسجل مسبقاً");
+          toast.error(
+            <div className="text-right">
+              <div className="font-bold">⚠️ البريد الإلكتروني مسجل مسبقاً</div>
+              <div className="text-sm mt-1">يرجى استخدام بريد إلكتروني آخر</div>
+            </div>,
+            {
+              duration: 4000,
+              icon: '📧'
+            }
+          );
+        } else if (response.status === 400) {
+          // بيانات غير صالحة
+          toast.error(
+            <div className="text-right">
+              <div className="font-bold">❌ بيانات غير صالحة</div>
+              <div className="text-sm mt-1">يرجى مراجعة البيانات المدخلة</div>
+            </div>
+          );
+        } else {
+          // خطأ عام
+          toast.error(
+            <div className="text-right">
+              <div className="font-bold">😔 حدث خطأ غير متوقع</div>
+              <div className="text-sm mt-1">يرجى المحاولة مرة أخرى</div>
+            </div>
+          );
+        }
+
+        // تحذير بعد محاولتين
+        if (attempts >= 1) {
+          const remainingAttempts = 3 - (attempts + 1);
+          if (remainingAttempts > 0) {
+            toast(
+              <div className="text-right">
+                <div className="font-bold">⚠️ انتبه!</div>
+                <div className="text-sm mt-1">متبقي لديك {remainingAttempts} محاولة فقط</div>
+              </div>,
+              {
+                duration: 3000,
+                icon: '🚨'
+              }
+            );
+          }
+        }
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
+      setAttempts(prev => prev + 1);
+      
+      toast.error(
+        <div className="text-right">
+          <div className="font-bold">🌐 خطأ في الشبكة</div>
+          <div className="text-sm mt-1">يرجى التحقق من اتصال الإنترنت</div>
+        </div>
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -84,7 +209,7 @@ const JoinUsPage = () => {
               انضم إلى EventPro
             </motion.h1>
             
-            <div className="w-20"></div> {/* Spacer for balance */}
+            <div className="w-20"></div>
           </div>
         </div>
       </nav>
@@ -103,6 +228,49 @@ const JoinUsPage = () => {
             كن شريكاً معنا واربح مع منصة الحجوزات الرائدة في المملكة
           </p>
         </motion.div>
+
+        {/* تحذير المحاولات */}
+        {attempts > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-6 mx-auto max-w-2xl"
+          >
+            <div className={`p-4 rounded-xl border-2 ${
+              attempts >= 3 
+                ? 'bg-red-50 border-red-200 text-red-800' 
+                : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 space-x-reverse">
+                  <span className="text-xl">
+                    {attempts >= 3 ? '🚫' : '⚠️'}
+                  </span>
+                  <div>
+                    <div className="font-bold">
+                      {attempts >= 3 
+                        ? 'تم تجاوز الحد الأقصى للمحاولات' 
+                        : `محاولة ${attempts} من 3`}
+                    </div>
+                    <div className="text-sm">
+                      {attempts >= 3 
+                        ? 'يرجى المحاولة مرة أخرى لاحقاً' 
+                        : `متبقي ${3 - attempts} محاولة`}
+                    </div>
+                  </div>
+                </div>
+                {attempts < 3 && (
+                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(attempts / 3) * 100}%` }}
+                    ></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Form Section */}
@@ -129,7 +297,8 @@ const JoinUsPage = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={attempts >= 3 || isSubmitting}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="أدخل اسمك الكامل"
                   />
                 </div>
@@ -144,9 +313,24 @@ const JoinUsPage = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={attempts >= 3 || isSubmitting}
+                    className={`w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      emailError 
+                        ? 'border-red-500 dark:border-red-400' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
                     placeholder="example@email.com"
                   />
+                  {emailError && (
+                    <motion.p 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-sm mt-2 flex items-center space-x-2 space-x-reverse"
+                    >
+                      <span>⚠️</span>
+                      <span>{emailError}</span>
+                    </motion.p>
+                  )}
                 </div>
               </div>
 
@@ -161,14 +345,15 @@ const JoinUsPage = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={attempts >= 3 || isSubmitting}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="+966 5XX XXX XXX"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    اسم المنشأة *
+                    {formData.partnerType === "hall_owner" ? "اسم القاعة *" : "اسم الاستوديو *"}
                   </label>
                   <input
                     type="text"
@@ -176,8 +361,9 @@ const JoinUsPage = () => {
                     value={formData.businessName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="اسم المنشأة أو العلامة التجارية"
+                    disabled={attempts >= 3 || isSubmitting}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder={formData.partnerType === "hall_owner" ? "اسم القاعة" : "اسم الاستوديو"}
                   />
                 </div>
               </div>
@@ -187,17 +373,17 @@ const JoinUsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   نوع الشريك *
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {partnerTypes.map((type) => (
                     <motion.label
                       key={type.value}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: attempts >= 3 ? 1 : 1.05 }}
+                      whileTap={{ scale: attempts >= 3 ? 1 : 0.95 }}
                       className={`cursor-pointer border-2 rounded-xl p-4 text-center transition-all duration-200 ${
                         formData.partnerType === type.value
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                           : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
-                      }`}
+                      } ${attempts >= 3 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <input
                         type="radio"
@@ -206,6 +392,7 @@ const JoinUsPage = () => {
                         checked={formData.partnerType === type.value}
                         onChange={handleInputChange}
                         required
+                        disabled={attempts >= 3 || isSubmitting}
                         className="hidden"
                       />
                       <div className="text-2xl mb-2">{type.icon}</div>
@@ -228,7 +415,8 @@ const JoinUsPage = () => {
                   value={formData.location}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  disabled={attempts >= 3 || isSubmitting}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="المدينة والمنطقة"
                 />
               </div>
@@ -243,7 +431,8 @@ const JoinUsPage = () => {
                   value={formData.experience}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  disabled={attempts >= 3 || isSubmitting}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">اختر سنوات الخبرة</option>
                   <option value="less_than_1">أقل من سنة</option>
@@ -257,7 +446,7 @@ const JoinUsPage = () => {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  وصف الخدمات المقدمة *
+                  {formData.partnerType === "hall_owner" ? "وصف القاعة والخدمات المقدمة *" : "وصف الخدمات التصويرية المقدمة *"}
                 </label>
                 <textarea
                   name="description"
@@ -265,8 +454,11 @@ const JoinUsPage = () => {
                   onChange={handleInputChange}
                   required
                   rows="4"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                  placeholder="صف الخدمات التي تقدمها وتجربتك في هذا المجال..."
+                  disabled={attempts >= 3 || isSubmitting}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder={formData.partnerType === "hall_owner" 
+                    ? "صف القاعة والخدمات التي تقدمها وتجربتك في هذا المجال..." 
+                    : "صف الخدمات التصويرية التي تقدمها وتجربتك في هذا المجال..."}
                 />
               </div>
 
@@ -280,7 +472,8 @@ const JoinUsPage = () => {
                   name="portfolio"
                   value={formData.portfolio}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  disabled={attempts >= 3 || isSubmitting}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="https://..."
                 />
               </div>
@@ -288,11 +481,27 @@ const JoinUsPage = () => {
               {/* Submit Button */}
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg"
+                disabled={attempts >= 3 || isSubmitting}
+                whileHover={attempts >= 3 ? {} : { scale: 1.02 }}
+                whileTap={attempts >= 3 ? {} : { scale: 0.98 }}
+                className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg ${
+                  attempts >= 3
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : isSubmitting
+                    ? 'bg-blue-400 text-white cursor-wait'
+                    : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white'
+                }`}
               >
-                تقديم طلب الانضمام
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center space-x-2 space-x-reverse">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>جاري الإرسال...</span>
+                  </div>
+                ) : attempts >= 3 ? (
+                  "تم تجاوز الحد الأقصى للمحاولات"
+                ) : (
+                  "تقديم طلب الانضمام"
+                )}
               </motion.button>
             </form>
           </motion.div>
@@ -334,10 +543,10 @@ const JoinUsPage = () => {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { number: "500+", label: "شريك نشط" },
+                { number: "300+", label: "قاعة مناسبة" },
+                { number: "200+", label: "مصور محترف" },
                 { number: "50K+", label: "حجز شهري" },
-                { number: "95%", label: "رضا العملاء" },
-                { number: "24/7", label: "دعم فني" }
+                { number: "95%", label: "رضا العملاء" }
               ].map((stat, index) => (
                 <motion.div
                   key={index}
@@ -367,7 +576,7 @@ const JoinUsPage = () => {
                 </p>
                 <p className="flex items-center space-x-3 space-x-reverse">
                   <span>📞</span>
-                  <span>+966 500 000 001</span>
+                  <span>+201010087245</span>
                 </p>
                 <p className="flex items-center space-x-3 space-x-reverse">
                   <span>🕒</span>

@@ -15,6 +15,8 @@ import whatsappRoutes from "./routes/whatsapp.js"; // ✅ تم التصحيح
 import reviewsRoutes from './routes/reviews.route.js';
 import { connectDB } from "./db/connectDB.js";
 import telegramRoutes from "./routes/telegram.route.js";
+import partnersRoutes from "./routes/partners.js";
+
 
 dotenv.config();
 
@@ -47,7 +49,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/whatsapp", whatsappRoutes); 
 app.use('/api/venues', reviewsRoutes);
-app.use("/api/telegram", telegramRoutes)// ✅ استخدام import بدلاً من require
+app.use("/api/telegram", telegramRoutes)
+app.use("/api/partners", partnersRoutes);
+// ✅ استخدام import بدلاً من require
 
 // 🔥 Route للتست على الموبايل
 app.get("/api/mobile-test", (req, res) => {

@@ -10,6 +10,7 @@ const EmailVerificationPage = () => {
 	const [code, setCode] = useState(["", "", "", "", "", ""]);
 	const [timer, setTimer] = useState(60);
 	const [canResend, setCanResend] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const inputRefs = useRef([]);
 	const navigate = useNavigate();
 
@@ -30,6 +31,14 @@ const EmailVerificationPage = () => {
 			const lastFilledIndex = newCode.findLastIndex((digit) => digit !== "");
 			const focusIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
 			inputRefs.current[focusIndex].focus();
+			
+			// Check if all fields are filled after paste
+			if (newCode.every((digit) => digit !== "")) {
+				setIsSubmitting(true);
+				setTimeout(() => {
+					handleSubmit();
+				}, 100);
+			}
 		} else {
 			// Allow only numbers
 			if (!/^\d*$/.test(value)) return;
@@ -40,6 +49,14 @@ const EmailVerificationPage = () => {
 			// Move focus to the next input field if value is entered
 			if (value && index < 5) {
 				inputRefs.current[index + 1].focus();
+			}
+
+			// Check if all fields are filled and this is the last input
+			if (value && index === 5 && newCode.every((digit) => digit !== "")) {
+				setIsSubmitting(true);
+				setTimeout(() => {
+					handleSubmit();
+				}, 100);
 			}
 		}
 	};
@@ -60,22 +77,26 @@ const EmailVerificationPage = () => {
 
 	const handleSubmit = async (e) => {
 		if (e) e.preventDefault();
+		
 		const verificationCode = code.join("");
 		
 		if (verificationCode.length !== 6) {
 			toast.error("الرجاء إدخال الرمز المكون من 6 أرقام");
+			setIsSubmitting(false);
 			return;
 		}
 
 		try {
 			await verifyEmail(verificationCode);
-			navigate("/");
 			toast.success("تم التحقق من البريد الإلكتروني بنجاح");
+			navigate("/");
 		} catch (error) {
 			console.log(error);
 			// Reset code on error
 			setCode(["", "", "", "", "", ""]);
 			inputRefs.current[0].focus();
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -85,13 +106,6 @@ const EmailVerificationPage = () => {
 		// Here you would call your resend verification code API
 		toast.success("تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني");
 	};
-
-	// Auto submit when all fields are filled
-	useEffect(() => {
-		if (code.every((digit) => digit !== "")) {
-			handleSubmit();
-		}
-	}, [code]);
 
 	// Timer for resend code
 	useEffect(() => {
@@ -184,7 +198,7 @@ const EmailVerificationPage = () => {
 										onFocus={(e) => e.target.select()}
 										className='w-14 h-14 text-center text-2xl font-bold bg-gray-50 text-gray-800 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200'
 										whileFocus={{ scale: 1.05 }}
-										disabled={isLoading}
+										disabled={isLoading || isSubmitting}
 									/>
 								))}
 							</div>
@@ -211,10 +225,10 @@ const EmailVerificationPage = () => {
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.98 }}
 								type='submit'
-								disabled={isLoading || code.some((digit) => !digit)}
+								disabled={isLoading || isSubmitting || code.some((digit) => !digit)}
 								className='w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold rounded-lg shadow-lg hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
 							>
-								{isLoading ? (
+								{(isLoading || isSubmitting) ? (
 									<>
 										<Loader className='w-5 h-5 animate-spin' />
 										جاري التحقق...

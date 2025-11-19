@@ -1,4 +1,4 @@
-// store/authStore.ts
+// store/authStore.js
 import { create } from "zustand";
 import axios from "axios";
 
@@ -17,6 +17,37 @@ export const useAuthStore = create((set, get) => ({
     isLoading: false,
     isCheckingAuth: true,
     message: null,
+
+    // ✅ التحقق من البريد الإلكتروني
+    verifyEmail: async (verificationCode) => {
+        set({ isLoading: true, error: null, message: null });
+        try {
+            console.log("🔄 Verifying email with code:", verificationCode);
+            
+            const response = await axios.post(`${FINAL_API_BASE}/api/auth/verify-email`, { 
+                code: verificationCode
+            });
+            
+            console.log("✅ Email verification successful:", response.data);
+            
+            set({ 
+                user: response.data.user, 
+                isAuthenticated: true,
+                isLoading: false,
+                message: response.data.message 
+            });
+            
+            return response.data;
+
+        } catch (error) {
+            console.error("❌ Email verification error:", error.response?.data);
+            set({ 
+                error: error.response?.data?.message || "Error verifying email", 
+                isLoading: false 
+            });
+            throw error;
+        }
+    },
 
     // ✅ تسجيل مستخدم جديد
     signup: async (email, password, name) => {
@@ -62,7 +93,6 @@ export const useAuthStore = create((set, get) => ({
             const userData = response.data.user;
             
             console.log("✅ User login successful:", userData);
-            console.log("🎯 User role from API:", userData?.role);
             
             set({
                 isAuthenticated: true,
@@ -72,11 +102,6 @@ export const useAuthStore = create((set, get) => ({
                 message: response.data.message
             });
 
-            // نتأكد من الـ role بعد ما خزنا البيانات
-            console.log("🔍 User in store after login:", get().user);
-            console.log("🔍 User role in store:", get().user?.role);
-
-            // إرجاع true إذا كان المستخدم أدمن
             return userData?.role === 'admin';
 
         } catch (error) {
@@ -99,20 +124,12 @@ export const useAuthStore = create((set, get) => ({
                 email, password 
             });
             
-            console.log("✅ Admin login FULL response:", response);
-            console.log("📦 Response data:", response.data);
-            console.log("👤 User data from API:", response.data.user);
-            console.log("🎯 User role from API:", response.data.user?.role);
-            
             const userData = response.data.user;
             
-            // ⬇️⬇️⬇️ التعديل المهم - نتأكد إن role بيكون 'admin'
             const adminUserData = {
                 ...userData,
-                role: userData?.role || 'admin' // إذا مفيش role في الـ API، نضيفه يدوي
+                role: userData?.role || 'admin'
             };
-            
-            console.log("🎯 Final user data with role:", adminUserData);
             
             set({
                 isAuthenticated: true,
@@ -121,10 +138,6 @@ export const useAuthStore = create((set, get) => ({
                 isLoading: false,
                 message: response.data.message
             });
-
-            // نتأكد من الـ role بعد ما خزنا البيانات
-            console.log("🔍 User in store after login:", get().user);
-            console.log("🔍 User role in store:", get().user?.role);
 
             return true;
 
@@ -141,11 +154,6 @@ export const useAuthStore = create((set, get) => ({
     // ✅ التحقق إذا كان المستخدم أدمن
     isAdmin: () => {
         const state = get();
-        console.log("🔍 isAdmin check:", {
-            user: state.user,
-            role: state.user?.role,
-            isAdmin: state.user?.role === 'admin'
-        });
         return state.user?.role === 'admin';
     },
 
@@ -162,9 +170,6 @@ export const useAuthStore = create((set, get) => ({
             console.log("🔄 Checking authentication...");
             
             const response = await axios.get(`${FINAL_API_BASE}/api/auth/check-auth`);
-            
-            console.log("✅ Auth check successful:", response.data);
-            console.log("🎯 User role from check-auth:", response.data.user?.role);
             
             set({ 
                 user: response.data.user, 
@@ -189,8 +194,6 @@ export const useAuthStore = create((set, get) => ({
             console.log("🔄 Forgot password request:", email);
             
             const response = await axios.post(`${FINAL_API_BASE}/api/auth/forgot-password`, { email });
-            
-            console.log("✅ Forgot password email sent");
             
             set({ 
                 message: response.data.message, 
@@ -217,8 +220,6 @@ export const useAuthStore = create((set, get) => ({
             
             const response = await axios.post(`${FINAL_API_BASE}/api/auth/reset-password/${token}`, { password });
             
-            console.log("✅ Password reset successful");
-            
             set({ 
                 message: response.data.message, 
                 isLoading: false 
@@ -243,8 +244,6 @@ export const useAuthStore = create((set, get) => ({
             console.log("🔄 Logging out...");
             
             await axios.post(`${FINAL_API_BASE}/api/auth/logout`);
-            
-            console.log("✅ Logout successful");
             
             set({ 
                 user: null, 
@@ -289,7 +288,7 @@ export const useAuthStore = create((set, get) => ({
         return get().error;
     },
 
-    // ✅ إعادة تعيين حالة المستخدم (للت debugging)
+    // ✅ إعادة تعيين حالة المستخدم
     resetUser: () => {
         set({ 
             user: null, 
