@@ -740,7 +740,7 @@ const PhotographerDetailsPage = () => {
                         <img 
                           src={image} 
                           alt={`${photographer.name} ${index + 1}`}
-                          className="w-16 h-12 object-cover"
+                          className="w-20 h-16 object-cover"
                         />
                       </button>
                     ))}
@@ -823,7 +823,7 @@ const PhotographerDetailsPage = () => {
                               y: -5
                             }}
                           >
-                            <div className="relative h-64 overflow-hidden">
+                            <div className="relative h-80 overflow-hidden">
                               <img
                                 src={album.coverImage}
                                 alt={album.title}
@@ -1352,7 +1352,7 @@ const PhotographerDetailsPage = () => {
               <img 
                 src={sliderImages[lightboxImageIndex]} 
                 alt={`${photographer.name} gallery ${lightboxImageIndex + 1}`}
-                className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                className="max-w-full max-h-[95vh] object-contain rounded-lg"
               />
 
               {sliderImages.length > 1 && (
@@ -1402,7 +1402,7 @@ const PhotographerDetailsPage = () => {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header - بدون تدرج أزرق */}
-              <div className="bg-white border-b border-gray-200 p-8">
+              {/* <div className="bg-white border-b border-gray-200 p-8">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h2 className="text-3xl font-bold text-gray-800 mb-3">{selectedAlbum.title}</h2>
@@ -1428,78 +1428,55 @@ const PhotographerDetailsPage = () => {
                     </svg>
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Content */}
-              <div className="p-8 max-h-[60vh] overflow-y-auto">
-                <div className="relative bg-gray-100 rounded-2xl h-96 mb-8 overflow-hidden">
-                  {selectedAlbum.images && selectedAlbum.images.length > 0 ? (
-                    <>
-                      <img 
-                        src={selectedAlbum.images[albumImageIndex]} 
-                        alt={`${selectedAlbum.title} - ${albumImageIndex + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      
-                      {/* Navigation Arrows */}
-                      {selectedAlbum.images.length > 1 && (
-                        <>
-                          <button
-                            onClick={prevAlbumImage}
-                            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-lg"
-                          >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={nextAlbumImage}
-                            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-lg"
-                          >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </>
-                      )}
+             <div className="p-0 max-h-[90vh] overflow-y-auto bg-transparent">
+  <div className="relative overflow-hidden bg-transparent">
+    {selectedAlbum.images && selectedAlbum.images.length > 0 ? (
+      <>
+        <img 
+          src={selectedAlbum.images[albumImageIndex]} 
+          alt={`${selectedAlbum.title} - ${albumImageIndex + 1}`}
+          className="w-full max-h-[85vh] object-contain bg-transparent"
+        />
+        
+        {/* Navigation Arrows */}
+        {selectedAlbum.images.length > 1 && (
+          <>
+            <button
+              onClick={prevAlbumImage}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={nextAlbumImage}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
 
-                      {/* Image Counter */}
-                      {selectedAlbum.images.length > 1 && (
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
-                          {albumImageIndex + 1} / {selectedAlbum.images.length}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
-                      لا توجد صور متاحة في هذا الألبوم
-                    </div>
-                  )}
-                </div>
-
-                {/* Thumbnails */}
-                {selectedAlbum.images && selectedAlbum.images.length > 1 && (
-                  <div className="flex space-x-3 overflow-x-auto pb-4">
-                    {selectedAlbum.images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setAlbumImageIndex(index)}
-                        className={`flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                          albumImageIndex === index 
-                            ? 'border-blue-500 scale-110 shadow-lg' 
-                            : 'border-gray-300 hover:border-blue-300'
-                        }`}
-                      >
-                        <img 
-                          src={image} 
-                          alt={`${selectedAlbum.title} ${index + 1}`}
-                          className="w-24 h-20 object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+        {/* Image Counter */}
+        {selectedAlbum.images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
+            {albumImageIndex + 1} / {selectedAlbum.images.length}
+          </div>
+        )}
+      </>
+    ) : (
+      <div className="w-full h-[600px] flex items-center justify-center text-gray-500 bg-transparent">
+        لا توجد صور متاحة في هذا الألبوم
+      </div>
+    )}
+  </div>
+</div>
             </motion.div>
           </motion.div>
         )}
