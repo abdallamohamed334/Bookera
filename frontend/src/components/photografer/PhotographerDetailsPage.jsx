@@ -300,7 +300,7 @@ const PhotographerDetailsPage = () => {
         }
 
         console.log('🔍 جاري البحث في الـ API...');
-        const response = await fetch(`http://localhost:5000/api/photographers/${id}`);
+        const response = await fetch(`https://bookera-production.up.railway.app/api/photographers/${id}`);
         
         if (response.ok) {
           const data = await response.json();
