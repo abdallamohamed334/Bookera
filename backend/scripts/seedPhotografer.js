@@ -6,77 +6,82 @@ dotenv.config();
 
 const samplePhotographers = [
   {
-    name: " طارق",
-    businessName: "tareq_tbb  ",
-    type: "شخصي",
-    specialty: "تصوير مناسبات",
-    experience: 8,
+    name: " Mariam Badr ",
+    businessName: "mariambadrphotography",
+    type: "فردي",
+    specialty: "تصوير أفراح",
+    experience: 2,
     governorate: "القاهرة",
-    city: "المعادي",
-    price: "5000",
+    city: "المنهدسين",
+    price: "2000",
     portfolio: [
       {
-        title: " 🤍 الحب في عينيهم 🤍  ",
-        description: "🤍 الحب في عينيهم 🤍 ",
+        title: " 🤍  قصر البرنس نجيب  🤍  ",
+        description: "🤍  قصر البرنس نجيب  🤍 ",
         category: "شخصي",
-        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577563/%D8%A7%D9%84%D8%AD%D8%A8_%D9%81%D9%8A_%D8%B9%D9%8A%D9%86%D9%8A%D9%87%D9%85_love_loveislove_fyp_photography_photooftheday_ykart1.jpg",
+        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587407/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_14_lvsncq.jpg",
         images: [
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577575/%D8%A7%D9%84%D8%AD%D8%A8_%D9%81%D9%8A_%D8%B9%D9%8A%D9%86%D9%8A%D9%87%D9%85_love_loveislove_fyp_photography_photooftheday_3_tf7cif.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577576/%D8%A7%D9%84%D8%AD%D8%A8_%D9%81%D9%8A_%D8%B9%D9%8A%D9%86%D9%8A%D9%87%D9%85_love_loveislove_fyp_photography_photooftheday_2_aqkbfa.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577578/%D8%A7%D9%84%D8%AD%D8%A8_%D9%81%D9%8A_%D8%B9%D9%8A%D9%86%D9%8A%D9%87%D9%85_love_loveislove_fyp_photography_photooftheday_5_v9lhmx.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577578/%D8%A7%D9%84%D8%AD%D8%A8_%D9%81%D9%8A_%D8%B9%D9%8A%D9%86%D9%8A%D9%87%D9%85_love_loveislove_fyp_photography_photooftheday_1_li4eel.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577583/%D8%A7%D9%84%D8%AD%D8%A8_%D9%81%D9%8A_%D8%B9%D9%8A%D9%86%D9%8A%D9%87%D9%85_love_loveislove_fyp_photography_photooftheday_4_x6xx0z.jpg"
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587392/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_7_krvvih.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587394/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_8_jugv4n.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587397/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_9_heufrb.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587400/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_10_iszywh.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587400/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_11_z6xwpv.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587401/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_12_gcwftz.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587406/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_13_zjqin9.jpg",                            
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587408/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_15_h5t6o9.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587407/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_14_lvsncq.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587412/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_16_t0atwh.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587414/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_beguee.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587417/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_1_ffcfu6.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587420/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_2_b1bx8e.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587422/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_3_wdevbr.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587427/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_4_pc2gg3.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587428/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_5_lupc8m.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763587433/Book_your_day-_01067871601Save_your_special_moments_with_us_%EF%B8%8F_6_ia1rvk.jpg"
+
         ]
       },
        {
-        title: "  يا جمال هداوة الصور 🔥  ",
-        description: "  يا جمال هداوة الصور 🔥  ",
+        title: "  Congratulations A & R💞 ",
+        description: " Congratulations A & R💞   ",
         category: "شخصي",
-        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763585624/%D9%8A%D8%A7_%D8%AC%D9%85%D8%A7%D9%84_%D9%87%D8%AF%D8%A7%D9%88%D8%A9_%D8%A7%D9%84%D8%B5%D9%88%D8%B1_photographer_photography_%D9%85%D8%B5%D9%88%D8%B1_model_2_zpzz70.jpg",
+        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588072/Congratulations_A_R_Book_your_day-_01067871601_1_s4kk76.jpg",
         images: [
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763585624/%D9%8A%D8%A7_%D8%AC%D9%85%D8%A7%D9%84_%D9%87%D8%AF%D8%A7%D9%88%D8%A9_%D8%A7%D9%84%D8%B5%D9%88%D8%B1_photographer_photography_%D9%85%D8%B5%D9%88%D8%B1_model_2_zpzz70.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763585625/%D9%8A%D8%A7_%D8%AC%D9%85%D8%A7%D9%84_%D9%87%D8%AF%D8%A7%D9%88%D8%A9_%D8%A7%D9%84%D8%B5%D9%88%D8%B1_photographer_photography_%D9%85%D8%B5%D9%88%D8%B1_model_3_b7nkwx.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763585628/%D9%8A%D8%A7_%D8%AC%D9%85%D8%A7%D9%84_%D9%87%D8%AF%D8%A7%D9%88%D8%A9_%D8%A7%D9%84%D8%B5%D9%88%D8%B1_photographer_photography_%D9%85%D8%B5%D9%88%D8%B1_model_4_j81hdb.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763585628/%D9%8A%D8%A7_%D8%AC%D9%85%D8%A7%D9%84_%D9%87%D8%AF%D8%A7%D9%88%D8%A9_%D8%A7%D9%84%D8%B5%D9%88%D8%B1_photographer_photography_%D9%85%D8%B5%D9%88%D8%B1_model_vu21cw.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588073/Congratulations_A_R_Book_your_day-_01067871601_3_ffuy2r.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588072/Congratulations_A_R_Book_your_day-_01067871601_1_s4kk76.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588071/Congratulations_A_R_Book_your_day-_01067871601_2_bpzqlp.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588069/Congratulations_A_R_Book_your_day-_01067871601_f9vh9n.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588066/Congratulations_A_R_Book_your_day-_01067871601_11_bwj5lb.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588064/Congratulations_A_R_Book_your_day-_01067871601_10_gbuf8g.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588063/Congratulations_A_R_Book_your_day-_01067871601_9_lt250a.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588059/Congratulations_A_R_Book_your_day-_01067871601_8_cojx88.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588057/Congratulations_A_R_Book_your_day-_01067871601_5_ilspca.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588058/Congratulations_A_R_Book_your_day-_01067871601_7_iecwvt.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588057/Congratulations_A_R_Book_your_day-_01067871601_6_gdh9z0.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588057/Congratulations_A_R_Book_your_day-_01067871601_6_gdh9z0.jpg"
+          
           
         ]
       },
-      {
-        title: "  سموني_ملك_تصوير_اليلي",
-        description: "سموني_ملك_تصوير_اليلي",
-        category: "طبيعي",
-        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577639/%D8%B3%D9%85%D9%88%D9%86%D9%8A_%D9%85%D9%84%D9%83_%D8%AA%D8%B5%D9%88%D9%8A%D8%B1_%D8%A7%D9%84%D9%8A%D9%84%D9%8A___photographer_photography_%D9%85%D8%B5%D9%88%D8%B1_jnybts.jpg",
-        images: [
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577640/%D8%B3%D9%85%D9%88%D9%86%D9%8A_%D9%85%D9%84%D9%83_%D8%AA%D8%B5%D9%88%D9%8A%D8%B1_%D8%A7%D9%84%D9%8A%D9%84%D9%8A___photographer_photography_%D9%85%D8%B5%D9%88%D8%B1_1_veehfd.jpg",
-        ]
-      },
-        {
-        title: "  فترة الخريف الاجمل للصور 🔥",
-        description: "فترة الخريف الاجمل للصور 🔥",
-        category: "طبيعي",
-        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577858/%D9%81%D8%AA%D8%B1%D8%A9_%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D9%81_%D8%A7%D9%84%D8%A7%D8%AC%D9%85%D9%84_%D9%84%D9%84%D8%B5%D9%88%D8%B1_een9ls.jpg",
-        images: [
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577859/%D9%81%D8%AA%D8%B1%D8%A9_%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D9%81_%D8%A7%D9%84%D8%A7%D8%AC%D9%85%D9%84_%D9%84%D9%84%D8%B5%D9%88%D8%B1_1_cppbld.jpg",
-        ]
-      }
+
     ],
-    profileImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763577464/485654054_3928686050611416_5538891718561654918_n_sgyqcf.jpg",
+    profileImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1763588072/Congratulations_A_R_Book_your_day-_01067871601_1_s4kk76.jpg",
     services: ["تصوير قبل الزفاف", "تصوير حفل الزفاف", "تصوير ما بعد الحفل", "ألبوم كامل", "فيديو"],
     equipment: ["Canon EOS R5", "Sony A7III", "DJI Drone", "LED Lights", "Various Lenses"],
     description: "مصور محترف متخصص في تصوير الأفراح بأسلوب فني عصري، أمتلك خبرة 8 سنوات.",
     available: true,
     rating: 4.7,
-    contact: "0785317273",
-    email: "tareq@photography.com",
+    contact: "01067871601",
+    email: "mariam@photography.com",
     address: "شارع 9، المعادي، القاهرة",
     socialMedia: {
-      instagram: "https://www.instagram.com/tareq_tbb/?hl=ar",
-      facebook: "Ahmed Photography Studio",
+      instagram: "https://www.instagram.com/mariambadrphotography?igsh=MW9oNHp3YXk2Y21teg%3D%3D&utm_source=qr&fbclid=IwY2xjawOLE5lleHRuA2FlbQIxMABicmlkETFNMGJ2bTZTMFRYWkhtMm5pc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHjObgjJW8v8C9Ru8mmZrWKfqlEkSw0C5wXxqrozIseZl54kErO-ULu3KpFvP_aem_i8qk7hnS-SgW_2l_iVZn5w",
+      facebook: "https://l.instagram.com/?u=https%3A%2F%2Fwww.facebook.com%2FMariam-Badr-photography-105040588043823%2F%3Futm_source%3Dig%26utm_medium%3Dsocial%26utm_content%3Dlink_in_bio&e=AT3GutZmHiHRBXGGlT6d7_Mbod3bdWIlLKh17hE-wApT4pZ_SFOxEqpGy_hl3vyMDkoPK1LIvPAkXHOLQndMhHXPjxGU3bgAgl--U4C8gw",
       website: "www.ahmed-photo.com"
     },
     photographySpecific: {
       hoursCoverage: 8,
-      numberOfPhotos: "+50",
+      numberOfPhotos: "+200",
       digitalPhotos: true,
       printedPhotos: true,
       photoAlbum: true,
@@ -116,29 +121,28 @@ const samplePhotographers = [
 
 const seedDatabase = async () => {
   try {
-    await mongoose.connect(
-      "mongodb+srv://tallaey445_db_user:KSFUyc7tmkHQnsEb@cluster0.pxplox6.mongodb.net/?appName=Cluster0"
-    );
-
+    await mongoose.connect("mongodb+srv://tallaey445_db_user:KSFUyc7tmkHQnsEb@cluster0.pxplox6.mongodb.net/?appName=Cluster0");
     console.log("📡 Connected to MongoDB");
 
     for (const photographer of samplePhotographers) {
-      const updated = await Photographer.findOneAndUpdate(
-        { email: photographer.email }, // ✔ التعريف الأساسي
-        { $set: photographer },        // ✔ تحديث البيانات بالكامل
-        { upsert: true, new: true }    // ✔ لو مش موجود → يعمله Insert
+      const email = photographer.email.toLowerCase().trim(); // normalize
+      const updatedPhotographer = await Photographer.findOneAndUpdate(
+        { email },               // تحقق بالإيميل
+        { $set: photographer },   // حدث كل البيانات
+        { upsert: true, new: true } // لو مش موجود → إضافة جديد
       );
 
-      console.log(`✅ Upserted: ${updated.name}`);
+      console.log(`✅ Upserted: ${updatedPhotographer.name}`);
     }
 
-    console.log("\n🎉 Upsert completed (Updated or Inserted without deleting)");
+    const total = await Photographer.countDocuments();
+    console.log(`📊 Total photographers in database: ${total}`);
+    console.log("🎉 Database seeding (update/upsert) completed!");
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error during upsert:", error);
+    console.error("❌ Error during database upsert:", error);
     process.exit(1);
   }
 };
 
-// تشغيل السكريبت
 seedDatabase();
