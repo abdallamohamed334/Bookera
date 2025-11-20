@@ -26,7 +26,7 @@ const LoadingWithImage = () => {
           }}
         >
           <motion.img
-            src="https://images.unsplash.com/photo-1578932750294-f5075e85a44b?w=150&h=150&fit=crop&crop=center"
+            src="e:/mern-advanced-auth-master/frontend/public/Gemini_Generated_Image_bmm6u9bmm6u9bmm6.png"
             alt="Evento Logo"
             className="w-24 h-24 object-cover rounded-2xl mx-auto shadow-lg border border-gray-200"
             animate={{
