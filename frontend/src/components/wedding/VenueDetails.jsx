@@ -35,10 +35,13 @@ const VenueDetails = () => {
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [venueOwner, setVenueOwner] = useState(null);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
-  const [showAllFood, setShowAllFood] = useState(false);
   const [mapLocation, setMapLocation] = useState(null);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 0 });
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [reels, setReels] = useState([]);
+  const [selectedReel, setSelectedReel] = useState(null);
+  const [showReelsModal, setShowReelsModal] = useState(false);
+  const [currentReelIndex, setCurrentReelIndex] = useState(0);
 
   // 🔥 إعدادات التليجرام
   const TELEGRAM_CONFIG = {
@@ -121,6 +124,23 @@ const VenueDetails = () => {
           min: venueData.min_price || venueData.price || 0,
           max: venueData.max_price || venueData.price || 0
         });
+
+        // 🔥 إعداد الريلز (استخدام الفيديوهات كريلز)
+        if (venueData.videos && venueData.videos.length > 0) {
+          const reelsData = venueData.videos.map((video, index) => ({
+            id: index + 1,
+            videoUrl: video,
+            thumbnail: venueData.images?.[0] || venueData.image,
+            title: `ريلز ${venueData.name} #${index + 1}`,
+            description: "جولة داخل القاعة وتصميماتها الفاخرة",
+            likes: Math.floor(Math.random() * 1000) + 100,
+            comments: Math.floor(Math.random() * 100) + 10,
+            shares: Math.floor(Math.random() * 50) + 5,
+            duration: "0:30",
+            views: Math.floor(Math.random() * 5000) + 1000
+          }));
+          setReels(reelsData);
+        }
         
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -348,6 +368,33 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     }
   };
 
+  // 🔥 فتح الريلز
+  const openReelsModal = (reel, index) => {
+    setSelectedReel(reel);
+    setCurrentReelIndex(index);
+    setShowReelsModal(true);
+  };
+
+  // 🔥 إغلاق الريلز
+  const closeReelsModal = () => {
+    setShowReelsModal(false);
+    setSelectedReel(null);
+    setCurrentReelIndex(0);
+  };
+
+  // 🔥 التنقل بين الريلز
+  const navigateReels = (direction) => {
+    if (direction === 'next') {
+      const nextIndex = (currentReelIndex + 1) % reels.length;
+      setSelectedReel(reels[nextIndex]);
+      setCurrentReelIndex(nextIndex);
+    } else {
+      const prevIndex = (currentReelIndex - 1 + reels.length) % reels.length;
+      setSelectedReel(reels[prevIndex]);
+      setCurrentReelIndex(prevIndex);
+    }
+  };
+
   // 🔥 عرض النجوم
   const renderStars = (rating) => {
     const numericRating = parseFloat(rating) || 0;
@@ -443,6 +490,74 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     );
   };
 
+  // 🔥 عرض قسم الريلز
+  const renderReelsSection = () => {
+    if (reels.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 mb-4 shadow-lg border border-purple-100">
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-1 rounded-lg text-sm">🎬</span>
+          ريلز القاعة
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {reels.map((reel, index) => (
+            <motion.div 
+              key={reel.id} 
+              className="aspect-[9/16] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all cursor-pointer group relative"
+              whileHover={{ scale: 1.05 }}
+              onClick={() => openReelsModal(reel, index)}
+            >
+              {/* ثامبنل الفيديو */}
+              <div className="relative w-full h-full">
+                <img 
+                  src={reel.thumbnail} 
+                  alt={reel.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                
+                {/* طبقة تدرج لوني */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                
+                {/* أيقونة التشغيل */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-black/50 rounded-full p-3 group-hover:scale-110 transition-transform">
+                    <span className="text-white text-2xl">▶</span>
+                  </div>
+                </div>
+                
+                {/* معلومات الريلز */}
+                <div className="absolute bottom-2 left-2 right-2">
+                  <div className="flex items-center justify-between text-white text-xs">
+                    <span className="flex items-center gap-1">
+                      <span>👁️</span>
+                      <span>{reel.views.toLocaleString()}</span>
+                    </span>
+                    <span>{reel.duration}</span>
+                  </div>
+                </div>
+                
+                {/* شارة الريلز */}
+                <div className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                  REELS
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        
+        {/* نص توضيحي */}
+        <div className="text-center mt-4 p-3 bg-white/80 rounded-xl border border-purple-200">
+          <p className="text-gray-700 text-sm font-medium">
+            🎥 استمتع بمشاهدة ريلز حصرية للقاعة تعرض أجمل اللحظات والتفاصيل
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   // 🔥 عرض قسم الفيديوهات
   const renderVideosSection = () => {
     if (!venueData?.videos || venueData.videos.length === 0) {
@@ -450,9 +565,9 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     }
 
     return (
-      <div className="bg-white rounded-2xl p-4 mb-4 shadow-lg border border-gray-100">
+      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-4 mb-4 shadow-lg border border-blue-100">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <span className="bg-red-100 p-1 rounded-lg text-sm">🎥</span>
+          <span className="bg-blue-100 p-1 rounded-lg text-sm">🎥</span>
           فيديوهات القاعة
         </h3>
         <div className="grid grid-cols-1 gap-4">
@@ -466,6 +581,12 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 <source src={video} type="video/mp4" />
                 متصفحك لا يدعم تشغيل الفيديو
               </video>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                <div className="text-white">
+                  <p className="font-bold text-sm">فيديو {index + 1}</p>
+                  <p className="text-xs">جولة داخل القاعة وتصميماتها</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -574,78 +695,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     );
   };
 
-  // 🔥 عرض قسم الطعام والشراب - كلها ألوان خضراء
-  const renderFoodSection = () => {
-    const foodItems = venueData?.food_items || [
-      "بوفيه مفتوح متنوع",
-      "مشروبات غازية وعصائر طازجة",
-      "قهوة عربية وتركية",
-      "حلويات شرقية وغربية",
-      "مقبلات وسلطات متنوعة",
-      "أطباق رئيسية متنوعة",
-      "مشروبات ساخنة متنوعة",
-      "آيس كريم وحلويات فاخرة",
-      "مشروبات طاقة وعصائر طبيعية",
-      "مقبلات ساخنة وباردة",
-      "حلويات شرقية مميزة",
-      "مشروبات ساخنة بجودة عالية"
-    ];
-
-    const foodIcons = ["🍕", "🍹", "☕", "🍰", "🥗", "🍲", "🍵", "🍨", "🥤", "🍟", "🧁", "🍫"];
-    
-    // 🔥 كل الألوان خضراء الآن
-    const foodColors = [
-      "from-green-50 to-emerald-50 border-green-200",
-      "from-green-50 to-emerald-50 border-green-200", 
-      "from-green-50 to-emerald-50 border-green-200",
-      "from-green-50 to-emerald-50 border-green-200",
-      "from-green-50 to-emerald-50 border-green-200",
-      "from-green-50 to-emerald-50 border-green-200",
-      "from-green-50 to-emerald-50 border-green-200",
-      "from-green-50 to-emerald-50 border-green-200"
-    ];
-
-    return (
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4 mb-4 shadow-lg border border-green-200">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white p-2 rounded-lg text-sm">🍽️</span>
-          <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-            المأكولات والمشروبات
-          </span>
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {foodItems.slice(0, showAllFood ? foodItems.length : 8).map((item, index) => (
-            <motion.div 
-              key={index} 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`flex items-center gap-3 p-3 rounded-xl shadow-sm border bg-gradient-to-r ${
-                foodColors[index % foodColors.length]
-              } hover:shadow-md transition-all group hover:scale-105`}
-            >
-              <span className="text-2xl bg-white/80 p-2 rounded-lg group-hover:scale-110 transition-transform shadow-sm">
-                {foodIcons[index % foodIcons.length]}
-              </span>
-              <span className="text-gray-800 text-sm font-medium flex-1">{item}</span>
-            </motion.div>
-          ))}
-        </div>
-        {foodItems.length > 8 && (
-          <button
-            onClick={() => setShowAllFood(!showAllFood)}
-            className="text-green-600 hover:text-green-700 font-bold mt-4 flex items-center gap-2 bg-white/80 px-4 py-2 rounded-lg hover:bg-white transition-all shadow-sm w-full justify-center border border-green-200"
-          >
-            {showAllFood ? 'عرض أقل' : `عرض ${foodItems.length - 8} صنف آخر`}
-            <span className="text-sm transform transition-transform">
-              {showAllFood ? '▲' : '▼'}
-            </span>
-          </button>
-        )}
-      </div>
-    );
-  };
-
   // 🔥 عرض الباكدجات مع إصلاح الألوان
   const renderPackagesSection = () => {
     const packagesToShow = packages && packages.length > 0 ? packages : [];
@@ -718,12 +767,11 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 <h5 className="font-bold text-gray-900 text-sm">المميزات المتضمنة:</h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {(pkg.features || pkg.includes || []).map((feature, idx) => (
-  <div key={idx} className="flex items-center gap-2 text-gray-700 bg-white p-2 rounded-lg border border-gray-200 text-xs hover:border-blue-300 transition-colors">
-    <span className="text-green-500 text-sm">✓</span>
-    <span className="font-medium">{feature}</span>
-  </div>
-))
-}
+                    <div key={idx} className="flex items-center gap-2 text-gray-700 bg-white p-2 rounded-lg border border-gray-200 text-xs hover:border-blue-300 transition-colors">
+                      <span className="text-green-500 text-sm">✓</span>
+                      <span className="font-medium">{feature}</span>
+                    </div>
+                  ))}
                 </div>
                 
                 {/* معلومات إضافية عن الباكدج */}
@@ -818,9 +866,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
             </div>
           </div>
         </div>
-
-        {/* 🔥 بديل الخريطة مع تصميم جميل */}
-        
       </div>
     );
   };
@@ -862,7 +907,7 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       { id: "location", label: "الموقع", icon: "📍" },
       { id: "packages", label: "البكجات", icon: "💰" },
       { id: "features", label: "المميزات", icon: "⚡" },
-      { id: "food", label: "الطعام", icon: "🍽️" }
+      { id: "reels", label: "الريلز", icon: "🎬" } // 🔥 تغيير من "الطعام" إلى "الريلز"
     ];
 
     return (
@@ -904,7 +949,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       case "gallery":
         return (
           <div className="space-y-4">
-            {renderVideosSection()}
             <div className="bg-gradient-to-br from-white to-pink-50 rounded-2xl p-4 shadow-lg border border-pink-100">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <span className="bg-pink-100 p-1 rounded-lg text-sm">🖼️</span>
@@ -953,8 +997,13 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       case "features":
         return renderFeatures();
       
-      case "food":
-        return renderFoodSection();
+      case "reels": // 🔥 تبويب الريلز الجديد
+        return (
+          <div className="space-y-4">
+            {renderReelsSection()}
+            {renderVideosSection()}
+          </div>
+        );
       
       default:
         return (
@@ -1010,6 +1059,116 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
           </div>
         )}
       </div>
+    );
+  };
+
+  // 🔥 عرض مودال الريلز
+  const renderReelsModal = () => {
+    if (!selectedReel) return null;
+
+    return (
+      <AnimatePresence>
+        {showReelsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black flex items-center justify-center z-50"
+            onClick={closeReelsModal}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative w-full h-full max-w-md max-h-[90vh] aspect-[9/16] bg-black"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* زر الإغلاق */}
+              <button
+                onClick={closeReelsModal}
+                className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* الفيديو */}
+              <div className="w-full h-full flex items-center justify-center">
+                <video 
+                  controls 
+                  autoPlay
+                  className="w-full h-full object-contain"
+                  poster={selectedReel.thumbnail}
+                >
+                  <source src={selectedReel.videoUrl} type="video/mp4" />
+                  متصفحك لا يدعم تشغيل الفيديو
+                </video>
+              </div>
+
+              {/* معلومات الريلز */}
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <h4 className="font-bold text-lg mb-2">{selectedReel.title}</h4>
+                <p className="text-sm text-gray-300 mb-3">{selectedReel.description}</p>
+                
+                {/* إحصائيات الريلز */}
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <span>❤️</span>
+                      <span>{selectedReel.likes.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>💬</span>
+                      <span>{selectedReel.comments.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>↗️</span>
+                      <span>{selectedReel.shares.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>👁️</span>
+                    <span>{selectedReel.views.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* أزرار التنقل بين الريلز */}
+              {reels.length > 1 && (
+                <>
+                  <button
+                    onClick={() => navigateReels('prev')}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => navigateReels('next')}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+
+              {/* مؤشر الريلز */}
+              {reels.length > 1 && (
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                  {reels.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentReelIndex ? 'bg-white' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     );
   };
 
@@ -1200,6 +1359,9 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 🔥 مودال الريلز */}
+      {renderReelsModal()}
 
       {/* Booking Modal */}
       <AnimatePresence>
