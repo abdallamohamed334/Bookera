@@ -137,6 +137,7 @@ router.get("/", async (req, res) => {
           original_price: row.original_price,
           special_offer: row.special_offer,
           image: row.image,
+          profile_image: row.profile_image, // ← حقل إجباري جديد
           images: row.images || [],
           videos: row.videos || [],
           features: row.features || [],
@@ -188,7 +189,6 @@ router.get("/", async (req, res) => {
         const reviewData = {
           id: row.review_id,
           userName: row.review_user_name || 'زائر',
-          
           rating: parseInt(row.review_rating) || 5,
           comment: row.review_comment || '',
           date: row.review_created_at ? new Date(row.review_created_at).toLocaleDateString('ar-EG') : 'قريباً',
@@ -241,7 +241,6 @@ router.get("/:id", async (req, res) => {
         p.updated_at AS package_updated_at,
         r.id AS review_id,
         r.user_name AS review_user_name,
-        
         r.rating AS review_rating,
         r.comment AS review_comment,
         r.created_at AS review_created_at,
@@ -279,6 +278,7 @@ router.get("/:id", async (req, res) => {
       original_price: result.rows[0].original_price,
       special_offer: result.rows[0].special_offer,
       image: result.rows[0].image,
+      profile_image: result.rows[0].profile_image, // ← حقل إجباري جديد
       images: result.rows[0].images || [],
       videos: result.rows[0].videos || [],
       features: result.rows[0].features || [],
@@ -333,7 +333,6 @@ router.get("/:id", async (req, res) => {
         venue.reviews.push({
           id: row.review_id,
           userName: row.review_user_name || 'زائر',
-          
           rating: parseInt(row.review_rating) || 5,
           comment: row.review_comment || '',
           date: row.review_created_at ? new Date(row.review_created_at).toLocaleDateString('ar-EG') : 'قريباً',
@@ -348,6 +347,46 @@ router.get("/:id", async (req, res) => {
 
   } catch (error) {
     console.error("Error fetching venue:", error);
+    res.status(500).json({ message: error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+// ✅ PUT تحديث الصورة الشخصية للقاعة
+router.put("/:id/profile-image", async (req, res) => {
+  let client;
+  try {
+    const venueId = req.params.id;
+    const { profile_image } = req.body;
+    
+    if (!profile_image) {
+      return res.status(400).json({ message: "رابط الصورة مطلوب" });
+    }
+
+    client = await pool.connect();
+
+    const query = `
+      UPDATE wedding_venues 
+      SET profile_image = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `;
+
+    const result = await client.query(query, [profile_image, venueId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "القاعة غير موجودة" });
+    }
+
+    res.json({
+      success: true,
+      message: "تم تحديث الصورة الشخصية بنجاح",
+      venue: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error("Error updating profile image:", error);
     res.status(500).json({ message: error.message });
   } finally {
     if (client) client.release();
@@ -452,7 +491,6 @@ router.get("/:id/reviews", async (req, res) => {
     const reviews = reviewsResult.rows.map(row => ({
       id: row.id,
       userName: row.user_name || 'زائر',
-      
       rating: parseInt(row.rating) || 5,
       comment: row.comment || '',
       date: row.created_at ? new Date(row.created_at).toLocaleDateString('ar-EG') : 'قريباً',
@@ -489,7 +527,7 @@ router.get("/:id/reviews", async (req, res) => {
 
 // ✅ POST إضافة تقييم جديد
 router.post("/:id/reviews", async (req, res) => {
-  const { id } = req.params; // <--- هنا
+  const { id } = req.params;
   const { userName, rating, comment } = req.body;
 
   try {
@@ -515,7 +553,6 @@ router.post("/:id/reviews", async (req, res) => {
     });
   }
 });
-
 
 // ✅ PUT تحديث تقييم
 router.put("/:id/reviews/:reviewId", async (req, res) => {

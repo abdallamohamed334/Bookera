@@ -192,12 +192,7 @@ const PhotographersPage = () => {
       {/* Header مع زرين فقط */}
       <header className="bg-transparent py-4 px-6">
         <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <button 
-            onClick={() => navigate(-1)}
-            className="text-gray-700 hover:text-gray-900 font-medium text-lg transition-colors duration-200 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-2xl border border-gray-200/50 shadow-sm hover:shadow-md"
-          >
-            العودة
-          </button>
+          
           <button 
             onClick={() => {
               const shareUrl = window.location.href;

@@ -32,31 +32,22 @@ const CompanyHomePage = () => {
   const bookingTypes = [
     {
       id: 1,
-      title: "قاعات أفراح",
+      title: " قاعات افراح واعياد ميلاد ومؤتمرات ",
       description: "أفضل قاعات الأفراح لحفلاتك الخاصة",
       icon: "💒",
       route: "/wedding-halls",
-      image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      image: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8d2VkZGluZ3xlbnwwfHwwfHx8MA%3D%3D",
       category: "venues",
       featured: true
     },
-    {
-      id: 2,
-      title: "قاعات مؤتمرات",
-      description: "قاعات احترافية للاجتماعات والمؤتمرات",
-      icon: "🏢",
-      route: "/conference-halls",
-      image: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "venues",
-      featured: true
-    },
+    
     {
       id: 3,
       title: "مصورين أفراح",
       description: "مصورين محترفين لتوثيق لحظاتك الخاصة",
       icon: "📸",
       route: "/wedding-photographers",
-      image: "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      image: "https://images.unsplash.com/photo-1611550287705-7ff8b459c8eb?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8d2VkZGluZyUyMHBob3RvZ3JhcGhlcnxlbnwwfHwwfHx8MA%3D%3D",
       category: "photographers",
       featured: true
     },
@@ -66,20 +57,11 @@ const CompanyHomePage = () => {
       description: "محترفين التصوير للإعلانات والمشاريع",
       icon: "🎬",
       route: "/photoshoot",
-      image: "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      image: "https://plus.unsplash.com/premium_photo-1661594795875-03c523fc754d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nzd8fHBob3RvZ3JhcGh5fGVufDB8fDB8fHww",
       category: "photographers",
       featured: false
     },
-    {
-      id: 5,
-      title: "قاعات مناسبات",
-      description: "لجميع أنواع الحفلات والمناسبات",
-      icon: "🎉",
-      route: "/event-halls",
-      image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "venues",
-      featured: false
-    }
+    
   ];
 
   // الفئات الرئيسية
@@ -150,7 +132,7 @@ const CompanyHomePage = () => {
     {
       name: "فاطمة الناصر",
       role: "مديرة فعاليات",
-      comment: "أكثر من مجرد منصة حجوزات.. EventPro أصبحت مصدر دخل مهم لي! الاستضافة أصبحت ممتعة وبسيطة.",
+      comment: "أكثر من مجرد منصة حجوزات.. EventUp أصبحت مصدر دخل مهم لي! الاستضافة أصبحت ممتعة وبسيطة.",
       rating: 5,
       avatar: "👩‍💼",
       type: "host"
@@ -366,7 +348,7 @@ const CompanyHomePage = () => {
                 onClick={() => handleNavigateToCategory(item)}
                 className="cursor-pointer group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700"
               >
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-70 overflow-hidden">
                   <img 
                     src={item.image} 
                     alt={item.title}
@@ -384,7 +366,7 @@ const CompanyHomePage = () => {
                     <p className="text-blue-100 text-sm">{item.description}</p>
                   </div>
                 </div>
-                <div className="p-4">
+                {/* <div className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-2xl">{item.icon}</span>
                     <motion.button
@@ -396,7 +378,7 @@ const CompanyHomePage = () => {
                       {favorites.some(fav => fav.id === item.id) ? '❤️' : '🤍'}
                     </motion.button>
                   </div>
-                </div>
+                </div> */}
               </motion.div>
             ))}
           </div>
@@ -436,7 +418,7 @@ const CompanyHomePage = () => {
               </div>
             </div>
             
-            <div className="p-4">
+            {/* <div className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-1">{item.title}</h3>
@@ -467,7 +449,7 @@ const CompanyHomePage = () => {
                   احجز الآن
                 </motion.button>
               </div>
-            </div>
+            </div> */}
           </motion.div>
         ))}
       </motion.div>
@@ -512,7 +494,7 @@ const CompanyHomePage = () => {
           transition={{ delay: 0.1 }}
           className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4"
         >
-          دعنا نرى ما يقوله الناس عن EventPro
+          دعنا نرى ما يقوله الناس عن EventUp
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -539,7 +521,7 @@ const CompanyHomePage = () => {
               transition={{ delay: 0.3 }}
               className="text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-6 italic"
             >
-              "لم أتخيل أبداً أن EventPro يمكن أن تكون مصدر الدخل الذي أصبحت عليه! ولكن الأهم من ذلك، الاستضافة أصبحت ممتعة وبسيطة وتوسع باستمرار رؤيتي لما يمكن أن يكون عليه هذا المكان."
+              "لم أتخيل أبداً أن EventUp يمكن أن تكون مصدر الدخل الذي أصبحت عليه! ولكن الأهم من ذلك، الاستضافة أصبحت ممتعة وبسيطة وتوسع باستمرار رؤيتي لما يمكن أن يكون عليه هذا المكان."
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -597,10 +579,8 @@ const CompanyHomePage = () => {
                 className="cursor-pointer flex items-center space-x-2"
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-gray-600 to-gray-400 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">E</span>
-                </div>
-                <span className="text-lg font-bold text-gray-800 dark:text-white">EventPro</span>
+                
+                <span className="text-lg font-bold text-gray-800 dark:text-white">EventUp</span>
               </motion.div>
             </div>
             
@@ -778,6 +758,7 @@ const CompanyHomePage = () => {
           )}
         </AnimatePresence>
       </nav>
+      
 
       {/* Hero Section */}
       <SectionContainer id="home" bg="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-blue-900/20">
@@ -852,7 +833,7 @@ const CompanyHomePage = () => {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">لماذا تختار EventPro؟</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">لماذا تختار EventUp؟</h2>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -967,9 +948,9 @@ const CompanyHomePage = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-lg font-bold mb-4">EventPro</h3>
+              <h3 className="text-lg font-bold mb-4">EventUp</h3>
               <p className="text-gray-400 text-sm">
-                الوجهة الأولى لحجز قاعات المناسبات والفعاليات في المملكة العربية السعودية.
+                الوجهة الأولى لحجز قاعات المناسبات والفعاليات في مصر.
               </p>
             </div>
             
@@ -989,15 +970,15 @@ const CompanyHomePage = () => {
             <div>
               <h4 className="font-semibold mb-4">تواصل معنا</h4>
               <div className="space-y-2 text-gray-400 text-sm">
-                <p>info@eventpro.com</p>
-                <p>+966 500 000 000</p>
-                <p>المملكة العربية السعودية</p>
+                <p>tallaey445@gmail.com</p>
+                <p>+201040652783</p>
+                <p>مصر</p>
               </div>
             </div>
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            <p>© 2024 EventPro. جميع الحقوق محفوظة.</p>
+            <p>© 2024 EventUp. جميع الحقوق محفوظة.</p>
           </div>
         </div>
       </footer>

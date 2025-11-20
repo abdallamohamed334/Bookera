@@ -1,19 +1,43 @@
 import { motion } from "framer-motion";
 import { useState, useRef } from "react";
 
-const VenueCard = ({ venue, onVenueClick, isFavorite, onToggleFavorite, onShareVenue }) => {
+const VenueCard = ({ 
+  venue, 
+  onVenueClick, 
+  isFavorite, 
+  onToggleFavorite, 
+  onShareVenue,
+  comparisonMode = false,
+  isSelectedForComparison = false,
+  onToggleComparison,
+  onBookNow
+}) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [profileImageError, setProfileImageError] = useState(false);
 
   const handleImageError = () => {
     setImageError(true);
     setImageLoaded(true);
   };
 
+  const handleProfileImageError = () => {
+    setProfileImageError(true);
+  };
+
   const handleShareClick = (e) => {
     e.stopPropagation();
-    onShareVenue(venue, e);
+    if (onShareVenue) {
+      onShareVenue(venue, e);
+    }
+  };
+
+  const handleBookNowClick = (e) => {
+    e.stopPropagation();
+    if (onBookNow) {
+      onBookNow(venue);
+    }
   };
 
   const renderStars = (rating) => {
@@ -48,14 +72,68 @@ const VenueCard = ({ venue, onVenueClick, isFavorite, onToggleFavorite, onShareV
     }
   };
 
+  // دالة لتحويل أنواع المناسبات إلى أيقونات
+  const getEventTypeIcons = () => {
+    const eventTypes = venue.event_types || [];
+    const icons = [];
+    
+    if (eventTypes.includes('فرح')) icons.push('💒');
+    if (eventTypes.includes('خطوبة')) icons.push('💍');
+    if (eventTypes.includes('كتب_كتاب')) icons.push('📖');
+    if (eventTypes.includes('عيد_ميلاد')) icons.push('🎂');
+    if (eventTypes.includes('مؤتمرات')) icons.push('👔');
+    
+    return icons.length > 0 ? icons : ['💒'];
+  };
+
+  // الحصول على الصورة الشخصية - أولوية لـ profile_image
+  const getProfileImage = () => {
+    if (profileImageError) {
+      return "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=200";
+    }
+    if (venue.profile_image) return venue.profile_image;
+    if (venue.image) return venue.image;
+    if (venue.images && venue.images.length > 0) return venue.images[0];
+    return "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=200";
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      className="bg-white rounded-2xl border border-gray-200 overflow-hidden cursor-pointer transition-all h-full flex flex-col hover:border-gray-300 hover:shadow-lg relative w-full max-w-md" // تم تكبير العرض إلى max-w-md
+      whileHover={{ scale: comparisonMode ? 1.02 : 1.02 }}
+      className={`bg-white rounded-2xl border overflow-hidden cursor-pointer transition-all h-full flex flex-col hover:shadow-lg relative w-full max-w-md ${
+        comparisonMode && isSelectedForComparison 
+          ? 'border-2 border-blue-500 shadow-blue-100' 
+          : 'border-gray-200 hover:border-gray-300'
+      }`}
       onClick={() => onVenueClick(venue)}
     >
+      {/* Comparison Checkbox في وضع المقارنة */}
+      {comparisonMode && (
+        <div className="absolute top-4 left-4 z-30">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onToggleComparison) {
+                onToggleComparison();
+              }
+            }}
+            className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all shadow-lg ${
+              isSelectedForComparison
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : 'bg-white border-gray-300 hover:border-blue-400'
+            }`}
+          >
+            {isSelectedForComparison && (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </button>
+        </div>
+      )}
+
       <VenueImage 
         venue={venue} 
         renderStars={renderStars}
@@ -67,24 +145,105 @@ const VenueCard = ({ venue, onVenueClick, isFavorite, onToggleFavorite, onShareV
         onImageError={handleImageError}
         onShareClick={handleShareClick}
         getPriceRange={getPriceRange}
+        getEventTypeIcons={getEventTypeIcons}
+        comparisonMode={comparisonMode}
+        isSelectedForComparison={isSelectedForComparison}
       />
       
       <div className="p-4 flex-grow flex flex-col">
-        {/* Special Offer Banner - بألوان رمادية فاتحة */}
+        {/* Profile Image and Header Section */}
+        <div className="flex items-start gap-3 mb-3">
+          {/* Profile Image */}
+          <div className="flex-shrink-0">
+            <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm bg-gray-100">
+              <img 
+                src={getProfileImage()}
+                alt={`صورة شخصية لـ ${venue.name}`}
+                className="w-full h-full object-cover"
+                onError={handleProfileImageError}
+              />
+            </div>
+          </div>
+
+          {/* Venue Info */}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-lg font-bold text-gray-800 mb-1 line-clamp-1 leading-tight">{venue.name}</h4>
+            
+            {/* Rating and Reviews */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-1">
+                <span className="text-yellow-500 text-sm">⭐</span>
+                <span className="text-sm font-semibold text-gray-700">{venue.rating || 0}</span>
+              </div>
+              <span className="text-gray-500 text-sm">({venue.review_count || 0} تقييم)</span>
+            </div>
+
+            {/* Event Types Display */}
+            <div className="flex items-center gap-1 mb-2">
+              {getEventTypeIcons().slice(0, 3).map((icon, index) => (
+                <span 
+                  key={index}
+                  className="text-xs bg-gray-100 px-2 py-1 rounded-lg border border-gray-200 flex items-center gap-1"
+                  title={getEventTypeLabel(icon)}
+                >
+                  {icon}
+                </span>
+              ))}
+              {getEventTypeIcons().length > 3 && (
+                <span className="text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded-lg">
+                  +{getEventTypeIcons().length - 3}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Special Offer Banner */}
         {venue.special_offer && (
-          <div className="mb-3 bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold text-center">
+          <div className="mb-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold text-center shadow-md">
             🎉 {venue.special_offer}
           </div>
         )}
+
+        {/* Comparison Badge */}
+        {comparisonMode && isSelectedForComparison && (
+          <div className="mb-3 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium text-center border border-blue-200">
+            ✓ مختارة للمقارنة
+          </div>
+        )}
         
-        <VenueInfo 
-          venue={venue} 
-          getPriceRange={getPriceRange}
-        />
+        {/* Location and Capacity */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center text-gray-600 text-sm">
+            <svg className="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="truncate">{venue.city}، {venue.governorate}</span>
+          </div>
+          
+          {/* Capacity with icon */}
+          <div className="text-right flex-shrink-0">
+            <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+              <span className="text-gray-800 font-bold">{venue.capacity}</span>
+            </div>
+            <div className="text-gray-500 text-xs mt-1 text-center">شخص</div>
+          </div>
+        </div>
+
         <VenueFeatures venue={venue} />
         <VenueActions 
           onVenueClick={onVenueClick}
           venue={venue}
+          onBookNow={handleBookNowClick}
+          comparisonMode={comparisonMode}
+          isSelectedForComparison={isSelectedForComparison}
+          onToggleComparison={onToggleComparison}
+          isFavorite={isFavorite}
+          onToggleFavorite={onToggleFavorite}
         />
       </div>
     </motion.div>
@@ -101,20 +260,21 @@ const VenueImage = ({
   onImageLoad, 
   onImageError,
   onShareClick,
-  getPriceRange
+  getPriceRange,
+  getEventTypeIcons,
+  comparisonMode,
+  isSelectedForComparison
 }) => {
   const scrollContainerRef = useRef(null);
 
   const handleShare = async (e) => {
     e.stopPropagation();
     
-    // استخدام دالة الشير من الـ props بدل التنفيذ المباشر
     if (onShareClick) {
       onShareClick(e);
       return;
     }
 
-    // Fallback implementation
     const shareData = {
       title: venue.name,
       text: `اكتشف ${venue.name} - ${venue.city} | ${getPriceRange()}`,
@@ -130,7 +290,6 @@ const VenueImage = ({
       }
     } catch (err) {
       console.log('مشكلة في المشاركة:', err);
-      // لا تعرض رسالة خطأ إذا كان المستخدم ألغى المشاركة
       if (err.name !== 'AbortError') {
         try {
           await navigator.clipboard.writeText(window.location.href);
@@ -161,7 +320,9 @@ const VenueImage = ({
   };
 
   return (
-    <div className={`relative h-52 flex-shrink-0 bg-gray-100 overflow-hidden`}>
+    <div className={`relative h-52 flex-shrink-0 bg-gray-100 overflow-hidden ${
+      comparisonMode && isSelectedForComparison ? 'ring-2 ring-blue-500' : ''
+    }`}>
       {/* Loading State */}
       {!imageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center z-0">
@@ -241,14 +402,27 @@ const VenueImage = ({
         </div>
       )}
 
-      {/* Price Range - على الجانب */}
+      {/* Price Range */}
       <div className="absolute top-3 right-3 bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-bold shadow-lg">
         {getPriceRange()}
       </div>
 
-      {/* City - على الجانب */}
+      {/* City */}
       <div className="absolute top-3 left-3 bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium">
         {venue.city}
+      </div>
+
+      {/* Event Types */}
+      <div className="absolute top-12 left-3 flex gap-1 z-20">
+        {getEventTypeIcons().map((icon, index) => (
+          <div 
+            key={index}
+            className="bg-white/90 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg border border-gray-200"
+            title={getEventTypeLabel(icon)}
+          >
+            {icon}
+          </div>
+        ))}
       </div>
 
       {/* Rating */}
@@ -256,7 +430,7 @@ const VenueImage = ({
         {renderStars(venue.rating)}
       </div>
 
-      {/* Share Button فقط - تم إزالة زر المفضلة */}
+      {/* Share Button */}
       <button
         onClick={handleShare}
         className="absolute bottom-3 left-3 p-2 bg-white text-gray-600 rounded-full transition-all shadow-lg hover:bg-gray-100 border border-gray-300 z-20"
@@ -272,34 +446,28 @@ const VenueImage = ({
           +{venue.images.length - 1}
         </div>
       )}
+
+      {/* Comparison Selection Indicator */}
+      {comparisonMode && isSelectedForComparison && (
+        <div className="absolute top-3 left-12 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg z-20">
+          ✓ مختارة
+        </div>
+      )}
     </div>
   );
 };
 
-const VenueInfo = ({ venue, getPriceRange }) => (
-  <div className="flex justify-between items-start mb-3">
-    <div className="flex-1 min-w-0">
-      <h4 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1 leading-tight">{venue.name}</h4>
-      <div className="flex items-center text-gray-600 text-sm mb-2">
-        <svg className="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <span className="truncate">{venue.city}، {venue.governorate}</span>
-      </div>
-    </div>
-    {/* Capacity with icon - بخلفية رمادية فاتحة */}
-    <div className="text-right flex-shrink-0 ml-3">
-      <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200">
-        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-        <span className="text-gray-800 text-lg font-bold">{venue.capacity}</span>
-      </div>
-      <div className="text-gray-500 text-sm mt-1">شخص</div>
-    </div>
-  </div>
-);
+// دالة مساعدة للحصول على تسمية نوع المناسبة
+const getEventTypeLabel = (icon) => {
+  const labels = {
+    '💒': 'فرح',
+    '💍': 'خطوبة', 
+    '📖': 'كتب كتاب',
+    '🎂': 'عيد ميلاد',
+    '👔': 'مؤتمرات'
+  };
+  return labels[icon] || 'مناسبة';
+};
 
 const VenueFeatures = ({ venue }) => (
   <>
@@ -340,17 +508,78 @@ const VenueFeatures = ({ venue }) => (
   </>
 );
 
-const VenueActions = ({ onVenueClick, venue }) => (
+const VenueActions = ({ 
+  onVenueClick, 
+  venue, 
+  onBookNow,
+  comparisonMode,
+  isSelectedForComparison,
+  onToggleComparison,
+  isFavorite,
+  onToggleFavorite
+}) => (
   <div className="mt-auto">
-    <button 
-      onClick={(e) => {
-        e.stopPropagation();
-        onVenueClick(venue);
-      }}
-      className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-semibold text-sm transition-all transform hover:scale-[1.02] shadow-lg"
-    >
-      عرض التفاصيل
-    </button>
+    <div className="flex gap-2">
+      {comparisonMode ? (
+        // أزرار وضع المقارنة
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onToggleComparison) {
+                onToggleComparison();
+              }
+            }}
+            className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all border ${
+              isSelectedForComparison
+                ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            {isSelectedForComparison ? 'إزالة' : 'مقارنة'}
+          </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onVenueClick(venue);
+            }}
+            className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-semibold text-sm transition-all transform hover:scale-[1.02]"
+          >
+            تفاصيل
+          </button>
+        </>
+      ) : (
+        // أزرار الوضع العادي
+        <>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onBookNow) {
+                onBookNow(venue);
+              }
+            }}
+            className="flex-1 py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-semibold text-sm transition-all transform hover:scale-[1.02] shadow-lg"
+          >
+            احجز الآن
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onToggleFavorite) {
+                onToggleFavorite(venue.id || venue._id, e);
+              }
+            }}
+            className={`p-3 rounded-xl border transition-colors ${
+              isFavorite
+                ? 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'
+                : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            {isFavorite ? '❤️' : '🤍'}
+          </button>
+        </>
+      )}
+    </div>
   </div>
 );
 
