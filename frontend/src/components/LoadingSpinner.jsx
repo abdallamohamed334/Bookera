@@ -25,19 +25,23 @@ const LoadingWithImage = () => {
             bounce: 0.5
           }}
         >
-          <motion.img
-            src="e:/mern-advanced-auth-master/frontend/public/Gemini_Generated_Image_bmm6u9bmm6u9bmm6.png"
-            alt="EventUp"
-            className="w-24 h-24 object-cover rounded-2xl mx-auto shadow-lg border border-gray-200"
-            animate={{
-              y: [0, -10, 0],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
+        <motion.img
+  src="/Gemini_Generated_Image_bmm6u9bmm6u9bmm6.png"
+  alt="EventUp"
+  className="w-24 h-24 object-cover rounded-2xl mx-auto shadow-lg border border-gray-200"
+  animate={{
+    y: [0, -10, 0],
+  }}
+  transition={{
+    duration: 3,
+    repeat: Infinity,
+    ease: "easeInOut"
+  }}
+  onError={(e) => {
+    console.error('Failed to load logo image');
+    // يمكنك إضافة بديل هنا إذا فشل تحميل الصورة
+  }}
+/>
         </motion.div>
 
         {/* Title */}
