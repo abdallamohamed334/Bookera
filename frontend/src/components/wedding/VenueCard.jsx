@@ -551,18 +551,9 @@ const VenueActions = ({
       ) : (
         // أزرار الوضع العادي
         <>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onBookNow) {
-                onBookNow(venue);
-              }
-            }}
-            className="flex-1 py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-semibold text-sm transition-all transform hover:scale-[1.02] shadow-lg"
-          >
-            احجز الآن
-          </button>
-          <button
+         
+ 
+          {/* <button
             onClick={(e) => {
               e.stopPropagation();
               if (onToggleFavorite) {
@@ -576,7 +567,7 @@ const VenueActions = ({
             }`}
           >
             {isFavorite ? '❤️' : '🤍'}
-          </button>
+          </button> */}
         </>
       )}
     </div>

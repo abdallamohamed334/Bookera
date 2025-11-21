@@ -14,6 +14,7 @@ router.get("/", async (req, res) => {
       minPrice,
       maxPrice,
       minCapacity,
+      reels,
       minRating,
       page = 1,
       limit = 10,
@@ -140,6 +141,7 @@ router.get("/", async (req, res) => {
           profile_image: row.profile_image, // ← حقل إجباري جديد
           images: row.images || [],
           videos: row.videos || [],
+          reels: row.reels || [],
           features: row.features || [],
           amenities: row.amenities || [],
           rules: row.rules || [],
@@ -281,6 +283,7 @@ router.get("/:id", async (req, res) => {
       profile_image: result.rows[0].profile_image, // ← حقل إجباري جديد
       images: result.rows[0].images || [],
       videos: result.rows[0].videos || [],
+      reels: result.rows[0].reels || [],
       features: result.rows[0].features || [],
       amenities: result.rows[0].amenities || [],
       rules: result.rows[0].rules || [],

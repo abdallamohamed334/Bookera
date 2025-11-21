@@ -42,6 +42,7 @@ const VenueDetails = () => {
   const [selectedReel, setSelectedReel] = useState(null);
   const [showReelsModal, setShowReelsModal] = useState(false);
   const [currentReelIndex, setCurrentReelIndex] = useState(0);
+  const [videoRefs, setVideoRefs] = useState({});
 
   // 🔥 إعدادات التليجرام
   const TELEGRAM_CONFIG = {
@@ -53,26 +54,42 @@ const VenueDetails = () => {
   };
 
   // 🔥 جلب بيانات القاعة والباكدجات من API
-  useEffect(() => {
-    const controller = new AbortController();
-    
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // جلب بيانات القاعة
-        const venueResponse = await fetch(
-          `https://bookera-production.up.railway.app/api/wedding-venues/${id}`,
-          { signal: controller.signal }
-        );
-        
-        if (!venueResponse.ok) throw new Error('فشل في جلب بيانات القاعة');
-        
-        const venueData = await venueResponse.json();
-        setVenueData(venueData);
+ // 🔥 جلب بيانات القاعة والباكدجات من API
+useEffect(() => {
+  const controller = new AbortController();
+  
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔄 جاري جلب بيانات القاعة ID:', id);
 
-        // جلب الباكدجات
+      // جلب بيانات القاعة
+      const venueResponse = await fetch(
+        `https://bookera-production.up.railway.app/api/wedding-venues/${id}`,
+        { 
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      
+      console.log('📡 حالة الاستجابة:', venueResponse.status);
+      
+      if (!venueResponse.ok) {
+        const errorText = await venueResponse.text();
+        console.error('❌ خطأ في الاستجابة:', errorText);
+        throw new Error(`فشل في جلب بيانات القاعة: ${venueResponse.status}`);
+      }
+      
+      const venueData = await venueResponse.json();
+      console.log('✅ بيانات القاعة المستلمة:', venueData);
+      setVenueData(venueData);
+
+      // جلب الباكدجات
+      try {
         const packagesResponse = await fetch(
           `https://bookera-production.up.railway.app/api/wedding-venues/${id}/packages`,
           { signal: controller.signal }
@@ -84,77 +101,183 @@ const VenueDetails = () => {
         } else {
           setPackages(venueData.packages || []);
         }
-        
-        // 🔥 حفظ بيانات صاحب القاعة
-        if (venueData.owner_phone) {
-          setVenueOwner({
-            phone: venueData.owner_phone,
-            name: venueData.owner_name || 'صاحب القاعة'
-          });
-        } else {
-          setVenueOwner({
-            phone: venueData.phone || venueData.whatsapp || "01095952888",
-            name: 'صاحب القاعة'
-          });
-        }
-
-        // 🔥 إعداد موقع الخريطة
-        if (venueData.location_lat && venueData.location_lng) {
-          setMapLocation({
-            lat: parseFloat(venueData.location_lat),
-            lng: parseFloat(venueData.location_lng),
-            name: venueData.name,
-            address: venueData.address,
-            city: venueData.city,
-            governorate: venueData.governorate
-          });
-        } else {
-          setMapLocation({
-            lat: 30.0444,
-            lng: 31.2357,
-            name: venueData.name,
-            address: venueData.address,
-            city: venueData.city,
-            governorate: venueData.governorate
-          });
-        }
-
-        // 🔥 إعداد نطاق الأسعار
-        setPriceRange({
-          min: venueData.min_price || venueData.price || 0,
-          max: venueData.max_price || venueData.price || 0
-        });
-
-        // 🔥 إعداد الريلز (استخدام الفيديوهات كريلز)
-        if (venueData.videos && venueData.videos.length > 0) {
-          const reelsData = venueData.videos.map((video, index) => ({
-            id: index + 1,
-            videoUrl: video,
-            thumbnail: venueData.images?.[0] || venueData.image,
-            title: `ريلز ${venueData.name} #${index + 1}`,
-            description: "جولة داخل القاعة وتصميماتها الفاخرة",
-            likes: Math.floor(Math.random() * 1000) + 100,
-            comments: Math.floor(Math.random() * 100) + 10,
-            shares: Math.floor(Math.random() * 50) + 5,
-            duration: "0:30",
-            views: Math.floor(Math.random() * 5000) + 1000
-          }));
-          setReels(reelsData);
-        }
-        
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          setError('تعذر تحميل بيانات القاعة. يرجى المحاولة مرة أخرى.');
-        }
-      } finally {
-        setLoading(false);
+      } catch (packagesError) {
+        console.error('⚠️ خطأ في جلب الباكدجات:', packagesError);
+        setPackages(venueData.packages || []);
       }
-    };
+      
+      // 🔥 حفظ بيانات صاحب القاعة
+      if (venueData.owner_phone) {
+        setVenueOwner({
+          phone: venueData.owner_phone,
+          name: venueData.owner_name || 'صاحب القاعة'
+        });
+      } else {
+        setVenueOwner({
+          phone: venueData.phone || venueData.whatsapp || "01095952888",
+          name: 'صاحب القاعة'
+        });
+      }
 
-    fetchData();
+      // 🔥 إعداد موقع الخريطة
+      if (venueData.location_lat && venueData.location_lng) {
+        setMapLocation({
+          lat: parseFloat(venueData.location_lat),
+          lng: parseFloat(venueData.location_lng),
+          name: venueData.name,
+          address: venueData.address,
+          city: venueData.city,
+          governorate: venueData.governorate
+        });
+      } else {
+        setMapLocation({
+          lat: 30.0444,
+          lng: 31.2357,
+          name: venueData.name,
+          address: venueData.address,
+          city: venueData.city,
+          governorate: venueData.governorate
+        });
+      }
 
-    return () => controller.abort();
-  }, [id]);
+      // 🔥 إعداد نطاق الأسعار
+      setPriceRange({
+        min: venueData.min_price || venueData.price || 0,
+        max: venueData.max_price || venueData.price || 0
+      });
+
+      // 🔥 دالة للحصول على صورة بديلة
+      const getFallbackThumbnail = () => {
+        if (venueData.images && venueData.images.length > 0) {
+          return venueData.images[0];
+        }
+        if (venueData.image) {
+          return venueData.image;
+        }
+        return `https://via.placeholder.com/300x500/8B5CF6/FFFFFF?text=${encodeURIComponent(venueData.name || 'قاعة')}`;
+      };
+
+      // 🔥 التحقق من أن الرابط صحيح
+      const isValidUrl = (string) => {
+        if (!string) return false;
+        try {
+          const url = new URL(string);
+          return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (_) {
+          return false;
+        }
+      };
+
+      // 🔥 إعداد الريلز من قاعدة البيانات
+      console.log('🎬 بيانات الريلز:', venueData.reels);
+      
+      if (venueData.reels && venueData.reels.length > 0) {
+        // إذا كانت الريلز مخزنة كـ JSON
+        let reelsData;
+        try {
+          reelsData = Array.isArray(venueData.reels) ? venueData.reels : JSON.parse(venueData.reels || '[]');
+          
+          // 🔥 إصلاح الـ thumbnails
+          reelsData = reelsData.map((reel, index) => ({
+            ...reel,
+            id: reel.id || index + 1,
+            // إصلاح الـ thumbnail إذا كان رابط غير صحيح
+            thumbnail: isValidUrl(reel.thumbnail) ? reel.thumbnail : getFallbackThumbnail(),
+            video_url: reel.video_url || reel.videoUrl || reel.url,
+            title: reel.title || `ريلز ${venueData.name} #${index + 1}`,
+            description: reel.description || "جولة داخل القاعة وتصميماتها الفاخرة",
+            likes: reel.likes || Math.floor(Math.random() * 1000) + 100,
+            comments: reel.comments || Math.floor(Math.random() * 100) + 10,
+            shares: reel.shares || Math.floor(Math.random() * 50) + 5,
+            duration: reel.duration || "0:30",
+            views: reel.views || Math.floor(Math.random() * 5000) + 1000,
+            source_type: reel.source_type || getVideoSourceType(reel.video_url || reel.videoUrl || reel.url)
+          }));
+          
+          console.log('✅ الريلز بعد الإصلاح:', reelsData);
+        } catch (parseError) {
+          console.error('❌ خطأ في تحليل الريلز:', parseError);
+          reelsData = [];
+        }
+        setReels(reelsData);
+      } else if (venueData.videos && venueData.videos.length > 0) {
+        // استخدام الفيديوهات كبديل إذا لم توجد ريلز
+        console.log('🎥 استخدام الفيديوهات كريلز بديلة');
+        const reelsData = venueData.videos.map((video, index) => ({
+          id: index + 1,
+          video_url: video,
+          thumbnail: getFallbackThumbnail(), // استخدام الصورة البديلة
+          title: `ريلز ${venueData.name} #${index + 1}`,
+          description: "جولة داخل القاعة وتصميماتها الفاخرة",
+          likes: Math.floor(Math.random() * 1000) + 100,
+          comments: Math.floor(Math.random() * 100) + 10,
+          shares: Math.floor(Math.random() * 50) + 5,
+          duration: "0:30",
+          views: Math.floor(Math.random() * 5000) + 1000,
+          source_type: getVideoSourceType(video)
+        }));
+        setReels(reelsData);
+      } else {
+        console.log('📹 لا توجد ريلز أو فيديوهات متاحة');
+        setReels([]);
+      }
+      
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('❌ خطأ في جلب البيانات:', err);
+        setError('تعذر تحميل بيانات القاعة. يرجى المحاولة مرة أخرى.');
+      }
+    } finally {
+      setLoading(false);
+      console.log('🏁 انتهى تحميل البيانات');
+    }
+  };
+
+  fetchData();
+
+  return () => controller.abort();
+}, [id]);
+
+  // 🔥 تحديد نوع مصدر الفيديو
+// 🔥 تحديد نوع مصدر الفيديو
+const getVideoSourceType = (videoUrl) => {
+  if (!videoUrl) return 'direct';
+  
+  const url = videoUrl.toLowerCase();
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook';
+  if (url.includes('tiktok.com')) return 'tiktok';
+  if (url.includes('instagram.com')) return 'instagram';
+  if (url.includes('vimeo.com')) return 'vimeo';
+  return 'direct';
+};
+
+  // 🔥 استخراج معرف فيديو يوتيوب
+  const getYouTubeVideoId = (url) => {
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    return match ? match[1] : null;
+  };
+
+ // 🔥 تحسين دالة getFacebookVideoId
+const getFacebookVideoId = (url) => {
+  if (!url) return null;
+  
+  const urlStr = url.toString().toLowerCase();
+  
+  // طريقة 1: فيديو من صفحة
+  let match = urlStr.match(/(?:facebook\.com|fb\.watch)\/(?:[^\/]+\/videos\/|video\.php\?v=)([0-9]+)/);
+  if (match) return match[1];
+  
+  // طريقة 2: من رابط fb.watch
+  match = urlStr.match(/fb\.watch\/([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  
+  // طريقة 3: من رابط فيديو مباشر
+  match = urlStr.match(/facebook\.com\/(?:[^\/]+\/)?video\/?\?v=([0-9]+)/);
+  if (match) return match[1];
+  
+  return null;
+};
 
   // 🔥 جلب التقييمات
   useEffect(() => {
@@ -380,6 +503,11 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     setShowReelsModal(false);
     setSelectedReel(null);
     setCurrentReelIndex(0);
+    
+    // إيقاف جميع الفيديوهات عند الإغلاق
+    Object.values(videoRefs).forEach(ref => {
+      if (ref && ref.pause) ref.pause();
+    });
   };
 
   // 🔥 التنقل بين الريلز
@@ -392,6 +520,82 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       const prevIndex = (currentReelIndex - 1 + reels.length) % reels.length;
       setSelectedReel(reels[prevIndex]);
       setCurrentReelIndex(prevIndex);
+    }
+  };
+
+  // 🔥 عرض فيديو يوتيوب
+  const renderYouTubeVideo = (videoId) => {
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+        className="w-full h-full"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        title="YouTube video"
+      />
+    );
+  };
+
+  // 🔥 عرض فيديو فيسبوك
+  const renderFacebookVideo = (videoId) => {
+    return (
+      <iframe
+        src={`https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/facebook/videos/${videoId}/&show_text=0&width=476`}
+        className="w-full h-full"
+        frameBorder="0"
+        allowFullScreen
+        title="Facebook video"
+      />
+    );
+  };
+
+  // 🔥 عرض فيديو مباشر
+  const renderDirectVideo = (videoUrl) => {
+    return (
+      <video 
+        ref={el => {
+          if (el && selectedReel) {
+            setVideoRefs(prev => ({ ...prev, [selectedReel.id]: el }));
+          }
+        }}
+        controls 
+        autoPlay
+        className="w-full h-full object-contain"
+        poster={selectedReel?.thumbnail}
+      >
+        <source src={videoUrl} type="video/mp4" />
+        <source src={videoUrl} type="video/webm" />
+        <source src={videoUrl} type="video/ogg" />
+        متصفحك لا يدعم تشغيل الفيديو
+      </video>
+    );
+  };
+
+  // 🔥 عرض الفيديو حسب المصدر
+  const renderVideoBySource = (reel) => {
+    if (!reel || !reel.video_url) return null;
+
+    const sourceType = reel.source_type || getVideoSourceType(reel.video_url);
+    
+    switch (sourceType) {
+      case 'youtube':
+        const youtubeId = getYouTubeVideoId(reel.video_url);
+        return youtubeId ? renderYouTubeVideo(youtubeId) : renderDirectVideo(reel.video_url);
+      
+      case 'facebook':
+        const facebookId = getFacebookVideoId(reel.video_url);
+        return facebookId ? renderFacebookVideo(facebookId) : renderDirectVideo(reel.video_url);
+      
+      case 'tiktok':
+      case 'instagram':
+      case 'vimeo':
+        // يمكن إضافة دعم لهذه المنصات لاحقاً
+        return renderDirectVideo(reel.video_url);
+      
+      case 'direct':
+      default:
+        return renderDirectVideo(reel.video_url);
     }
   };
 
@@ -493,19 +697,31 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
   // 🔥 عرض قسم الريلز
   const renderReelsSection = () => {
     if (reels.length === 0) {
-      return null;
+      return (
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 mb-4 shadow-lg border border-purple-100">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-1 rounded-lg text-sm">🎬</span>
+            ريلز القاعة
+          </h3>
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">📹</div>
+            <p className="text-gray-600 text-sm mb-2">لا توجد ريلز متاحة حالياً</p>
+            <p className="text-gray-500 text-xs">سيتم إضافة ريلز حصرية للقاعة قريباً</p>
+          </div>
+        </div>
+      );
     }
 
     return (
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 mb-4 shadow-lg border border-purple-100">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-1 rounded-lg text-sm">🎬</span>
-          ريلز القاعة
+          ريلز القاعة ({reels.length} ريلز)
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {reels.map((reel, index) => (
             <motion.div 
-              key={reel.id} 
+              key={reel.id || index} 
               className="aspect-[9/16] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all cursor-pointer group relative"
               whileHover={{ scale: 1.05 }}
               onClick={() => openReelsModal(reel, index)}
@@ -513,8 +729,8 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
               {/* ثامبنل الفيديو */}
               <div className="relative w-full h-full">
                 <img 
-                  src={reel.thumbnail} 
-                  alt={reel.title}
+                  src={reel.thumbnail || venueData.images?.[0] || venueData.image} 
+                  alt={reel.title || `ريلز ${index + 1}`}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 
@@ -533,15 +749,20 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                   <div className="flex items-center justify-between text-white text-xs">
                     <span className="flex items-center gap-1">
                       <span>👁️</span>
-                      <span>{reel.views.toLocaleString()}</span>
+                      <span>{(reel.views || 0).toLocaleString()}</span>
                     </span>
-                    <span>{reel.duration}</span>
+                    <span>{reel.duration || "0:30"}</span>
                   </div>
                 </div>
                 
                 {/* شارة الريلز */}
                 <div className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold">
                   REELS
+                </div>
+
+                {/* شارة مصدر الفيديو */}
+                <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs backdrop-blur-sm">
+                  {reel.source_type ? reel.source_type.toUpperCase() : 'VIDEO'}
                 </div>
               </div>
             </motion.div>
@@ -552,6 +773,9 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
         <div className="text-center mt-4 p-3 bg-white/80 rounded-xl border border-purple-200">
           <p className="text-gray-700 text-sm font-medium">
             🎥 استمتع بمشاهدة ريلز حصرية للقاعة تعرض أجمل اللحظات والتفاصيل
+          </p>
+          <p className="text-gray-600 text-xs mt-1">
+            يدعم تشغيل الفيديوهات من يوتيوب، فيسبوك، والروابط المباشرة
           </p>
         </div>
       </div>
@@ -907,7 +1131,7 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       { id: "location", label: "الموقع", icon: "📍" },
       { id: "packages", label: "البكجات", icon: "💰" },
       { id: "features", label: "المميزات", icon: "⚡" },
-      { id: "reels", label: "الريلز", icon: "🎬" } // 🔥 تغيير من "الطعام" إلى "الريلز"
+      { id: "reels", label: "الريلز", icon: "🎬" }
     ];
 
     return (
@@ -1094,42 +1318,34 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
               </button>
 
               {/* الفيديو */}
-              <div className="w-full h-full flex items-center justify-center">
-                <video 
-                  controls 
-                  autoPlay
-                  className="w-full h-full object-contain"
-                  poster={selectedReel.thumbnail}
-                >
-                  <source src={selectedReel.videoUrl} type="video/mp4" />
-                  متصفحك لا يدعم تشغيل الفيديو
-                </video>
+              <div className="w-full h-full">
+                {renderVideoBySource(selectedReel)}
               </div>
 
               {/* معلومات الريلز */}
               <div className="absolute bottom-4 left-4 right-4 text-white">
-                <h4 className="font-bold text-lg mb-2">{selectedReel.title}</h4>
-                <p className="text-sm text-gray-300 mb-3">{selectedReel.description}</p>
+                <h4 className="font-bold text-lg mb-2">{selectedReel.title || `ريلز ${currentReelIndex + 1}`}</h4>
+                <p className="text-sm text-gray-300 mb-3">{selectedReel.description || "جولة داخل القاعة وتصميماتها الفاخرة"}</p>
                 
                 {/* إحصائيات الريلز */}
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
                       <span>❤️</span>
-                      <span>{selectedReel.likes.toLocaleString()}</span>
+                      <span>{(selectedReel.likes || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span>💬</span>
-                      <span>{selectedReel.comments.toLocaleString()}</span>
+                      <span>{(selectedReel.comments || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span>↗️</span>
-                      <span>{selectedReel.shares.toLocaleString()}</span>
+                      <span>{(selectedReel.shares || 0).toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <span>👁️</span>
-                    <span>{selectedReel.views.toLocaleString()}</span>
+                    <span>{(selectedReel.views || 0).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
