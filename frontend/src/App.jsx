@@ -23,10 +23,12 @@ import { useEffect } from "react";
 
 // حماية المسارات التي تتطلب تسجيل دخول
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, isCheckingAuth, user } = useAuthStore();
 
-  if (!isAuthenticated) return <Navigate to='/login' replace />;
-  if (!user?.isVerified) return <Navigate to='/verify-email' replace />;
+  if (isCheckingAuth) return <div>جارٍ التحقق من الحساب...</div>;
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!user?.emailVerified) return <Navigate to="/verify-email" replace />;
 
   return children;
 };

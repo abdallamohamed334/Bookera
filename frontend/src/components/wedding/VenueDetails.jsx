@@ -249,6 +249,7 @@ const getVideoSourceType = (videoUrl) => {
   if (url.includes('tiktok.com')) return 'tiktok';
   if (url.includes('instagram.com')) return 'instagram';
   if (url.includes('vimeo.com')) return 'vimeo';
+  if (url.includes('res.cloudinary.com')) return 'cloudinary'; 
   return 'direct';
 };
 
@@ -257,6 +258,11 @@ const getVideoSourceType = (videoUrl) => {
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
     return match ? match[1] : null;
   };
+  const getCloudinaryVideoId = (url) => {
+  if (!url) return null;
+  const match = url.match(/res\.cloudinary\.com\/[^\/]+\/video\/upload\/(?:[^\/]+\/)?([^\/]+)\.(mp4|webm|mov)/);
+  return match ? match[1] : null;
+};
 
  // 🔥 تحسين دالة getFacebookVideoId
 const getFacebookVideoId = (url) => {
@@ -574,30 +580,37 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
 
   // 🔥 عرض الفيديو حسب المصدر
   const renderVideoBySource = (reel) => {
-    if (!reel || !reel.video_url) return null;
+  if (!reel || !reel.video_url) return null;
 
-    const sourceType = reel.source_type || getVideoSourceType(reel.video_url);
-    
-    switch (sourceType) {
-      case 'youtube':
-        const youtubeId = getYouTubeVideoId(reel.video_url);
-        return youtubeId ? renderYouTubeVideo(youtubeId) : renderDirectVideo(reel.video_url);
-      
-      case 'facebook':
-        const facebookId = getFacebookVideoId(reel.video_url);
-        return facebookId ? renderFacebookVideo(facebookId) : renderDirectVideo(reel.video_url);
-      
-      case 'tiktok':
-      case 'instagram':
-      case 'vimeo':
-        // يمكن إضافة دعم لهذه المنصات لاحقاً
-        return renderDirectVideo(reel.video_url);
-      
-      case 'direct':
-      default:
-        return renderDirectVideo(reel.video_url);
+  const sourceType = reel.source_type || getVideoSourceType(reel.video_url);
+
+  switch (sourceType) {
+    case 'youtube': {
+      const youtubeId = getYouTubeVideoId(reel.video_url);
+      return youtubeId ? renderYouTubeVideo(youtubeId) : renderDirectVideo(reel.video_url);
     }
-  };
+
+    case 'facebook': {
+      const facebookId = getFacebookVideoId(reel.video_url);
+      return facebookId ? renderFacebookVideo(facebookId) : renderDirectVideo(reel.video_url);
+    }
+
+    case 'cloudinary': {
+      const cloudinaryId = getCloudinaryVideoId(reel.video_url);
+      return cloudinaryId ? renderDirectVideo(reel.video_url) : null;
+    }
+
+    case 'tiktok':
+    case 'instagram':
+    case 'vimeo':
+      // يمكن إضافة دعم لهذه المنصات لاحقاً
+      return renderDirectVideo(reel.video_url);
+
+    case 'direct':
+    default:
+      return renderDirectVideo(reel.video_url);
+  }
+};
 
   // 🔥 عرض النجوم
   const renderStars = (rating) => {
