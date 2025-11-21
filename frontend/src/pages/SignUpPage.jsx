@@ -179,15 +179,11 @@ const SignUpPage = () => {
 						<div className="text-center">
 							<p className="text-gray-600 text-sm mb-4">أو سجل باستخدام</p>
 							<div className="flex justify-center gap-4">
-								<button className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-									<span className="text-gray-700 font-bold text-sm">f</span>
-								</button>
+								
 								<button className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
 									<span className="text-gray-700 font-bold text-sm">G</span>
 								</button>
-								<button className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-									<span className="text-gray-700 font-bold text-sm">in</span>
-								</button>
+								
 							</div>
 						</div>
 					</motion.div>

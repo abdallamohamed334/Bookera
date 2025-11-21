@@ -126,7 +126,7 @@ const LoginPage = () => {
                                 </span>
                             </h1>
                             <p className="text-xl text-gray-600">
-                                اكتشف أفضل الأماكن لحفلاتك ومناسباتك. أكثر من 500 مكان متاح في 50 مدينة سعودية.
+                                اكتشف أفضل الأماكن لحفلاتك ومناسباتك..
                             </p>
                         </div>
 
@@ -245,16 +245,7 @@ const LoginPage = () => {
                                         </button>
 
                                         {/* زر اختبار الأدمن */}
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                setEmail("admin@test.com");
-                                                setPassword("123456");
-                                            }}
-                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg"
-                                        >
-                                            ملء بيانات الأدمن للاختبار
-                                        </button>
+                                 
                                     </form>
 
                                     {/* GOOGLE LOGIN */}
@@ -263,9 +254,7 @@ const LoginPage = () => {
 
                                         <div className="flex justify-center gap-4">
                                             {/* Facebook placeholder */}
-                                            <button className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                                                f
-                                            </button>
+                                            
 
                                             {/* ⭐ زر Google الفعلي */}
                                             <button
@@ -278,10 +267,7 @@ const LoginPage = () => {
                                                 <span className="text-gray-700 font-bold text-base">G</span>
                                             </button>
 
-                                            {/* LinkedIn placeholder */}
-                                            <button className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                                                in
-                                            </button>
+                                            
                                         </div>
                                     </div>
                                 </div>
