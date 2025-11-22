@@ -1,0 +1,6 @@
+name = "bookera"
+compatibility_date = "2025-11-22"
+
+# إعداد الموقع الثابت
+[site]
+bucket = "./frontend/dist"
