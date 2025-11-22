@@ -2,4 +2,4 @@ name = "eventup"
 compatibility_date = "2025-11-22"
 
 [site]
-bucket = "./dist"
+bucket = "./frontend/dist"
