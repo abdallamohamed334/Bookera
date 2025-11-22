@@ -1,7 +1,0 @@
-name = "bookera"
-main = ""  # اتركها فاضية أو احذف السطر
-compatibility_date = "2025-11-22"
-
-# Optional: configure environments
-[vars]
-# أي متغيرات بيئة هنا
