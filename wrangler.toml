@@ -1,5 +1,8 @@
 name = "bookera"
 compatibility_date = "2025-11-22"
 
+type = "javascript" # مهم لتحديد نوع المشروع، أو يمكنك حذفه
+
 [site]
-bucket = "./frontend/dist"
+bucket = "./dist"
+entry-point = "."  # هذا يكفي لـ Wrangler 4.x لنشر مجلد ثابت
