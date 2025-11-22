@@ -3,4 +3,3 @@ compatibility_date = "2025-11-22"
 
 [site]
 bucket = "./dist"
-entry-point = "index.html"
