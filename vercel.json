@@ -6,8 +6,10 @@
       "use": "@vercel/static-build"
     }
   ],
-  "outputDirectory": "frontend/dist",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dist/index.html"
+    }
   ]
 }
