@@ -2,12 +2,10 @@ import { motion } from "framer-motion";
 
 const VenueFilters = ({
   activeFilter,
-  priceRange,
   selectedGovernorate,
   selectedCity,
   governorates,
   onFilterChange,
-  onPriceChange,
   onGovernorateChange,
   onCityChange,
   onResetFilters,
@@ -15,7 +13,7 @@ const VenueFilters = ({
   totalCount,
   dataSource
 }) => {
-  const categories = ["all", "فاخرة", "طبيعية", "كلاسيكية", "عصرية", "اقتصادية"];
+  const eventCategories = ["all", "فرح", "خطوبة", "كتب_كتاب", "عيد_ميلاد", "مؤتمرات"];
 
   return (
     <div className="lg:w-1/4 bg-gray-50 p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
@@ -43,15 +41,10 @@ const VenueFilters = ({
           onChange={onCityChange}
         />
 
-        <CategoryFilter
+        <EventTypeFilter
           activeFilter={activeFilter}
-          categories={categories}
+          eventCategories={eventCategories}
           onChange={onFilterChange}
-        />
-
-        <PriceFilter
-          priceRange={priceRange}
-          onChange={onPriceChange}
         />
 
         <FilterStats
@@ -98,53 +91,66 @@ const CityFilter = ({ selectedCity, selectedGovernorate, governorates, onChange 
   </div>
 );
 
-const CategoryFilter = ({ activeFilter, categories, onChange }) => (
-  <div className="mb-6">
-    <h4 className="text-gray-900 font-medium mb-3">نوع القاعة</h4>
-    <div className="space-y-2 max-h-40 overflow-y-auto">
-      {categories.map((category) => (
-        <button
-          key={category}
-          onClick={() => onChange(category)}
-          className={`w-full text-right px-3 py-2 rounded-lg transition-colors duration-200 ${
-            activeFilter === category
-              ? 'bg-purple-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-          }`}
-        >
-          {category === "all" ? "كل الأنواع" : category}
-        </button>
-      ))}
-    </div>
-  </div>
-);
+const EventTypeFilter = ({ activeFilter, eventCategories, onChange }) => {
+  // تسميات أنواع المناسبات
+  const eventLabels = {
+    "all": "كل المناسبات",
+    "فرح": "💒 فرح",
+    "خطوبة": "💍 خطوبة", 
+    "كتب_كتاب": "📖 كتب كتاب",
+    "عيد_ميلاد": "🎂 عيد ميلاد",
+    "مؤتمرات": "👔 مؤتمرات"
+  };
 
-const PriceFilter = ({ priceRange, onChange }) => (
-  <div className="mb-6">
-    <h4 className="text-gray-900 font-medium mb-3">السعر: لحد {priceRange.toLocaleString()} جنيه</h4>
-    <input
-      type="range"
-      min="1000"
-      max="50000"
-      step="1000"
-      value={priceRange}
-      onChange={(e) => onChange(parseInt(e.target.value))}
-      className="w-full mb-2"
-    />
-    <div className="flex justify-between text-gray-600 text-sm">
-      <span>1,000</span>
-      <span>50,000</span>
+  return (
+    <div className="mb-6">
+      <h4 className="text-gray-900 font-medium mb-3">نوع المناسبة</h4>
+      <div className="space-y-2 max-h-60 overflow-y-auto">
+        {eventCategories.map((eventType) => (
+          <button
+            key={eventType}
+            onClick={() => onChange(eventType)}
+            className={`w-full text-right px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-between ${
+              activeFilter === eventType
+                ? 'bg-purple-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+            }`}
+          >
+            <span>{eventLabels[eventType] || eventType}</span>
+            {activeFilter === eventType && (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const FilterStats = ({ filteredCount, totalCount, dataSource }) => (
   <div className="bg-purple-50 p-4 rounded-lg">
     <h4 className="font-medium text-purple-800 mb-2">إحصائيات البحث</h4>
     <div className="space-y-1 text-sm text-purple-700">
-      <div>القاعات المتاحة: <span className="font-bold">{filteredCount}</span></div>
-      <div>مجموع القاعات: <span className="font-bold">{totalCount}</span></div>
-      <div>مصدر البيانات: <span className="font-bold">{dataSource === "api" ? "قاعدة البيانات" : "..."}</span></div>
+      <div className="flex justify-between">
+        <span>القاعات المتاحة:</span>
+        <span className="font-bold">{filteredCount}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>مجموع القاعات:</span>
+        <span className="font-bold">{totalCount}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>مصدر البيانات:</span>
+        <span className="font-bold">
+          {dataSource === "api" 
+            ? "قاعدة البيانات" 
+            : dataSource === "sample" 
+            ? "بيانات تجريبية" 
+            : "جارِ التحميل..."}
+        </span>
+      </div>
     </div>
   </div>
 );

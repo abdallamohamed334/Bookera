@@ -159,41 +159,8 @@ const FiltersSidebar = ({
             </select>
           </div>
 
-          {/* فلترة السعر */}
-          <div>
-            <h4 className="text-gray-900 font-medium mb-2">السعر: حتى {priceRange.toLocaleString()} جنيه</h4>
-            <input
-              type="range"
-              min="1000"
-              max="100000"
-              step="1000"
-              value={priceRange}
-              onChange={(e) => onPriceRangeChange(parseInt(e.target.value))}
-              className="w-full mb-1"
-            />
-            <div className="flex justify-between text-gray-600 text-xs">
-              <span>1,000</span>
-              <span>100,000</span>
-            </div>
-          </div>
-
-          {/* فلترة السعة */}
-          <div>
-            <h4 className="text-gray-900 font-medium mb-2">السعة: حتى {capacityRange} شخص</h4>
-            <input
-              type="range"
-              min="50"
-              max="1000"
-              step="50"
-              value={capacityRange}
-              onChange={(e) => onCapacityRangeChange(parseInt(e.target.value))}
-              className="w-full mb-1"
-            />
-            <div className="flex justify-between text-gray-600 text-xs">
-              <span>50</span>
-              <span>1,000</span>
-            </div>
-          </div>
+         
+          
 
           {/* إحصائيات */}
           <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">

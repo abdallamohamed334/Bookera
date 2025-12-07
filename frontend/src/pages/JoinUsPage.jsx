@@ -68,7 +68,7 @@ const JoinUsPage = () => {
 
     try {
       // إرسال البيانات إلى API
-      const response = await fetch('https://bookera-production.up.railway.app/api/partners/register', {
+      const response = await fetch('http://localhost:5000/api/partners/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

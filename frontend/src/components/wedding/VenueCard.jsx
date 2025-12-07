@@ -48,28 +48,23 @@ const VenueCard = ({
           <span
             key={star}
             className={`text-sm ${
-              star <= numericRating ? 'text-gray-600' : 'text-gray-300'
+              star <= numericRating ? 'text-yellow-400' : 'text-gray-300'
             }`}
           >
             ★
           </span>
         ))}
-        <span className="text-gray-500 text-sm mr-1">({numericRating.toFixed(1)})</span>
+        <span className="text-gray-600 text-xs mr-1">({numericRating.toFixed(1)})</span>
       </div>
     );
   };
 
-  const getPriceRange = () => {
-    const minPrice = venue.min_price || venue.price;
-    const maxPrice = venue.max_price || venue.price;
-    
-    if (minPrice && maxPrice && minPrice !== maxPrice) {
-      return `${parseInt(minPrice).toLocaleString()} - ${parseInt(maxPrice).toLocaleString()} ج`;
-    } else if (minPrice) {
-      return `${parseInt(minPrice).toLocaleString()} ج`;
-    } else {
-      return "السعر عند الطلب";
+  // الحصول على أول 5 صور فقط
+  const getDisplayImages = () => {
+    if (!venue.images || venue.images.length === 0) {
+      return venue.image ? [venue.image] : ["https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600"];
     }
+    return venue.images.slice(0, 5); // فقط أول 5 صور
   };
 
   // دالة لتحويل أنواع المناسبات إلى أيقونات
@@ -86,7 +81,7 @@ const VenueCard = ({
     return icons.length > 0 ? icons : ['💒'];
   };
 
-  // الحصول على الصورة الشخصية - أولوية لـ profile_image
+  // الحصول على الصورة الشخصية
   const getProfileImage = () => {
     if (profileImageError) {
       return "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=200";
@@ -144,10 +139,10 @@ const VenueCard = ({
         onImageLoad={() => setImageLoaded(true)}
         onImageError={handleImageError}
         onShareClick={handleShareClick}
-        getPriceRange={getPriceRange}
         getEventTypeIcons={getEventTypeIcons}
         comparisonMode={comparisonMode}
         isSelectedForComparison={isSelectedForComparison}
+        getDisplayImages={getDisplayImages}
       />
       
       <div className="p-4 flex-grow flex flex-col">
@@ -172,10 +167,12 @@ const VenueCard = ({
             {/* Rating and Reviews */}
             <div className="flex items-center gap-2 mb-2">
               <div className="flex items-center gap-1">
-                <span className="text-yellow-500 text-sm">⭐</span>
+                <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
                 <span className="text-sm font-semibold text-gray-700">{venue.rating || 0}</span>
               </div>
-              <span className="text-gray-500 text-sm">({venue.review_count || 0} تقييم)</span>
+              <span className="text-gray-500 text-xs">({venue.review_count || 0} تقييم)</span>
             </div>
 
             {/* Event Types Display */}
@@ -198,10 +195,12 @@ const VenueCard = ({
           </div>
         </div>
 
-        {/* Special Offer Banner */}
+        {/* Special Offer Banner (صغير على الجانب) */}
         {venue.special_offer && (
-          <div className="mb-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold text-center shadow-md">
-            🎉 {venue.special_offer}
+          <div className="mb-3 self-start">
+            <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md">
+              {venue.special_offer}
+            </div>
           </div>
         )}
 
@@ -228,7 +227,7 @@ const VenueCard = ({
               <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
               </svg>
-              <span className="text-gray-800 font-bold">{venue.capacity}</span>
+              <span className="text-gray-800 font-bold">{venue.capacity || 0}</span>
             </div>
             <div className="text-gray-500 text-xs mt-1 text-center">شخص</div>
           </div>
@@ -260,12 +259,15 @@ const VenueImage = ({
   onImageLoad, 
   onImageError,
   onShareClick,
-  getPriceRange,
   getEventTypeIcons,
   comparisonMode,
-  isSelectedForComparison
+  isSelectedForComparison,
+  getDisplayImages
 }) => {
   const scrollContainerRef = useRef(null);
+  
+  // الحصول على أول 5 صور فقط
+  const displayImages = getDisplayImages();
 
   const handleShare = async (e) => {
     e.stopPropagation();
@@ -277,7 +279,7 @@ const VenueImage = ({
 
     const shareData = {
       title: venue.name,
-      text: `اكتشف ${venue.name} - ${venue.city} | ${getPriceRange()}`,
+      text: `اكتشف ${venue.name} - ${venue.city} | تواصل للاستعلام عن الأسعار`,
       url: window.location.href,
     };
 
@@ -303,18 +305,18 @@ const VenueImage = ({
 
   const nextImage = (e) => {
     e.stopPropagation();
-    if (venue.images && venue.images.length > 1) {
+    if (displayImages.length > 1) {
       setCurrentImageIndex((prev) => 
-        prev === venue.images.length - 1 ? 0 : prev + 1
+        prev === displayImages.length - 1 ? 0 : prev + 1
       );
     }
   };
 
   const prevImage = (e) => {
     e.stopPropagation();
-    if (venue.images && venue.images.length > 1) {
+    if (displayImages.length > 1) {
       setCurrentImageIndex((prev) => 
-        prev === 0 ? venue.images.length - 1 : prev - 1
+        prev === 0 ? displayImages.length - 1 : prev - 1
       );
     }
   };
@@ -336,7 +338,7 @@ const VenueImage = ({
         className="flex h-full transition-transform duration-300 ease-out"
         style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
       >
-        {(venue.images && venue.images.length > 0 ? venue.images : [venue.image || "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600"]).map((img, index) => (
+        {displayImages.map((img, index) => (
           <div key={index} className="w-full h-full flex-shrink-0">
             <img 
               src={imageError ? "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600" : img} 
@@ -352,7 +354,7 @@ const VenueImage = ({
       </div>
 
       {/* Navigation Arrows for multiple images */}
-      {venue.images && venue.images.length > 1 && (
+      {displayImages.length > 1 && (
         <>
           <button
             onClick={prevImage}
@@ -373,10 +375,10 @@ const VenueImage = ({
         </>
       )}
 
-      {/* Image Indicators */}
-      {venue.images && venue.images.length > 1 && (
+      {/* Image Indicators - فقط أول 5 صور */}
+      {displayImages.length > 1 && (
         <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
-          {venue.images.map((_, index) => (
+          {displayImages.slice(0, 5).map((_, index) => (
             <button
               key={index}
               onClick={(e) => {
@@ -402,13 +404,13 @@ const VenueImage = ({
         </div>
       )}
 
-      {/* Price Range */}
-      <div className="absolute top-3 right-3 bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-bold shadow-lg">
-        {getPriceRange()}
+      {/* Price Range - إزالة الأسعار */}
+      <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-2 rounded-xl text-sm font-bold shadow-lg">
+        تواصل للاستعلام
       </div>
 
       {/* City */}
-      <div className="absolute top-3 left-3 bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium">
+      <div className="absolute top-3 left-3 bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-medium">
         {venue.city}
       </div>
 
@@ -425,10 +427,19 @@ const VenueImage = ({
         ))}
       </div>
 
-      {/* Rating */}
-      <div className="absolute bottom-3 right-3 bg-white/95 px-3 py-2 rounded-xl shadow-sm border border-gray-200">
-        {renderStars(venue.rating)}
-      </div>
+      {/* Image Count - تظهر فقط إذا كان هناك أكثر من 5 صور */}
+      {venue.images && venue.images.length > 5 && (
+        <div className="absolute top-12 right-3 bg-gray-800/80 text-white px-2 py-1 rounded-full text-xs">
+          +{venue.images.length - 5}
+        </div>
+      )}
+
+      {/* Comparison Selection Indicator */}
+      {comparisonMode && isSelectedForComparison && (
+        <div className="absolute top-3 left-12 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg z-20">
+          ✓ مختارة
+        </div>
+      )}
 
       {/* Share Button */}
       <button
@@ -439,20 +450,6 @@ const VenueImage = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
         </svg>
       </button>
-
-      {/* Image Count */}
-      {venue.images && venue.images.length > 1 && (
-        <div className="absolute top-12 right-3 bg-gray-700/80 text-white px-2 py-1 rounded-full text-xs">
-          +{venue.images.length - 1}
-        </div>
-      )}
-
-      {/* Comparison Selection Indicator */}
-      {comparisonMode && isSelectedForComparison && (
-        <div className="absolute top-3 left-12 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg z-20">
-          ✓ مختارة
-        </div>
-      )}
     </div>
   );
 };
@@ -469,44 +466,122 @@ const getEventTypeLabel = (icon) => {
   return labels[icon] || 'مناسبة';
 };
 
-const VenueFeatures = ({ venue }) => (
-  <>
-    <div className="flex flex-wrap gap-2 mb-4 flex-grow">
-      {venue.features?.slice(0, 4).map((feature, index) => (
-        <span
-          key={index}
-          className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200"
-        >
-          {feature}
-        </span>
-      ))}
-      {venue.features?.length > 4 && (
-        <span className="bg-gray-50 text-gray-500 px-3 py-1.5 rounded-lg text-sm">
-          +{venue.features.length - 4}
-        </span>
-      )}
-    </div>
+const VenueFeatures = ({ venue }) => {
+  // استبدال الإيموجي بأيقونات أفضل
+  const getFeatureIcon = (feature) => {
+    const featureIcons = {
+      'حمام': (
+        <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2zM8 20H5v-2h3v2zm0-4H5v-2h3v2zm0-4H5v-2h3v2zm6 8h-4v-2h4v2zm0-4h-4v-2h4v2zm0-4h-4v-2h4v2zm6 8h-3v-2h3v2zm0-4h-3v-2h3v2zm0-4h-3v-2h3v2z"/>
+        </svg>
+      ),
+      'كافيه': (
+        <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+        </svg>
+      ),
+      'مكان للتصوير': (
+        <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 3a5 5 0 100 10 5 5 0 000-10zm0 8a3 3 0 110-6 3 3 0 010 6z"/>
+        </svg>
+      ),
+      'واي فاي': (
+        <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+        </svg>
+      ),
+      'تكييف': (
+        <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 12c0-3 2.5-5.5 5.5-5.5S23 9 23 12H12zm0 0c0 3-2.5 5.5-5.5 5.5S1 15 1 12h11zm0 0c-3 0-5.5-2.5-5.5-5.5S9 1 12 1v11zm0 0c3 0 5.5 2.5 5.5 5.5S15 23 12 23V12z"/>
+        </svg>
+      )
+    };
 
-    {/* Additional Info */}
-    <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-      <div className="flex items-center gap-4">
-        <span className="flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {venue.review_count || 0} تقييم
+    // البحث عن الأيقونة المناسبة
+    for (const [key, icon] of Object.entries(featureIcons)) {
+      if (feature.includes(key)) {
+        return icon;
+      }
+    }
+
+    // أيقونة افتراضية إذا لم يتم العثور على تطابق
+    return (
+      <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+      </svg>
+    );
+  };
+
+  // الحصول على المميزات مع أيقونات محسنة
+  const getEnhancedFeatures = () => {
+    const baseFeatures = venue.features || [];
+    
+    // إضافة مميزات من خصائص القاعة إذا لم تكن موجودة
+    const enhancedFeatures = [...baseFeatures];
+    
+    if (venue.wc && !enhancedFeatures.some(f => f.includes('حمام'))) {
+      enhancedFeatures.push('حمام');
+    }
+    
+    if (venue.cafe && !enhancedFeatures.some(f => f.includes('كافيه'))) {
+      enhancedFeatures.push('كافيه');
+    }
+    
+    if (venue.photo_spot && !enhancedFeatures.some(f => f.includes('مكان للتصوير'))) {
+      enhancedFeatures.push('مكان للتصوير');
+    }
+    
+    if (venue.wifi && !enhancedFeatures.some(f => f.includes('واي فاي'))) {
+      enhancedFeatures.push('واي فاي');
+    }
+    
+    if (venue.ac && !enhancedFeatures.some(f => f.includes('تكييف'))) {
+      enhancedFeatures.push('تكييف');
+    }
+    
+    return enhancedFeatures;
+  };
+
+  const enhancedFeatures = getEnhancedFeatures();
+
+  return (
+    <>
+      <div className="flex flex-wrap gap-2 mb-4 flex-grow">
+        {enhancedFeatures.slice(0, 4).map((feature, index) => (
+          <div
+            key={index}
+            className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 flex items-center gap-2"
+          >
+            {getFeatureIcon(feature)}
+            <span>{feature}</span>
+          </div>
+        ))}
+        {enhancedFeatures.length > 4 && (
+          <div className="bg-gray-50 text-gray-500 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
+            </svg>
+            <span>+{enhancedFeatures.length - 4}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Additional Info */}
+      <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+        <div className="flex items-center gap-4">
+         
+        </div>
+        <span className={`px-3 py-1.5 rounded-full text-sm border border-gray-300 ${
+          venue.wedding_specific?.openAir 
+            ? 'bg-green-100 text-green-700' 
+            : 'bg-blue-100 text-blue-700'
+        }`}>
+          {venue.wedding_specific?.openAir ? 'أوبن دور' : 'إن دور'}
         </span>
       </div>
-      <span className={`px-3 py-1.5 rounded-full text-sm border border-gray-300 ${
-        venue.wedding_specific?.openAir 
-          ? 'bg-gray-100 text-gray-700' 
-          : 'bg-gray-100 text-gray-700'
-      }`}>
-        {venue.wedding_specific?.openAir ? 'أوبن دور' : 'إن دور'}
-      </span>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 const VenueActions = ({ 
   onVenueClick, 
@@ -551,23 +626,18 @@ const VenueActions = ({
       ) : (
         // أزرار الوضع العادي
         <>
-         
- 
-          {/* <button
+          <button 
             onClick={(e) => {
               e.stopPropagation();
-              if (onToggleFavorite) {
-                onToggleFavorite(venue.id || venue._id, e);
-              }
+              onVenueClick(venue);
             }}
-            className={`p-3 rounded-xl border transition-colors ${
-              isFavorite
-                ? 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200'
-                : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
-            }`}
+            className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-semibold text-sm transition-all transform hover:scale-[1.02]"
           >
-            {isFavorite ? '❤️' : '🤍'}
-          </button> */}
+            تفاصيل
+          </button>
+          
+          {/* زر حجز سريع */}
+          
         </>
       )}
     </div>
