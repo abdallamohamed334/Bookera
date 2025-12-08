@@ -160,7 +160,7 @@ const WeddingHallsPage = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`bookera-production-25ec.up.railway.app/api/wedding-venues/`, {
+        const response = await fetch(`https://bookera-production-25ec.up.railway.app/api/wedding-venues/`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

@@ -87,7 +87,7 @@ const PhotographerDetailsPage = () => {
 
         // جلب البيانات من الـ API فقط
         console.log('🔍 جاري البحث في الـ API...');
-        const response = await fetch(`bookera-production-25ec.up.railway.app/api/photographers/${id}`);
+        const response = await fetch(`https://bookera-production-25ec.up.railway.app/api/photographers/${id}`);
         
         if (response.ok) {
           const data = await response.json();

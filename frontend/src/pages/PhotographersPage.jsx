@@ -28,7 +28,7 @@ const PhotographersPage = () => {
         
         console.log('🔄 جاري جلب بيانات المصورين من API...');
         
-        const response = await fetch('bookera-production-25ec.up.railway.app/api/photographers', {
+        const response = await fetch('https://bookera-production-25ec.up.railway.app/api/photographers', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
