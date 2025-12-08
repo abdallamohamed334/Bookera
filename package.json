@@ -5,8 +5,8 @@
   "main": "backend/index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon backend/index.js",
-    "start": "npm run dev",
-    "build": "npm run build"
+    "start": "node index.js",
+    "build": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
