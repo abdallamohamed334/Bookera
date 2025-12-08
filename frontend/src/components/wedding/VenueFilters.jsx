@@ -13,7 +13,7 @@ const VenueFilters = ({
   totalCount,
   dataSource
 }) => {
-  const eventCategories = ["all", "فرح", "خطوبة", "كتب_كتاب", "عيد_ميلاد", "مؤتمرات"];
+  const eventCategories = ["all", "فرح", "خطوبة", "كتب_كتاب", "عيد_ميلاد"];
 
   return (
     <div className="lg:w-1/4 bg-gray-50 p-6 border-b lg:border-b-0 lg:border-r border-gray-200">

@@ -47,17 +47,7 @@ const MobileFilters = ({ onClose, filtersProps, governorates, venueTypes, locati
           </div>
           
           <div className="space-y-6">
-            {/* بحث */}
-            <div>
-              <h4 className="text-gray-900 font-medium mb-2">بحث</h4>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="ابحث باسم القاعة أو المنطقة..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
-              />
-            </div>
+           
 
             {/* فلترة المحافظة */}
             <div>
@@ -91,21 +81,7 @@ const MobileFilters = ({ onClose, filtersProps, governorates, venueTypes, locati
               </select>
             </div>
 
-            {/* فلترة نوع القاعة */}
-            <div>
-              <h4 className="text-gray-900 font-medium mb-2">نوع القاعة</h4>
-              <select
-                value={venueType}
-                onChange={(e) => onVenueTypeChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
-              >
-                {Object.entries(venueTypes).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            
 
             {/* فلترة الموقع */}
             <div>
@@ -123,39 +99,7 @@ const MobileFilters = ({ onClose, filtersProps, governorates, venueTypes, locati
               </select>
             </div>
 
-            {/* فلترة نوع المناسبة */}
-            <div>
-              <h4 className="text-gray-900 font-medium mb-2">نوع المناسبة</h4>
-              <select
-                value={eventType}
-                onChange={(e) => onEventTypeChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
-              >
-                {Object.entries(eventTypes).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* فلترة السعر */}
-            <div>
-              <h4 className="text-gray-900 font-medium mb-2">السعر: حتى {priceRange.toLocaleString()} جنيه</h4>
-              <input
-                type="range"
-                min="1000"
-                max="100000"
-                step="1000"
-                value={priceRange}
-                onChange={(e) => onPriceRangeChange(parseInt(e.target.value))}
-                className="w-full mb-1"
-              />
-              <div className="flex justify-between text-gray-600 text-xs">
-                <span>1,000</span>
-                <span>100,000</span>
-              </div>
-            </div>
+           
 
             {/* فلترة السعة */}
             <div>

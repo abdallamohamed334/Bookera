@@ -14,11 +14,11 @@ const governorates = {
 };
 
 const specialties = [
-  { id: "all", name: "كل التخصصات" },
-  { id: "تصوير أفراح", name: "تصوير أفراح", icon: "💒" },
+  { id: "all", name: "كل التخصصات", icon: "🎯" },
+  { id: "تصوير أفراح", name: "تصوير أفراح", icon: "📷" },
   { id: "تصوير شخصي", name: "تصوير شخصي", icon: "👤" },
   { id: "تصوير عائلي", name: "تصوير عائلي", icon: "👨‍👩‍👧‍👦" },
-  { id: "تصوير حمل", name: "تصوير حمل", icon: "🤰" },
+  { id: "تصوير مناسبات", name: "تصوير مناسبات"},
   { id: "تصوير مواليد", name: "تصوير مواليد", icon: "👶" },
   { id: "تصوير أزياء", name: "تصوير أزياء", icon: "👗" },
   { id: "تصوير منتجات", name: "تصوير منتجات", icon: "📦" }
@@ -71,20 +71,38 @@ const FiltersSection = ({
         </div>
       </div>
 
-      {/* Always Visible Filters */}
+      {/* Always Visible Filters - Now 3 columns instead of 4 */}
       <div className="p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           
-          {/* تخصص التصوير */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
-              <span>📸</span>
+          {/* تخصص التصوير - تصميم محسن */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 mb-4 flex items-center gap-2 text-lg">
+              <span className="bg-white p-2 rounded-lg shadow-sm">🎯</span>
               تخصص التصوير
             </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {specialties.slice(0, 4).map((specialty) => (
+                <button
+                  key={specialty.id}
+                  onClick={() => setActiveFilter(specialty.id)}
+                  className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-all duration-200 ${
+                    activeFilter === specialty.id
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                  }`}
+                >
+                  <span className="text-lg">{specialty.icon}</span>
+                  <span className="text-sm font-medium">{specialty.name}</span>
+                </button>
+              ))}
+            </div>
+            
+            {/* Select for more options */}
             <select
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="mt-3 w-full px-3 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               {specialties.map((specialty) => (
                 <option key={specialty.id} value={specialty.id}>
@@ -94,202 +112,145 @@ const FiltersSection = ({
             </select>
           </div>
 
-          {/* الموقع */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="font-medium text-green-900 mb-3 flex items-center gap-2">
-              <span>📍</span>
+          {/* الموقع - تصميم محسن */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+            <h3 className="font-semibold text-green-900 mb-4 flex items-center gap-2 text-lg">
+              <span className="bg-white p-2 rounded-lg shadow-sm">📍</span>
               الموقع
             </h3>
-            <div className="space-y-2">
-              <select
-                value={selectedGovernorate}
-                onChange={(e) => setSelectedGovernorate(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-              >
-                {Object.keys(governorates).map((gov) => (
-                  <option key={gov} value={gov}>
-                    {governorates[gov].name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-              >
-                {governorates[selectedGovernorate]?.cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* نطاق السعر - تصميم محسن */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <h3 className="font-medium text-purple-900 mb-3 flex items-center gap-2">
-              <span>💰</span>
-              نطاق السعر
-            </h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-purple-700 font-medium">{priceRange.toLocaleString()} جنيه</span>
-                <span className="text-xs text-purple-600">حد أقصى</span>
+              <div>
+                <label className="block text-sm text-green-700 mb-1 font-medium">المحافظة</label>
+                <div className="relative">
+                  <select
+                    value={selectedGovernorate}
+                    onChange={(e) => setSelectedGovernorate(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm appearance-none"
+                  >
+                    {Object.keys(governorates).map((gov) => (
+                      <option key={gov} value={gov}>
+                        {governorates[gov].name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute left-3 top-3.5 text-green-600">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <input
-                type="range"
-                min="500"
-                max="10000"
-                step="100"
-                value={priceRange}
-                onChange={(e) => setPriceRange(parseInt(e.target.value))}
-                className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-              <div className="flex justify-between text-xs text-purple-600">
-                <span>500 ج</span>
-                <span>10,000 ج</span>
+              
+              <div>
+                <label className="block text-sm text-green-700 mb-1 font-medium">المدينة</label>
+                <div className="relative">
+                  <select
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm appearance-none"
+                  >
+                    {governorates[selectedGovernorate]?.cities.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute left-3 top-3.5 text-green-600">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* التحكم */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <h3 className="font-medium text-orange-900 mb-3 flex items-center gap-2">
-              <span>⚙️</span>
-              التحكم
-            </h3>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center justify-between px-3 py-2 bg-white border border-orange-300 rounded-lg hover:bg-orange-100 transition-colors text-sm text-orange-700"
-              >
-                <span>فلاتر متقدمة</span>
-                <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+          {/* نطاق السعر وإعادة التعيين - تصميم محسن */}
+          <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-purple-900 flex items-center gap-2 text-lg">
+                <span className="bg-white p-2 rounded-lg shadow-sm">💰</span>
+                نطاق السعر
+              </h3>
               <button 
                 onClick={resetFilters}
-                className="px-3 py-2 bg-white border border-orange-300 rounded-lg hover:bg-orange-100 transition-colors text-sm text-orange-700"
+                className="flex items-center gap-1 px-3 py-2 bg-white border border-purple-300 rounded-lg hover:bg-purple-100 transition-colors text-sm text-purple-700 font-medium"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
                 مسح الكل
               </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-purple-700">الحد الأقصى للسعر</span>
+                  <span className="text-lg font-bold text-purple-900">{priceRange.toLocaleString()} جنيه</span>
+                </div>
+                
+                <input
+                  type="range"
+                  min="500"
+                  max="10000"
+                  step="100"
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(parseInt(e.target.value))}
+                  className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                
+                <div className="flex justify-between text-xs text-purple-600 mt-2">
+                  <span>500 ج</span>
+                  <span>2,500 ج</span>
+                  <span>5,000 ج</span>
+                  <span>7,500 ج</span>
+                  <span>10,000 ج</span>
+                </div>
+              </div>
+              
+              {/* زر الفلاتر المتقدمة */}
+              
             </div>
           </div>
         </div>
       </div>
 
       {/* Expandable Advanced Filters */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <div className="p-4 bg-gray-50 border-t border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-4 text-lg">فلاتر متقدمة</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                {/* نطاقات سعر جاهزة */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <h4 className="font-medium text-gray-900 mb-3">نطاقات سعر جاهزة</h4>
-                  <div className="space-y-2">
-                    {priceRanges.map((range, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setPriceRange(range.max)}
-                        className={`w-full text-right px-3 py-2 rounded-lg border transition-all duration-200 ${
-                          priceRange === range.max
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'bg-gray-50 text-gray-700 border-gray-300 hover:border-purple-500'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs opacity-75">{range.min.toLocaleString()} - {range.max.toLocaleString()} ج</span>
-                          <span>{range.label}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* خصائص إضافية */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <h4 className="font-medium text-gray-900 mb-3">خدمات إضافية</h4>
-                  <div className="space-y-3">
-                    <label className="flex items-center justify-between gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
-                      <span className="text-sm text-gray-700">تصوير فيديو</span>
-                      <input type="checkbox" className="text-blue-600 focus:ring-blue-500" />
-                    </label>
-                    <label className="flex items-center justify-between gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
-                      <span className="text-sm text-gray-700">تعديل الصور</span>
-                      <input type="checkbox" className="text-blue-600 focus:ring-blue-500" />
-                    </label>
-                    <label className="flex items-center justify-between gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
-                      <span className="text-sm text-gray-700">ألبوم صور</span>
-                      <input type="checkbox" className="text-blue-600 focus:ring-blue-500" />
-                    </label>
-                    <label className="flex items-center justify-between gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
-                      <span className="text-sm text-gray-700">جلسات خارجية</span>
-                      <input type="checkbox" className="text-blue-600 focus:ring-blue-500" />
-                    </label>
-                  </div>
-                </div>
-
-                {/* خيارات متقدمة */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <h4 className="font-medium text-gray-900 mb-3">خيارات متقدمة</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">الخبرة</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option>أي خبرة</option>
-                        <option>أقل من سنة</option>
-                        <option>1-3 سنوات</option>
-                        <option>أكثر من 3 سنوات</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">التقييم</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option>أي تقييم</option>
-                        <option>4 نجوم فأكثر</option>
-                        <option>3 نجوم فأكثر</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      
 
       <style jsx>{`
         .slider::-webkit-slider-thumb {
           appearance: none;
-          height: 20px;
-          width: 20px;
+          height: 22px;
+          width: 22px;
           border-radius: 50%;
-          background: #8B5CF6;
+          background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
           cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+          border: 3px solid white;
+          box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+          transition: all 0.2s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 8px rgba(139, 92, 246, 0.6);
         }
         
         .slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
+          height: 22px;
+          width: 22px;
           border-radius: 50%;
-          background: #8B5CF6;
+          background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
           cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+          border: 3px solid white;
+          box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+          transition: all 0.2s;
+        }
+        
+        .slider::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 8px rgba(139, 92, 246, 0.6);
         }
       `}</style>
     </div>

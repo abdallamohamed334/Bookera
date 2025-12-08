@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon backend/index.js",
     "start": "cross-env NODE_ENV=production node backend/index.js",
-    "build": "npm install --prefix frontend && npm run build --prefix frontend"
+    "build": "echo 'No frontend build. Backend only.'"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +24,6 @@
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.6.1",
-    "experss": "^0.0.1-security",
     "express": "^4.19.2",
     "firebase": "^12.6.0",
     "jsonwebtoken": "^9.0.2",
@@ -35,7 +34,6 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.4",
     "pg": "^8.16.3",
-    "react-leaflet": "^4.2.1",
     "resend": "^6.3.0",
     "twilio": "^5.10.5",
     "uuid": "^13.0.0"

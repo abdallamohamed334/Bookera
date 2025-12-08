@@ -18,6 +18,7 @@ const PhotographerDetailsPage = () => {
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [albumImageIndex, setAlbumImageIndex] = useState(0);
   const [sliderImages, setSliderImages] = useState([]);
+  const [socialMediaVisible, setSocialMediaVisible] = useState(false);
 
   // دالة محسنة لاختيار صور عشوائية
   const getRandomSliderImages = (portfolio, count = 4) => {
@@ -49,18 +50,13 @@ const PhotographerDetailsPage = () => {
 
   // دالة لتنظيف وإعداد رقم الهاتف للواتساب
   const prepareWhatsAppNumber = (phoneNumber) => {
+    if (!phoneNumber) return "";
+    
     // إزالة أي رموز غير رقمية
     let cleanNumber = phoneNumber.replace(/\D/g, '');
     
-    // إذا بدأ الرقم بـ 0، نستبدله بـ 20 (كود مصر)
-    if (cleanNumber.startsWith('0')) {
-      cleanNumber = '20' + cleanNumber.substring(1);
-    }
-    
-    // إذا كان الرقم يبدأ بـ 10 بدون كود دولة، نضيف 20
-    if (cleanNumber.startsWith('10') && cleanNumber.length === 10) {
-      cleanNumber = '20' + cleanNumber;
-    }
+    // إزالة أي أصفار في البداية
+    cleanNumber = cleanNumber.replace(/^0+/, '');
     
     // التأكد من أن الرقم يبدأ بـ 20 (كود مصر)
     if (!cleanNumber.startsWith('20')) {
@@ -226,21 +222,6 @@ const PhotographerDetailsPage = () => {
     }
   };
 
-  // Social media functions
-  const handleSocialMediaClick = (platform, url) => {
-    if (!url) {
-      alert(`لا يوجد رابط متاح لـ ${platform}`);
-      return;
-    }
-    
-    let finalUrl = url;
-    if (!url.startsWith('http')) {
-      finalUrl = `https://${url}`;
-    }
-    
-    window.open(finalUrl, '_blank');
-  };
-
   // دالة لعرض الألبوم في المودال
   const renderAlbumModalContent = () => {
     if (!selectedAlbum) return null;
@@ -382,7 +363,19 @@ const PhotographerDetailsPage = () => {
   };
 
   const renderWorkingHours = () => {
-    if (!photographer?.workingHours) return null;
+    // مواعيد العمل الافتراضية للمصورين
+    const defaultWorkingHours = {
+      "saturday": "10:00 ص - 10:00 م",
+      "sunday": "10:00 ص - 10:00 م",
+      "monday": "10:00 ص - 10:00 م", 
+      "tuesday": "10:00 ص - 10:00 م",
+      "wednesday": "10:00 ص - 10:00 م",
+      "thursday": "10:00 ص - 10:00 م",
+      "friday": "11:00 ص - 6:00 م"
+    };
+
+    // استخدام المواعيد من البيانات إذا كانت موجودة، وإلا استخدام الافتراضية
+    const workingHours = photographer?.workingHours || defaultWorkingHours;
 
     const days = {
       "saturday": "السبت",
@@ -396,12 +389,28 @@ const PhotographerDetailsPage = () => {
 
     return (
       <div className="space-y-4">
-        {Object.entries(photographer.workingHours).map(([day, hours]) => (
-          <div key={day} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200">
-            <span className="text-gray-700 font-medium text-lg">{days[day]}:</span>
-            <span className="font-bold text-blue-600 text-lg">{hours}</span>
+        {Object.entries(workingHours).map(([day, hours]) => (
+          <div key={day} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors">
+            <span className="text-gray-700 font-medium text-lg flex items-center gap-2">
+              {day === "friday" ? "🎉" : "📅"}
+              {days[day]}:
+            </span>
+            <span className={`font-bold text-lg ${
+              hours.includes("مغلق") || hours.includes("إجازة") 
+                ? "text-red-600" 
+                : "text-blue-600"
+            }`}>
+              {hours}
+            </span>
           </div>
         ))}
+        
+        {/* ملاحظة */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+          <p className="text-yellow-800 text-sm text-center">
+            ⚠️ المواعيد قابلة للتعديل حسب طلب العميل وتوافر المصور
+          </p>
+        </div>
       </div>
     );
   };
@@ -421,62 +430,75 @@ const PhotographerDetailsPage = () => {
         transition={{ delay: 0.3 }}
         className="bg-white rounded-2xl border border-gray-200 p-6"
       >
-        <h3 className="text-lg font-bold text-gray-800 mb-4">🌐 وسائل التواصل الاجتماعي</h3>
-        <div className="space-y-3">
-          {socialMedia.instagram && (
-            <button
-              onClick={() => handleSocialMediaClick("انستجرام", socialMedia.instagram)}
-              className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 rounded-lg border border-pink-200 transition-all duration-300 group"
-            >
-              <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                <span>📷</span>
-              </div>
-              <div className="text-right flex-1">
-                <div className="font-bold text-gray-800">انستجرام</div>
-                <div className="text-gray-600 text-sm truncate" dir="ltr">
-                  {socialMedia.instagram.replace('https://', '').replace('www.', '').substring(0, 30)}
-                  {socialMedia.instagram.length > 30 ? '...' : ''}
-                </div>
-              </div>
-            </button>
-          )}
-
-          {socialMedia.facebook && (
-            <button
-              onClick={() => handleSocialMediaClick("فيسبوك", socialMedia.facebook)}
-              className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-50 hover:from-blue-100 hover:to-blue-100 rounded-lg border border-blue-200 transition-all duration-300 group"
-            >
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                <span>📘</span>
-              </div>
-              <div className="text-right flex-1">
-                <div className="font-bold text-gray-800">فيسبوك</div>
-                <div className="text-gray-600 text-sm truncate" dir="ltr">
-                  {socialMedia.facebook.replace('https://', '').replace('www.', '').substring(0, 30)}
-                  {socialMedia.facebook.length > 30 ? '...' : ''}
-                </div>
-              </div>
-            </button>
-          )}
-
-          {socialMedia.website && (
-            <button
-              onClick={() => handleSocialMediaClick("الموقع الإلكتروني", socialMedia.website)}
-              className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg border border-green-200 transition-all duration-300 group"
-            >
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                <span>🌐</span>
-              </div>
-              <div className="text-right flex-1">
-                <div className="font-bold text-gray-800">الموقع الإلكتروني</div>
-                <div className="text-gray-600 text-sm truncate" dir="ltr">
-                  {socialMedia.website.replace('https://', '').replace('www.', '').substring(0, 30)}
-                  {socialMedia.website.length > 30 ? '...' : ''}
-                </div>
-              </div>
-            </button>
-          )}
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-gray-800">🌐 وسائل التواصل الاجتماعي</h3>
+          <button
+            onClick={() => setSocialMediaVisible(!socialMediaVisible)}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            {socialMediaVisible ? 'إخفاء' : 'إظهار'}
+          </button>
         </div>
+        
+        {socialMediaVisible && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-3"
+          >
+            {socialMedia.instagram && (
+              <button
+                onClick={() => window.open(socialMedia.instagram.startsWith('http') ? socialMedia.instagram : `https://${socialMedia.instagram}`, '_blank')}
+                className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 rounded-lg border border-pink-200 transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                  <span>📷</span>
+                </div>
+                <div className="text-right flex-1">
+                  <div className="font-bold text-gray-800">انستجرام</div>
+                  <div className="text-gray-600 text-sm truncate">
+                    اضغط للزيارة
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {socialMedia.facebook && (
+              <button
+                onClick={() => window.open(socialMedia.facebook.startsWith('http') ? socialMedia.facebook : `https://${socialMedia.facebook}`, '_blank')}
+                className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-50 hover:from-blue-100 hover:to-blue-100 rounded-lg border border-blue-200 transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                  <span>📘</span>
+                </div>
+                <div className="text-right flex-1">
+                  <div className="font-bold text-gray-800">فيسبوك</div>
+                  <div className="text-gray-600 text-sm truncate">
+                    اضغط للزيارة
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {socialMedia.website && (
+              <button
+                onClick={() => window.open(socialMedia.website.startsWith('http') ? socialMedia.website : `https://${socialMedia.website}`, '_blank')}
+                className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg border border-green-200 transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                  <span>🌐</span>
+                </div>
+                <div className="text-right flex-1">
+                  <div className="font-bold text-gray-800">الموقع الإلكتروني</div>
+                  <div className="text-gray-600 text-sm truncate">
+                    اضغط للزيارة
+                  </div>
+                </div>
+              </button>
+            )}
+          </motion.div>
+        )}
       </motion.div>
     );
   };
@@ -700,83 +722,85 @@ const PhotographerDetailsPage = () => {
               {/* Tabs Content */}
               <div className="p-6">
                 {activeTab === "portfolio" && (
-                  <div className="space-y-6">
-                    {/* Albums Grid */}
+                  <div className="space-y-8">
+                    {/* Albums Grid - تصميم جديد */}
                     {photographer.portfolio && photographer.portfolio.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {photographer.portfolio.map((album, index) => (
                           <motion.div
-                            key={album._id}
-                            className="group bg-white rounded-2xl border border-gray-200 overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-500 hover:border-blue-300"
-                            onClick={() => openAlbumModal(album)}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            whileHover={{ 
-                              scale: 1.02,
-                              y: -5
-                            }}
+                            key={album._id || index}
+                            className="group relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-200 hover:border-blue-300"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
+                            whileHover={{ y: -8, scale: 1.02 }}
                           >
-                            <div className="relative h-64 overflow-hidden">
+                            {/* Album Cover */}
+                            <div 
+                              className="relative h-64 cursor-pointer overflow-hidden"
+                              onClick={() => openAlbumModal(album)}
+                            >
                               <img
-                                src={album.coverImage}
+                                src={album.coverImage || "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800"}
                                 alt={album.title}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              
+                              {/* Overlay Gradient */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 <div className="absolute bottom-4 left-4 right-4">
-                                  <div className="flex items-center justify-between text-white">
-                                    <div>
-                                      <h3 className="text-xl font-bold mb-1">{album.title}</h3>
-                                      <p className="text-sm text-gray-200 line-clamp-2">{album.description}</p>
-                                    </div>
-                                    <div className="bg-blue-500 rounded-full p-3 group-hover:scale-110 transition-transform duration-300">
-                                      👁️
-                                    </div>
+                                  <div className="text-white text-center">
+                                    <div className="text-3xl mb-2">👁️</div>
+                                    <p className="font-bold text-sm">عرض الألبوم</p>
                                   </div>
                                 </div>
                               </div>
                               
-                              {/* Badges */}
-                              <div className="absolute top-4 left-4 flex gap-2">
-                                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+                              {/* Quick Info Badge */}
+                              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
+                                <span className="text-blue-600 font-bold text-sm">
                                   {album.images?.length || 0} صورة
                                 </span>
-                                {album.videos && album.videos.length > 0 && (
-                                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
-                                    {album.videos.length} فيديو
-                                  </span>
-                                )}
-                                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+                              </div>
+                              
+                              {/* Category Badge */}
+                              <div className="absolute top-3 left-3">
+                                <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
                                   {album.category}
                                 </span>
                               </div>
                             </div>
                             
-                            <div className="p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-lg font-bold text-gray-800">{album.title}</h3>
-                                <div className="flex items-center gap-2">
-                                  {album.videos && album.videos.length > 0 && (
-                                    <span className="text-red-600 text-sm font-medium">
-                                      {album.videos.length} فيديو
-                                    </span>
-                                  )}
-                                  <span className="text-blue-600 text-sm font-medium">
-                                    {album.images?.length || 0} صورة
-                                  </span>
-                                </div>
-                              </div>
-                              <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">
+                            {/* Album Info */}
+                            <div className="p-5">
+                              <h3 className="text-xl font-bold text-gray-800 mb-3 truncate">
+                                {album.title}
+                              </h3>
+                              
+                              <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
                                 {album.description}
                               </p>
-                              <div className="flex items-center justify-between">
-                                <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs">
-                                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                  {album.category}
-                                </span>
-                                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors">
-                                  عرض الألبوم →
+                              
+                              {/* Stats */}
+                              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                                <div className="flex items-center gap-2">
+                                  {album.videos && album.videos.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-red-500">🎥</span>
+                                      <span className="text-gray-600 text-xs">{album.videos.length}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-blue-500">🖼️</span>
+                                    <span className="text-gray-600 text-xs">{album.images?.length || 0}</span>
+                                  </div>
+                                </div>
+                                
+                                <button 
+                                  onClick={() => openAlbumModal(album)}
+                                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                                >
+                                  استعراض
                                 </button>
                               </div>
                             </div>
@@ -784,10 +808,51 @@ const PhotographerDetailsPage = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-12">
-                        <div className="text-6xl mb-4">📷</div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">لا توجد ألبومات متاحة</h3>
-                        <p className="text-gray-600">لم يقم المصور برفع أي ألبومات حتى الآن</p>
+                      <div className="text-center py-16 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
+                        <div className="text-7xl mb-6">📷</div>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-3">لا توجد ألبومات متاحة</h3>
+                        <p className="text-gray-600 text-lg">لم يقم المصور برفع أي ألبومات حتى الآن</p>
+                        <button className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full font-semibold transition-colors duration-300 shadow-lg">
+                          ← العودة للمعرض
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Albums Summary */}
+                    {photographer.portfolio && photographer.portfolio.length > 0 && (
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+                        <div className="flex flex-col md:flex-row justify-between items-center">
+                          <div className="text-center md:text-right mb-4 md:mb-0">
+                            <h4 className="text-xl font-bold text-gray-800 mb-2">📊 ملخص الألبومات</h4>
+                            <p className="text-gray-600">إجمالي {photographer.portfolio.length} ألبوم</p>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {photographer.portfolio.reduce((total, album) => total + (album.images?.length || 0), 0)}
+                              </div>
+                              <div className="text-gray-600 text-sm">صورة</div>
+                            </div>
+                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+                              <div className="text-2xl font-bold text-red-600">
+                                {photographer.portfolio.reduce((total, album) => total + (album.videos?.length || 0), 0)}
+                              </div>
+                              <div className="text-gray-600 text-sm">فيديو</div>
+                            </div>
+                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+                              <div className="text-2xl font-bold text-green-600">
+                                {new Set(photographer.portfolio.map(album => album.category)).size}
+                              </div>
+                              <div className="text-gray-600 text-sm">فئة</div>
+                            </div>
+                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+                              <div className="text-2xl font-bold text-purple-600">
+                                {photographer.portfolio.length}
+                              </div>
+                              <div className="text-gray-600 text-sm">ألبوم</div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

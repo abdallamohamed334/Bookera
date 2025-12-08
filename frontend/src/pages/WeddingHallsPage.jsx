@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 const WeddingHallsPage = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  
+
   // استخدام useRef لحفظ حالة الفلاتر
   const filtersStateRef = useRef({
     priceRange: 50000,
@@ -37,7 +37,7 @@ const WeddingHallsPage = () => {
   const [locationType, setLocationType] = useState(filtersStateRef.current.locationType);
   const [eventTypes, setEventTypes] = useState(filtersStateRef.current.eventTypes); // تغيير إلى مصفوفة
   const [sortBy, setSortBy] = useState(filtersStateRef.current.sortBy);
-  
+
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [filteredVenues, setFilteredVenues] = useState([]);
   const [currentView, setCurrentView] = useState("list");
@@ -47,7 +47,7 @@ const WeddingHallsPage = () => {
   const [dataSource, setDataSource] = useState("");
   const [favorites, setFavorites] = useState([]);
   const [searchQuery, setSearchQuery] = useState(filtersStateRef.current.searchQuery);
-  
+
   // States for UI
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -61,9 +61,9 @@ const WeddingHallsPage = () => {
   // محافظات مصر - الغربية فقط
   const governorates = {
     "all": { name: "كل المحافظات", cities: ["كل المدن"] },
-    "الغربية": { 
-      name: "الغربية", 
-      cities: ["كل المدن", "طنطا", "المحلة الكبرى", "زفتى", "سمنود", "بسيون", "قطور", "السنطه", "كفر الزيات", "صفتا", "شيخون"] 
+    "الغربية": {
+      name: "الغربية",
+      cities: ["كل المدن", "طنطا", "المحلة الكبري", "زفتى", "سمنود", "بسيون", "قطور", "السنطه", "كفر الزيات", "صفتا", "شيخون"]
     }
   };
 
@@ -87,7 +87,7 @@ const WeddingHallsPage = () => {
   // أنواع المناسبات - محدثة
   const availableEventTypes = {
     "فرح": "فرح",
-    "خطوبة": "خطوبة", 
+    "خطوبة": "خطوبة",
     "كتب_كتاب": "كتب كتاب",
     "عيد_ميلاد": "عيد ميلاد",
     "مؤتمرات": "مؤتمرات/مناسبات عمل"
@@ -121,7 +121,7 @@ const WeddingHallsPage = () => {
   // دوال المقارنة الجديدة
   const toggleVenueComparison = (venue) => {
     const venueId = venue.id || venue._id;
-    
+
     if (venuesToCompare.some(v => (v.id || v._id) === venueId)) {
       // إزالة من المقارنة
       setVenuesToCompare(prev => prev.filter(v => (v.id || v._id) !== venueId));
@@ -152,14 +152,14 @@ const WeddingHallsPage = () => {
     setComparisonMode(false);
     setVenuesToCompare([]);
   };
-      
+
   // جلب البيانات من الـ API
   useEffect(() => {
     const fetchWeddingVenues = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await fetch(`http://localhost:5000/api/wedding-venues/`, {
           method: 'GET',
           headers: {
@@ -169,7 +169,7 @@ const WeddingHallsPage = () => {
 
         if (response.ok) {
           const data = await response.json();
-          
+
           if (data.venues && data.venues.length > 0) {
             const venuesWithId = data.venues.map(venue => ({
               ...venue,
@@ -189,7 +189,7 @@ const WeddingHallsPage = () => {
               originalPrice: venue.originalPrice || null,
               discount: venue.discount || null
             }));
-            
+
             setWeddingVenues(venuesWithId);
             setDataSource("api");
           } else {
@@ -202,7 +202,7 @@ const WeddingHallsPage = () => {
         console.error('❌ خطأ في جلب البيانات:', err);
         setDataSource("error");
         setError(`تعذر الاتصال بالخادم: ${err.message}`);
-        
+
         // Fallback to sample data for demo
         setTimeout(() => {
           setWeddingVenues(getSampleVenues());
@@ -220,14 +220,14 @@ const WeddingHallsPage = () => {
   // دالة لاستخراج event_types من weddingSpecific للبيانات القديمة
   const getEventTypesFromWeddingSpecific = (weddingSpecific) => {
     if (!weddingSpecific) return ['فرح']; // قيمة افتراضية
-    
+
     const events = [];
     if (weddingSpecific.weddingEvents) events.push('فرح');
     if (weddingSpecific.engagementEvents) events.push('خطوبة');
     if (weddingSpecific.katbKitaabEvents) events.push('كتب_كتاب');
     if (weddingSpecific.birthdayEvents) events.push('عيد_ميلاد');
     if (weddingSpecific.businessEvents) events.push('مؤتمرات');
-    
+
     return events.length > 0 ? events : ['فرح'];
   };
 
@@ -353,8 +353,8 @@ const WeddingHallsPage = () => {
       type: "فندق",
       category: "5 نجوم",
       governorate: "الغربية",
-      city: "المحلة الكبرى",
-      address: "شارع البحر الأعظم، المحلة الكبرى",
+      city: "المحلة الكبري",
+      address: "شارع البحر الأعظم، المحلة الكبري",
       capacity: 400,
       minCapacity: 150,
       maxCapacity: 500,
@@ -381,7 +381,7 @@ const WeddingHallsPage = () => {
       website: "https://palmresort.com",
       locationLat: 30.9685,
       locationLng: 31.1663,
-      mapLink: "https://maps.google.com/?q=المحلة+الكبرى+الغربية",
+      mapLink: "https://maps.google.com/?q=المحلة الكبري+الكبرى+الغربية",
       weddingSpecific: {
         brideRoom: true,
         groomRoom: true,
@@ -491,7 +491,7 @@ const WeddingHallsPage = () => {
   // فلترة وترتيب الأماكن - محدثة لاستخدام event_types متعددة
   useEffect(() => {
     let filtered = weddingVenues.filter(venue => {
-      const matchesSearch = searchQuery === "" || 
+      const matchesSearch = searchQuery === "" ||
         venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -501,18 +501,18 @@ const WeddingHallsPage = () => {
       const matchesGovernorate = selectedGovernorate === "all" || venue.governorate === selectedGovernorate;
       const matchesCity = selectedCity === "all" || selectedCity === "كل المدن" || venue.city === selectedCity;
       const matchesVenueType = venueType === "all" || venue.type === venueType;
-      const matchesLocationType = locationType === "all" || 
+      const matchesLocationType = locationType === "all" ||
         (locationType === "open" && venue.weddingSpecific?.openAir) ||
         (locationType === "closed" && !venue.weddingSpecific?.openAir) ||
         (locationType === "mixed" && venue.weddingSpecific?.openAir !== undefined);
-      
-      const matchesEventTypes = eventTypes.length === 0 || 
-        (venue.event_types && eventTypes.some(selectedType => 
+
+      const matchesEventTypes = eventTypes.length === 0 ||
+        (venue.event_types && eventTypes.some(selectedType =>
           venue.event_types.includes(selectedType)
         ));
-      
-      return matchesSearch && matchesPrice && matchesCapacity && matchesGovernorate && 
-             matchesCity && matchesVenueType && matchesLocationType && matchesEventTypes;
+
+      return matchesSearch && matchesPrice && matchesCapacity && matchesGovernorate &&
+        matchesCity && matchesVenueType && matchesLocationType && matchesEventTypes;
     });
 
     // ترتيب النتائج
@@ -567,8 +567,8 @@ const WeddingHallsPage = () => {
   };
 
   const handleVenueClick = (venue) => {
-      const venueId = venue.id || venue._id;
-      window.open(`/venue/${venueId}`, '_blank');
+    const venueId = venue.id || venue._id;
+    window.open(`/venue/${venueId}`, '_blank');
   };
 
   const handleBackToList = () => {
@@ -596,7 +596,7 @@ const WeddingHallsPage = () => {
   // مشاركة القاعة
   const shareVenue = async (venue, e) => {
     if (e) e.stopPropagation();
-    
+
     const venueId = venue.id || venue._id;
     const shareUrl = `${window.location.origin}/venue/${venueId}`;
     const shareText = `شوف قاعة ${venue.name} في ${venue.city} - ${venue.description?.substring(0, 100)}...`;
@@ -627,7 +627,7 @@ const WeddingHallsPage = () => {
           <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-800">مقارنة القاعات</h2>
-              <button 
+              <button
                 onClick={() => setShowComparisonModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
               >
@@ -645,8 +645,8 @@ const WeddingHallsPage = () => {
                     {venuesToCompare.map((venue, index) => (
                       <th key={venue.id || venue._id} className="text-center p-4">
                         <div className="flex flex-col items-center">
-                          <img 
-                            src={venue.image} 
+                          <img
+                            src={venue.image}
                             alt={venue.name}
                             className="w-20 h-20 object-cover rounded-lg mb-2"
                           />
@@ -776,7 +776,7 @@ const WeddingHallsPage = () => {
   if (currentView === "details" && selectedVenue) {
     return (
       <div className="min-h-screen bg-white">
-        <VenueDetails 
+        <VenueDetails
           venue={selectedVenue}
           onBack={handleBackToList}
           onBookNow={handleBookNow}
@@ -791,7 +791,7 @@ const WeddingHallsPage = () => {
           }}
           onShareVenue={shareVenue}
         />
-        <BookingModal 
+        <BookingModal
           show={showBookingModal}
           onClose={closeBookingModal}
           venue={selectedVenue}
@@ -838,7 +838,7 @@ const WeddingHallsPage = () => {
 
             {/* User Menu */}
             <div className="flex items-center gap-3">
-              <Navigation 
+              <Navigation
                 user={user}
                 onLogout={logout}
                 onNavigateHome={handleBackToHome}
@@ -879,11 +879,10 @@ const WeddingHallsPage = () => {
               <button
                 onClick={startComparison}
                 disabled={venuesToCompare.length < 2}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  venuesToCompare.length >= 2 
-                    ? 'bg-black text-white hover:bg-gray-800 shadow-md' 
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${venuesToCompare.length >= 2
+                  ? 'bg-black text-white hover:bg-gray-800 shadow-md'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
               >
                 مقارنة ({venuesToCompare.length})
               </button>
@@ -905,19 +904,19 @@ const WeddingHallsPage = () => {
           <div className="absolute top-0 left-0 w-72 h-72 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"></div>
         </div>
-        
+
         <div className="relative max-w-6xl mx-auto px-4 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
             اكتشف أفضل قاعات الأفراح والمناسبات في الغربية
           </h1>
           <p className="text-lg text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
-            احجز القاعة المثالية لحفل زفافك، خطوبتك، كتب كتاب، عيد ميلاد، أو مؤتمر عملك. 
+            احجز القاعة المثالية لحفل زفافك، خطوبتك، كتب كتاب، عيد ميلاد، أو مؤتمر عملك.
             اختر من بين أفضل الأماكن المميزة بأسعار مناسبة وتقييمات حقيقية
           </p>
-          
+
           {/* Event Types Icons */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {["💒 أفراح", "💍 خطوبة", "📖 كتب كتاب", "🎂 أعياد ميلاد", "👔 مؤتمرات"].map((event, index) => (
+            {["💒 أفراح", "💍 خطوبة", "📖 كتب كتاب", "🎂 أعياد ميلاد"].map((event, index) => (
               <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
                 <span className="text-sm font-medium">{event}</span>
               </div>
@@ -926,7 +925,7 @@ const WeddingHallsPage = () => {
 
           {/* Hero Image */}
           <div className="mb-8 max-w-4xl mx-auto">
-            <img 
+            <img
               src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80"
               alt="قاعة أفراح فاخرة"
               className="w-full h-64 md:h-80 object-cover rounded-2xl shadow-2xl"
@@ -955,13 +954,8 @@ const WeddingHallsPage = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap justify-center gap-3">
-            <button 
-              onClick={() => document.getElementById('search-input')?.focus()}
-              className="bg-white text-black hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              ابدأ البحث الآن
-            </button>
-            <button 
+            
+            <button
               onClick={() => setShowMobileFilters(true)}
               className="border-2 border-white text-white hover:bg-white/10 px-6 py-3 rounded-lg font-semibold transition-all duration-300"
             >
@@ -976,27 +970,11 @@ const WeddingHallsPage = () => {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             {/* Search محسّن */}
-            <div className="flex-1 w-full">
-              <div className="relative">
-                <input
-                  id="search-input"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ابحث عن قاعة، منطقة، أو خدمة..."
-                  className="w-full pr-4 pl-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-300 shadow-sm"
-                />
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
+           
 
             {/* Controls محسّنة */}
             <div className="flex gap-3 w-full md:w-auto">
-              <button 
+              <button
                 onClick={() => setShowMobileFilters(true)}
                 className="flex items-center gap-2 px-4 py-3 bg-black hover:bg-gray-800 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
               >
@@ -1027,7 +1005,7 @@ const WeddingHallsPage = () => {
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800">فلاتر البحث المتقدم</h2>
-              <button 
+              <button
                 onClick={resetFilters}
                 className="text-black hover:text-gray-800 text-sm font-medium bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
               >
@@ -1066,19 +1044,7 @@ const WeddingHallsPage = () => {
                 </select>
               </div>
 
-              {/* Venue Type Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">نوع القاعة</label>
-                <select
-                  value={venueType}
-                  onChange={(e) => setVenueType(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-300"
-                >
-                  {Object.entries(venueTypes).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-              </div>
+            
 
               {/* Location Type Filter */}
               <div>
@@ -1096,36 +1062,10 @@ const WeddingHallsPage = () => {
 
               {/* Event Types Filter */}
               <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  أنواع المناسبات
-                  {eventTypes.length > 0 && (
-                    <span className="text-xs text-gray-500 mr-2">
-                      ({eventTypes.length} مختار)
-                    </span>
-                  )}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(availableEventTypes).map(([value, label]) => (
-                    <button
-                      key={value}
-                      onClick={() => handleEventTypeToggle(value)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm transition-all duration-200 ${
-                        eventTypes.includes(value)
-                          ? 'bg-black text-white border-black'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-black'
-                      }`}
-                    >
-                      <span>{label}</span>
-                      {eventTypes.includes(value) && (
-                        <span className="text-xs bg-white text-black rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                          ✓
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                
+                
                 {eventTypes.length > 0 && (
-                  <button 
+                  <button
                     onClick={clearAllEventTypes}
                     className="mt-2 text-red-600 hover:text-red-800 text-xs font-medium"
                   >
@@ -1135,31 +1075,7 @@ const WeddingHallsPage = () => {
               </div>
 
               {/* Price Range Filter - محسن */}
-              <div className="lg:col-span-2">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    نطاق السعر
-                  </label>
-                  <span className="text-sm font-bold text-black bg-gray-100 px-2 py-1 rounded">
-                    حتى {priceRange.toLocaleString()} جنيه
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="10000"
-                  max="100000"
-                  step="10000"
-                  value={priceRange}
-                  onChange={(e) => setPriceRange(parseInt(e.target.value))}
-                  className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
-                  <span className="bg-gray-100 px-2 py-1 rounded">10,000 ج</span>
-                  <span className="bg-gray-100 px-2 py-1 rounded">50,000 ج</span>
-                  <span className="bg-gray-100 px-2 py-1 rounded">100,000 ج</span>
-                </div>
-              </div>
-
+             
               {/* Capacity Range Filter - محسن */}
               <div className="lg:col-span-2">
                 <div className="flex items-center justify-between mb-2">
@@ -1199,14 +1115,7 @@ const WeddingHallsPage = () => {
                   {filteredVenues.length} قاعة
                 </span>
               </h2>
-              <p className="text-gray-600 text-sm mt-2 flex items-center gap-2">
-                {dataSource === "api" 
-                  ? `✨ عرض ${filteredVenues.length} من ${weddingVenues.length} قاعة حقيقية` 
-                  : "💫 بيانات تجريبية للعرض والتجربة"}
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  🎯 جميع المناسبات: أفراح، خطوبة، كتب كتاب، أعياد ميلاد، مؤتمرات
-                </span>
-              </p>
+            
             </div>
 
             {/* Comparison Mode Toggle */}
@@ -1226,11 +1135,10 @@ const WeddingHallsPage = () => {
               )}
               <button
                 onClick={() => setComparisonMode(!comparisonMode)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-300 text-sm font-medium ${
-                  comparisonMode
-                    ? 'bg-blue-100 text-blue-800 border-blue-300'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-300 text-sm font-medium ${comparisonMode
+                  ? 'bg-blue-100 text-blue-800 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -1244,20 +1152,20 @@ const WeddingHallsPage = () => {
           {(selectedGovernorate !== "all" || selectedCity !== "all" || venueType !== "all" || locationType !== "all" || eventTypes.length > 0 || searchQuery || priceRange < 50000 || capacityRange < 500) && (
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="text-sm text-gray-500 font-medium">الفلاتر النشطة:</span>
-              
+
               {/* Event Types Active Filters */}
               {eventTypes.map(eventType => (
                 <span key={eventType} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-medium">
                   {availableEventTypes[eventType]}
-                  <button 
-                    onClick={() => handleEventTypeToggle(eventType)} 
+                  <button
+                    onClick={() => handleEventTypeToggle(eventType)}
                     className="hover:text-blue-900 text-xs bg-blue-200 rounded-full w-5 h-5 flex items-center justify-center"
                   >
                     ×
                   </button>
                 </span>
               ))}
-              
+
               {selectedGovernorate !== "all" && (
                 <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
                   {governorates[selectedGovernorate]?.name}
@@ -1270,37 +1178,22 @@ const WeddingHallsPage = () => {
                   <button onClick={() => setSelectedCity("all")} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
                 </span>
               )}
-              {venueType !== "all" && (
-                <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  {venueTypes[venueType]}
-                  <button onClick={() => setVenueType("all")} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
-                </span>
-              )}
+            
               {locationType !== "all" && (
                 <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
                   {locationTypes[locationType]}
                   <button onClick={() => setLocationType("all")} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
                 </span>
               )}
-              {searchQuery && (
-                <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  بحث: {searchQuery}
-                  <button onClick={() => setSearchQuery("")} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
-                </span>
-              )}
-              {priceRange < 50000 && (
-                <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  سعر: حتى {priceRange.toLocaleString()} ج
-                  <button onClick={() => setPriceRange(50000)} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
-                </span>
-              )}
+        
+              
               {capacityRange < 500 && (
                 <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
                   سعة: حتى {capacityRange} شخص
                   <button onClick={() => setCapacityRange(500)} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
                 </span>
               )}
-              <button 
+              <button
                 onClick={resetFilters}
                 className="text-black hover:text-gray-800 text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors"
               >
@@ -1323,7 +1216,7 @@ const WeddingHallsPage = () => {
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-bold text-gray-700 mb-3">لا توجد نتائج</h3>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">لم نتمكن من العثور على قاعات تطابق معايير البحث. حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
-              <button 
+              <button
                 onClick={resetFilters}
                 className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium"
               >
@@ -1333,8 +1226,8 @@ const WeddingHallsPage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredVenues.map((venue) => (
-                <VenueCard 
-                  key={venue.id || venue._id} 
+                <VenueCard
+                  key={venue.id || venue._id}
                   venue={venue}
                   onVenueClick={handleVenueClick}
                   isFavorite={favorites.includes(venue.id || venue._id)}
@@ -1362,7 +1255,7 @@ const WeddingHallsPage = () => {
 
       {/* Mobile Filters Modal */}
       {showMobileFilters && (
-        <MobileFilters 
+        <MobileFilters
           onClose={() => setShowMobileFilters(false)}
           filtersProps={{
             searchQuery,
@@ -1398,7 +1291,7 @@ const WeddingHallsPage = () => {
         />
       )}
 
-      <BookingModal 
+      <BookingModal
         show={showBookingModal}
         onClose={closeBookingModal}
         venue={selectedVenue}
