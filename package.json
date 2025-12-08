@@ -6,11 +6,10 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon backend/index.js",
     "start": "node backend/index.js",
-    "build": "nodemon index.js"
+    "build": "echo 'No build needed'"
   },
   "keywords": [],
   "author": "",
-  
   "type": "module",
   "license": "ISC",
   "engines": {
@@ -25,7 +24,6 @@
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.6.1",
-    
     "express": "^4.19.2",
     "firebase": "^12.6.0",
     "jsonwebtoken": "^9.0.2",
