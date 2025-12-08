@@ -206,7 +206,7 @@ const JoinUsPage = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              انضم إلى EventUp
+              انضم إلى Bookera
             </motion.h1>
             
             <div className="w-20"></div>
@@ -222,7 +222,7 @@ const JoinUsPage = () => {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
-            انضم إلى عائلة EventUp
+            انضم إلى عائلة Bookera
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             كن شريكاً معنا واربح مع منصة الحجوزات الرائدة في المملكة
@@ -572,7 +572,7 @@ const JoinUsPage = () => {
               <div className="space-y-3 text-gray-600 dark:text-gray-300">
                 <p className="flex items-center space-x-3 space-x-reverse">
                   <span>📧</span>
-                  <span>partners@EventUp.com</span>
+                  <span>partners@Bookera.com</span>
                 </p>
                 <p className="flex items-center space-x-3 space-x-reverse">
                   <span>📞</span>

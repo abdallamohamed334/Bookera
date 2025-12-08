@@ -132,7 +132,7 @@ const CompanyHomePage = () => {
     {
       name: "فاطمة الناصر",
       role: "مديرة فعاليات",
-      comment: "أكثر من مجرد منصة حجوزات.. EventUp أصبحت مصدر دخل مهم لي! الاستضافة أصبحت ممتعة وبسيطة.",
+      comment: "أكثر من مجرد منصة حجوزات.. Bookera أصبحت مصدر دخل مهم لي! الاستضافة أصبحت ممتعة وبسيطة.",
       rating: 5,
       avatar: "👩‍💼",
       type: "host"
@@ -494,7 +494,7 @@ const CompanyHomePage = () => {
           transition={{ delay: 0.1 }}
           className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4"
         >
-          دعنا نرى ما يقوله الناس عن EventUp
+          دعنا نرى ما يقوله الناس عن Bookera
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -521,7 +521,7 @@ const CompanyHomePage = () => {
               transition={{ delay: 0.3 }}
               className="text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-6 italic"
             >
-              "لم أتخيل أبداً أن EventUp يمكن أن تكون مصدر الدخل الذي أصبحت عليه! ولكن الأهم من ذلك، الاستضافة أصبحت ممتعة وبسيطة وتوسع باستمرار رؤيتي لما يمكن أن يكون عليه هذا المكان."
+              "لم أتخيل أبداً أن Bookera يمكن أن تكون مصدر الدخل الذي أصبحت عليه! ولكن الأهم من ذلك، الاستضافة أصبحت ممتعة وبسيطة وتوسع باستمرار رؤيتي لما يمكن أن يكون عليه هذا المكان."
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -580,7 +580,7 @@ const CompanyHomePage = () => {
                 whileHover={{ scale: 1.02 }}
               >
                 
-                <span className="text-lg font-bold text-gray-800 dark:text-white">EventUp</span>
+                <span className="text-lg font-bold text-gray-800 dark:text-white">Bookera</span>
               </motion.div>
             </div>
             
@@ -833,7 +833,7 @@ const CompanyHomePage = () => {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">لماذا تختار EventUp؟</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">لماذا تختار Bookera؟</h2>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -948,7 +948,7 @@ const CompanyHomePage = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-lg font-bold mb-4">EventUp</h3>
+              <h3 className="text-lg font-bold mb-4">Bookera</h3>
               <p className="text-gray-400 text-sm">
                 الوجهة الأولى لحجز قاعات المناسبات والفعاليات في مصر.
               </p>
@@ -978,7 +978,7 @@ const CompanyHomePage = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            <p>© 2024 EventUp. جميع الحقوق محفوظة.</p>
+            <p>© 2024 Bookera. جميع الحقوق محفوظة.</p>
           </div>
         </div>
       </footer>

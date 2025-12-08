@@ -27,7 +27,7 @@ const LoadingWithImage = () => {
         >
         <motion.img
   src="/Gemini_Generated_Image_bmm6u9bmm6u9bmm6.png"
-  alt="EventUp"
+  alt="Bookera"
   className="w-24 h-24 object-cover rounded-2xl mx-auto shadow-lg border border-gray-200"
   animate={{
     y: [0, -10, 0],
@@ -51,7 +51,7 @@ const LoadingWithImage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.5 }}
         >
-          Evento
+          Bookera
         </motion.h1>
 
         {/* Arabic Text */}
