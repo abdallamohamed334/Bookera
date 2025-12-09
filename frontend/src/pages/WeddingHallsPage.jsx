@@ -140,7 +140,7 @@ const WeddingHallsPage = () => {
             'Content-Type': 'application/json',
           }
         });
-
+https://bookera-production-25ec.up.railway.app/
         if (response.ok) {
           const data = await response.json();
 
