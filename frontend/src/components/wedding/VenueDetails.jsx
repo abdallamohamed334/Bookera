@@ -341,7 +341,7 @@ const VenueDetails = () => {
         created_at: new Date().toISOString()
       };
 
-      const response = await fetch('bookera-production-25ec.up.railway.app/api/bookings', {
+      const response = await fetch('https://bookera-production-25ec.up.railway.app/api/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
