@@ -85,7 +85,7 @@ const VenueDetails = () => {
         setLoading(true);
         setError(null);
         
-        console.log('🔄 جاري جلب بيانات القاعة ID:', id);
+        
 
         // جلب بيانات القاعة
         const venueResponse = await fetch(
@@ -98,7 +98,7 @@ const VenueDetails = () => {
           }
         );
         
-        console.log('📡 حالة الاستجابة:', venueResponse.status);
+        
         
         if (!venueResponse.ok) {
           const errorText = await venueResponse.text();
@@ -107,7 +107,7 @@ const VenueDetails = () => {
         }
         
         const venueData = await venueResponse.json();
-        console.log('✅ بيانات القاعة المستلمة:', venueData);
+        
         setVenueData(venueData);
 
         // جلب الباكدجات
@@ -163,7 +163,7 @@ const VenueDetails = () => {
         }
 
         // 🔥 إعداد الريلز من قاعدة البيانات
-        console.log('🎬 بيانات الريلز:', venueData.reels);
+        
         
         if (venueData.reels && venueData.reels.length > 0) {
           // إذا كانت الريلز مخزنة كـ JSON
@@ -187,15 +187,14 @@ const VenueDetails = () => {
               source_type: reel.source_type || getVideoSourceType(reel.video_url || reel.videoUrl || reel.url)
             }));
             
-            console.log('✅ الريلز بعد الإصلاح:', reelsData);
+            
           } catch (parseError) {
             console.error('❌ خطأ في تحليل الريلز:', parseError);
             reelsData = [];
           }
           setReels(reelsData);
         } else if (venueData.videos && venueData.videos.length > 0) {
-          // استخدام الفيديوهات كبديل إذا لم توجد ريلز
-          console.log('🎥 استخدام الفيديوهات كريلز بديلة');
+          
           const reelsData = venueData.videos.map((video, index) => ({
             id: index + 1,
             video_url: video,
@@ -222,7 +221,7 @@ const VenueDetails = () => {
         }
       } finally {
         setLoading(false);
-        console.log('🏁 انتهى تحميل البيانات');
+        
       }
     };
 
@@ -1040,17 +1039,7 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
             </div>
           </div>
           
-          <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
-            <span className="bg-green-100 p-2 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-              </svg>
-            </span>
-            <div className="flex-1">
-              <p className="font-bold text-gray-900">الهاتف</p>
-              <p className="text-gray-600 text-sm mt-1">{venueOwner?.phone || '01095952888'}</p>
-            </div>
-          </div>
+          
           
           {/* 🔥 قسم الأسعار مع إخفائه */}
           <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 text-center">

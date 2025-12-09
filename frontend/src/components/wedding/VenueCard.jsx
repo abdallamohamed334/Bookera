@@ -4,8 +4,6 @@ import { useState, useRef, useEffect } from "react";
 const VenueCard = ({ 
   venue, 
   onVenueClick, 
-  isFavorite, 
-  onToggleFavorite, 
   onShareVenue,
   comparisonMode = false,
   isSelectedForComparison = false,
@@ -121,16 +119,26 @@ const VenueCard = ({
   // تقييم القاعة بناءً على الميزات
   const getVenueScore = () => {
     let score = venue.rating || 0;
-    if (venue.wedding_specific?.openAir) score += 0.3;
     if (venue.parking) score += 0.2;
     if (venue.wifi) score += 0.1;
     if (venue.ac) score += 0.1;
     return Math.min(5, score).toFixed(1);
   };
 
+  // حساب بداية سعر القاعة
+  const getVenueStartingPrice = () => {
+    if (venue.starting_price) return venue.starting_price;
+    if (venue.price_range?.min) return venue.price_range.min;
+    if (venue.packages && venue.packages.length > 0) {
+      return Math.min(...venue.packages.map(pkg => pkg.price || 0));
+    }
+    return null;
+  };
+
   const displayImages = getDisplayImages();
   const venueStatus = getVenueStatus();
   const eventTypeIcons = getEventTypeIcons();
+  const startingPrice = getVenueStartingPrice();
 
   return (
     <motion.div
@@ -249,6 +257,22 @@ const VenueCard = ({
           </div>
         </div>
 
+        {/* Starting Price Banner */}
+        {startingPrice && (
+          <div className="mb-5">
+            <div className="bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-2 h-full bg-white/30"></div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span>بداية السعر:</span>
+                  <span className="text-lg font-extrabold">{startingPrice.toLocaleString()} ج.م</span>
+                </div>
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">عرض خاص</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Special Offer Banner */}
         {venue.special_offer && (
           <div className="mb-5">
@@ -318,8 +342,6 @@ const VenueCard = ({
           comparisonMode={comparisonMode}
           isSelectedForComparison={isSelectedForComparison}
           onToggleComparison={onToggleComparison}
-          isFavorite={isFavorite}
-          onToggleFavorite={onToggleFavorite}
         />
       </div>
     </motion.div>
@@ -438,17 +460,14 @@ const VenueImage = ({
     }
   };
 
-  // تحديد نوع القاعة (أوبن دور / إن دور)
-  const getVenueType = () => {
-    return venue.wedding_specific?.openAir ? 'أوبن دور' : 'إن دور';
+  // حساب بداية سعر القاعة للعرض في الصورة
+  const getVenueStartingPrice = () => {
+    if (venue.starting_price) return venue.starting_price;
+    if (venue.price_range?.min) return venue.price_range.min;
+    return null;
   };
 
-  // الحصول على لون نوع القاعة
-  const getVenueTypeColor = () => {
-    return venue.wedding_specific?.openAir 
-      ? 'from-emerald-500/90 to-emerald-600/90' 
-      : 'from-blue-500/90 to-blue-600/90';
-  };
+  const startingPrice = getVenueStartingPrice();
 
   return (
     <div 
@@ -496,10 +515,15 @@ const VenueImage = ({
 
         {/* Top Controls */}
         <div className="absolute top-4 inset-x-5 flex justify-between items-start z-20">
-          {/* Venue Type Badge */}
-          <div className={`bg-gradient-to-r ${getVenueTypeColor()} backdrop-blur-sm text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-2xl`}>
-            {getVenueType()}
-          </div>
+          {/* Starting Price Badge */}
+          {startingPrice && (
+            <div className={`bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-2xl`}>
+              <div className="flex items-center gap-2">
+                <span>بداية السعر:</span>
+                <span className="text-lg">{startingPrice.toLocaleString()} ج.م</span>
+              </div>
+            </div>
+          )}
 
           {/* Share Button */}
           <button
@@ -744,17 +768,8 @@ const VenueActions = ({
   onBookNow,
   comparisonMode,
   isSelectedForComparison,
-  onToggleComparison,
-  isFavorite,
-  onToggleFavorite
+  onToggleComparison
 }) => {
-  const handleFavoriteClick = (e) => {
-    e.stopPropagation();
-    if (onToggleFavorite) {
-      onToggleFavorite(venue);
-    }
-  };
-
   return (
     <div className="mt-auto">
       <div className="flex gap-4">
@@ -797,35 +812,10 @@ const VenueActions = ({
               التفاصيل
             </button>
             
-            {/* Favorite Button */}
-            <button 
-              onClick={handleFavoriteClick}
-              className={`w-14 flex items-center justify-center rounded-2xl transition-all shadow-lg ${
-                isFavorite
-                  ? 'bg-gradient-to-br from-red-100 to-red-50 text-red-600 border border-red-200 hover:from-red-200 hover:to-red-100'
-                  : 'bg-gradient-to-br from-gray-100 to-white text-gray-600 border border-gray-200 hover:from-gray-200 hover:to-gray-100'
-              }`}
-            >
-              <svg className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isFavorite ? 2 : 1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </button>
+            
           </>
         )}
       </div>
-      
-      {/* Book Now Button - Always visible */}
-      {onBookNow && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onBookNow(venue);
-          }}
-          className="mt-4 w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.02] shadow-xl"
-        >
-          احجز الآن
-        </button>
-      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 const CompanyHomePage = () => {
   const { user, logout } = useAuthStore();
   const [darkMode, setDarkMode] = useState(false);
+  const [showOfferPopup, setShowOfferPopup] = useState(false);
   const navigate = useNavigate();
 
   // تحميل وضع الدارك مود
@@ -23,16 +24,25 @@ const CompanyHomePage = () => {
     }
   }, [darkMode]);
 
+  // عرض البوب أب بعد 3 ثواني
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowOfferPopup(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleLogout = () => logout();
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
-  // جميع الأقسام - معظمها قريباً
+  // جميع الأقسام
   const allSections = [
     {
       id: "wedding-halls",
       title: "قاعات الأفراح",
-      description: "أفضل قاعات الأفراح والمناسبات الفاخرة في المملكة",
-      image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      description: "أفضل قاعات الأفراح والمناسبات الفاخرة في مصر",
+      image: "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHdlZGRpbmd8ZW58MHx8MHx8fDA%3D",
       icon: "🏛️",
       color: "from-blue-500 to-blue-600",
       stats: "متاح الآن",
@@ -43,7 +53,7 @@ const CompanyHomePage = () => {
       id: "photographers",
       title: "المصورين المحترفين",
       description: "أفضل المصورين بتقنيات حديثة لالتقاط الذكريات",
-      image: "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "https://plus.unsplash.com/premium_photo-1674389991678-0836ca77c7f7?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cGhvdG9ncmFwaHl8ZW58MHx8MHx8fDA%3D",
       icon: "📸",
       color: "from-purple-500 to-pink-500",
       stats: "متاح الآن",
@@ -54,7 +64,7 @@ const CompanyHomePage = () => {
       id: "bridal-dresses",
       title: "فساتين العرائس",
       description: "أجمل تصاميم فساتين الزفاف من أفضل المصممين العالميين",
-      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "https://plus.unsplash.com/premium_photo-1673546785747-8068f85588ad?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDB8fGJyaWRhbC1kcmVzc2VzfGVufDB8fDB8fHww",
       icon: "👰",
       color: "from-pink-500 to-rose-500",
       stats: "قريباً",
@@ -62,66 +72,22 @@ const CompanyHomePage = () => {
       comingSoon: true
     },
     {
-      id: "event-planners",
-      title: "منظمي الحفلات",
-      description: "محترفين تنظيم المناسبات والزفاف بكل تفاصيله",
-      image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      icon: "🎉",
-      color: "from-green-500 to-teal-500",
-      stats: "قريباً",
-      gradient: "bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20",
-      comingSoon: true
-    },
-    {
-      id: "catering",
-      title: "خدمات الطعام",
-      description: "ولائم فاخرة بأسعار مناسبة من أفضل الشيفات",
-      image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      icon: "🍽️",
-      color: "from-orange-500 to-amber-500",
-      stats: "قريباً",
-      gradient: "bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20",
-      comingSoon: true
-    },
-    {
       id: "decorations",
       title: "ديكور وزينة",
       description: "تصاميم ديكور مبتكرة تجعل مناسبتك لا تُنسى",
-      image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "https://images.unsplash.com/photo-1678514823362-fd5ec94505a2?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGRlY29yYXRpb25zfGVufDB8fDB8fHww",
       icon: "💐",
       color: "from-yellow-500 to-orange-500",
       stats: "قريباً",
       gradient: "bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20",
       comingSoon: true
     },
-    {
-      id: "music-bands",
-      title: "فرق موسيقية",
-      description: "أفضل الفرق الموسيقية والمغنين للمناسبات",
-      image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      icon: "🎵",
-      color: "from-red-500 to-orange-500",
-      stats: "قريباً",
-      gradient: "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20",
-      comingSoon: true
-    },
-    {
-      id: "makeup-artists",
-      title: "محترفي التجميل",
-      description: "خبراء التجميل والعناية بالبشرة للمناسبات",
-      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      icon: "💄",
-      color: "from-fuchsia-500 to-purple-500",
-      stats: "قريباً",
-      gradient: "bg-gradient-to-br from-fuchsia-50 to-purple-50 dark:from-fuchsia-900/20 dark:to-purple-900/20",
-      comingSoon: true
-    }
   ];
 
   // آراء العملاء
   const testimonials = [
     {
-      name: "أحمد السعد",
+      name: "أحمد السعيد",
       role: "عريس - سبتمبر 2024",
       comment: "لا أستطيع أن أصف مدى روعة التجربة! القاعة كانت تحفة فنية، والمصور التقط لحظات لن أنساها أبداً. Bookera هي الوجهة الوحيدة لمن يبحث عن الكمال.",
       rating: 5,
@@ -133,13 +99,6 @@ const CompanyHomePage = () => {
       comment: "بعد بحث طويل، اكتشفت Bookera. المصور كان فناناً حقيقياً، والصور جاءت أفضل مما توقعت. أنصح كل عروس وعريس بهذه المنصة الرائعة.",
       rating: 5,
       image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
-    },
-    {
-      name: "خالد الرشيدي",
-      role: "صاحب قاعة - شريك منذ 6 أشهر",
-      comment: "كنت متخوفاً في البداية، ولكن خلال 6 أشهر فقط، زادت حجوزات قاعتي بنسبة 300%! المنصة سهلة الاستخدام وفريق الدعم ممتاز.",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
     },
     {
       name: "فاطمة الناصر",
@@ -156,11 +115,6 @@ const CompanyHomePage = () => {
       icon: "⚡",
       title: "حجز فوري",
       description: "احجز خلال دقائق بدون معاملات ورقية"
-    },
-    {
-      icon: "💰",
-      title: "أسعار شفافة",
-      description: "أسعار واضحة بدون رسوم خفية"
     },
     {
       icon: "🛡️",
@@ -219,7 +173,7 @@ const CompanyHomePage = () => {
       category: "قاعات"
     },
     {
-      url: "https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      url: "https://plus.unsplash.com/premium_photo-1682097066897-209d0d9e9ae5?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cGhvdG9ncmFwaHl8ZW58MHx8MHx8fDA%3D",
       category: "تصوير"
     },
     {
@@ -233,57 +187,86 @@ const CompanyHomePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
-      {/* Navigation */}
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300 relative">
+      {/* Navigation - تم تحسينه */}
       <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            {/* Logo - محاذاة مع مسافات أفضل */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="cursor-pointer flex items-center space-x-3"
+              className="cursor-pointer flex items-center space-x-4 space-x-reverse"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                B
+              <div className="relative flex-shrink-0">
+                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
+                  <img 
+                    src="https://res.cloudinary.com/dwocg88vs/image/upload/v1765294969/Red_Black_Typography_Nine_Brand_Logo_q0qhfd.png"
+                    alt="Bookera Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white text-xs shadow">
+                  B
+                </div>
               </div>
-              <div>
-                <span className="text-xl font-bold text-gray-800 dark:text-white block">Bookera</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">وجهتك لمناسبات لا تُنسى</span>
+              <div className="flex flex-col text-right">
+                <span className="text-2xl font-bold text-gray-800 dark:text-white leading-tight">Bookera</span>
+                
               </div>
             </motion.div>
 
-            {/* Actions */}
-            <div className="flex items-center space-x-4">
+            {/* Actions - تم تحسين المحاذاة */}
+            <div className="flex items-center space-x-6 space-x-reverse">
               <motion.button
                 onClick={toggleDarkMode}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle dark mode"
               >
-                {darkMode ? "🌙" : "☀️"}
+                {darkMode ? (
+                  <span className="text-xl">🌙</span>
+                ) : (
+                  <span className="text-xl">☀️</span>
+                )}
               </motion.button>
 
               {user ? (
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">{user.name}</span>
+                <div className="flex items-center space-x-4 space-x-reverse">
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className="text-right hidden md:block">
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{user.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">مرحباً بك</div>
+                    </div>
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500 dark:border-blue-400 shadow">
+                        <img 
+                          src={user.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"}
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
+                    </div>
+                  </div>
                   <motion.button 
                     onClick={handleLogout}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg text-sm font-medium shadow hover:shadow-md"
+                    className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg text-sm font-medium shadow hover:shadow-md transition-all"
                   >
                     تسجيل الخروج
                   </motion.button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4 space-x-reverse">
                   <motion.button 
                     onClick={() => navigate('/login')}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                    className="px-5 py-2.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium"
                   >
                     تسجيل الدخول
                   </motion.button>
@@ -291,7 +274,7 @@ const CompanyHomePage = () => {
                     onClick={() => navigate('/register')}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-sm font-medium shadow hover:shadow-md"
+                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-sm font-medium shadow hover:shadow-md transition-all"
                   >
                     إنشاء حساب
                   </motion.button>
@@ -301,6 +284,58 @@ const CompanyHomePage = () => {
           </div>
         </div>
       </nav>
+
+      {/* Popup للعروض */}
+      {showOfferPopup && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="fixed bottom-4 right-4 z-50 max-w-sm"
+        >
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl shadow-2xl overflow-hidden border-2 border-white/20">
+            <div className="p-5">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-bold text-lg mb-1">🎉 عرض خاص!</h3>
+                  <p className="text-blue-100 text-sm">عروض حصرية على قاعات الأفراح</p>
+                </div>
+                <button
+                  onClick={() => setShowOfferPopup(false)}
+                  className="text-white/80 hover:text-white text-lg transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="mb-4 text-sm">
+                احصل على <span className="font-bold">خصم 20%</span> على حجز قاعة فاخرة لمدة محدودة
+              </p>
+              <div className="flex gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    navigate('/wedding-halls');
+                    setShowOfferPopup(false);
+                  }}
+                  className="flex-1 bg-white text-blue-600 py-2.5 rounded-lg font-medium text-sm shadow hover:shadow-md transition-all"
+                >
+                  استعرض العروض
+                </motion.button>
+                <button
+                  onClick={() => setShowOfferPopup(false)}
+                  className="px-4 py-2.5 text-white/80 hover:text-white text-sm transition-colors"
+                >
+                  لاحقاً
+                </button>
+              </div>
+            </div>
+            <div className="bg-black/10 px-5 py-2.5 text-xs text-white/70">
+              العرض ساري حتى نهاية الشهر
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-purple-900/10">
@@ -342,10 +377,10 @@ const CompanyHomePage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all flex items-center"
+                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
                 onClick={() => document.getElementById('services').scrollIntoView({ behavior: 'smooth' })}
               >
-                <span className="ml-2">✨</span>
+                <span>✨</span>
                 استكشف خدماتنا
               </motion.button>
               
@@ -355,7 +390,7 @@ const CompanyHomePage = () => {
                 className="px-8 py-4 border-2 border-blue-500 text-blue-500 dark:text-blue-400 rounded-xl font-semibold text-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 onClick={() => navigate('/join-us')}
               >
-               انضم الينا واعرض خدماتك
+                انضم الينا واعرض خدماتك
               </motion.button>
             </motion.div>
           </div>
@@ -367,7 +402,7 @@ const CompanyHomePage = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2">25K+</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2">1K+</div>
               <div className="text-blue-100">عميل راضي</div>
             </div>
             <div className="text-center">
@@ -375,7 +410,7 @@ const CompanyHomePage = () => {
               <div className="text-blue-100">تقييم عام</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2">50+</div>
+              <div className="text-3xl md:text-4xl font-bold mb-2">1</div>
               <div className="text-blue-100">مدينة</div>
             </div>
             <div className="text-center">
@@ -415,10 +450,10 @@ const CompanyHomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -8 }}
-                className={`${section.gradient} rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 relative`}
+                className={`${section.gradient} rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 relative group`}
               >
                 {/* Badge */}
-                <div className={`absolute top-4 right-4 z-10 px-3 py-1 rounded-full text-sm font-semibold ${
+                <div className={`absolute top-4 right-4 z-10 px-3 py-1 rounded-full text-sm font-semibold shadow ${
                   section.available 
                     ? 'bg-green-500 text-white' 
                     : 'bg-purple-500 text-white'
@@ -431,7 +466,7 @@ const CompanyHomePage = () => {
                   <img 
                     src={section.image} 
                     alt={section.title}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                   <div className="absolute bottom-4 left-4">
@@ -496,10 +531,10 @@ const CompanyHomePage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.02 }}
-                className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300"
+                whileHover={{ scale: 1.02, y: -5 }}
+                className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700"
               >
-                <div className="text-3xl mb-4">{feature.icon}</div>
+                <div className="text-4xl mb-4">{feature.icon}</div>
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                   {feature.title}
                 </h3>
@@ -535,13 +570,13 @@ const CompanyHomePage = () => {
                 className="text-center relative"
               >
                 {index < 3 && (
-                  <div className="hidden lg:block absolute top-8 left-1/2 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                  <div className="hidden lg:block absolute top-10 left-1/2 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transform -translate-y-1/2"></div>
                 )}
                 <div className="relative z-10">
                   <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">
                     {step.icon}
                   </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow">
                     {step.step}
                   </div>
                   <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
@@ -578,7 +613,7 @@ const CompanyHomePage = () => {
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonials.map((testimonial, index) => (
               <motion.div
                 key={index}
@@ -586,10 +621,10 @@ const CompanyHomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ scale: 1.02 }}
-                className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 shadow-lg"
+                className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
               >
                 <div className="flex items-start space-x-4 space-x-reverse mb-6">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow flex-shrink-0">
                     <img 
                       src={testimonial.image} 
                       alt={testimonial.name}
@@ -608,13 +643,13 @@ const CompanyHomePage = () => {
                       </div>
                       <div className="flex">
                         {[...Array(testimonial.rating)].map((_, i) => (
-                          <span key={i} className="text-yellow-400">★</span>
+                          <span key={i} className="text-yellow-400 text-sm">★</span>
                         ))}
                       </div>
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
                   "{testimonial.comment}"
                 </p>
               </motion.div>
@@ -703,19 +738,19 @@ const CompanyHomePage = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center"
-              onClick={() => navigate('/register')}
+              className="px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              onClick={() => navigate('/join-us')}
             >
-              <span className="ml-2">🚀</span>
-              ابدأ الآن مجاناً
+              <span>🚀</span>
+              انضم الينا واظهر عملك
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 border-2 border-white text-white rounded-xl font-semibold text-lg hover:bg-white/10 flex items-center justify-center"
+              className="px-8 py-4 border-2 border-white text-white rounded-xl font-semibold text-lg hover:bg-white/10 flex items-center justify-center gap-2"
               onClick={() => navigate('/contact')}
             >
-              <span className="ml-2">💬</span>
+              <span>💬</span>
               تواصل مع مستشار
             </motion.button>
           </motion.div>
@@ -737,7 +772,13 @@ const CompanyHomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-6">
- 
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1611605698335-8b1569810432?w=100&auto=format&fit=crop&q=60"
+                    alt="Bookera Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div>
                   <span className="text-xl font-bold block">Bookera</span>
                   <span className="text-gray-400 text-sm">مناسبتك، مسؤوليتنا</span>
@@ -755,8 +796,9 @@ const CompanyHomePage = () => {
                   <button
                     key={section.id}
                     onClick={() => navigate(`/${section.id}`)}
-                    className="block hover:text-white transition-colors text-sm"
+                    className="block hover:text-white transition-colors text-sm flex items-center gap-2"
                   >
+                    <span className={`w-2 h-2 rounded-full ${section.id === 'wedding-halls' ? 'bg-green-500' : 'bg-purple-500'}`}></span>
                     {section.title}
                   </button>
                 ))}
@@ -767,8 +809,8 @@ const CompanyHomePage = () => {
               <h4 className="font-semibold mb-4 text-lg">الخدمات القادمة</h4>
               <div className="space-y-2 text-gray-400">
                 {allSections.filter(s => s.comingSoon).slice(0, 4).map((section) => (
-                  <div key={section.id} className="text-sm flex items-center">
-                    <span className="text-purple-400 ml-2">●</span>
+                  <div key={section.id} className="text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
                     {section.title}
                   </div>
                 ))}
@@ -778,17 +820,17 @@ const CompanyHomePage = () => {
             <div>
               <h4 className="font-semibold mb-4 text-lg">تواصل معنا</h4>
               <div className="space-y-3 text-gray-400">
-                <p className="flex items-center">
-                  <span className="ml-2">📧</span>
+                <p className="flex items-center gap-2">
+                  <span className="text-lg">📧</span>
                   tallaey445@gmail.com
                 </p>
-                <p className="flex items-center">
-                  <span className="ml-2">📞</span>
+                <p className="flex items-center gap-2">
+                  <span className="text-lg">📞</span>
                   +201040652783
                 </p>
-                <p className="flex items-center">
-                  <span className="ml-2">📍</span>
-                  المملكة العربية السعودية
+                <p className="flex items-center gap-2">
+                  <span className="text-lg">📍</span>
+                  مصر 
                 </p>
               </div>
             </div>

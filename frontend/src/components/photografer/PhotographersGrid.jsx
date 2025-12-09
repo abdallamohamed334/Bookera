@@ -60,13 +60,7 @@ const PhotographersGrid = ({
             <h3 className="text-2xl font-bold text-gray-900">
               المصورين المتاحين ({photographers.length})
             </h3>
-            <p className="text-gray-600 mt-1">
-              {dataSource === "api" 
-                ? `بيانات حقيقية من قاعدة البيانات - ${totalCount} مصور` 
-                : dataSource === "mock"
-                ? `بيانات تجريبية للعرض - ${totalCount} مصور`
-                : "جاري تحميل البيانات..."}
-            </p>
+            
           </div>
         </div>
 

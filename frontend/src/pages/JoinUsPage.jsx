@@ -225,7 +225,7 @@ const JoinUsPage = () => {
             انضم إلى عائلة Bookera
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            كن شريكاً معنا واربح مع Bookera الرائدة في المملكة
+            كن شريكاً معنا واربح مع Bookera الرائدة في مصر
           </p>
         </motion.div>
 

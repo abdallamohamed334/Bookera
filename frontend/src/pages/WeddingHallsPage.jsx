@@ -509,7 +509,7 @@ https://bookera-production-25ec.up.railway.app
               </div>
               <div className="text-right">
                 <h1 className="text-lg font-bold text-gray-800 leading-tight">قاعات الأفراح والمناسبات</h1>
-                <p className="text-xs text-gray-500 leading-tight">الغربية - لحفلات الزفاف، الخطوبة، كتب الكتاب، أعياد الميلاد والمؤتمرات</p>
+                <p className="text-xs text-gray-500 leading-tight"></p>
               </div>
             </div>
 
@@ -783,10 +783,7 @@ https://bookera-production-25ec.up.railway.app
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-600">
-              {dataSource === "api" && "🟢 متصل بالخادم"}
-              {dataSource === "error" && "🔴 فشل الاتصال"}
-            </div>
+            
           </div>
         </div>
 
