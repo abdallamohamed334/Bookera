@@ -79,7 +79,7 @@ const LoginPage = () => {
                     <div className="flex justify-between items-center h-16">
                         <div className="flex-shrink-0">
                             <Link to="/" className="text-2xl font-bold text-blue-600">
-                                منصة الحجوزات
+                                Bookera
                             </Link>
                         </div>
 
@@ -122,7 +122,7 @@ const LoginPage = () => {
                             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
                                 اهلاً بك في{" "}
                                 <span className="bg-gradient-to-r from-blue-600 to-indigo-700 text-transparent bg-clip-text">
-                                    منصة الحجوزات
+                                    Bookera
                                 </span>
                             </h1>
                             <p className="text-xl text-gray-600">

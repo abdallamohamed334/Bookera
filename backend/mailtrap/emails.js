@@ -44,7 +44,7 @@ export const sendWelcomeEmail = async (email, name) => {
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<title>أهلاً وسهلاً بك في منصة الحجوزات</title>
+				<title>أهلاً وسهلاً بك في Bookera</title>
 				<style>
 					@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
 					
@@ -248,7 +248,7 @@ export const sendWelcomeEmail = async (email, name) => {
 					<div class="content">
 						<p class="welcome-text">
 							مرحباً <span class="highlight">${name}</span>! <br>
-							يشرفنا انضمامك إلى <span class="highlight">منصة الحجوزات</span>
+							يشرفنا انضمامك إلى <span class="highlight">Bookera</span>
 						</p>
 						
 						<div class="features">
@@ -294,9 +294,9 @@ export const sendWelcomeEmail = async (email, name) => {
 						</div>
 						
 						<p class="footer-text">
-							صنع بكل <span class="heart">❤️</span> من فريق منصة الحجوزات<br>
+							صنع بكل <span class="heart">❤️</span> من فريق Bookera<br>
 							للأسئلة والاستفسارات: support@booking-platform.com<br>
-							© 2024 منصة الحجوزات. جميع الحقوق محفوظة.
+							© 2024 Bookera. جميع الحقوق محفوظة.
 						</p>
 					</div>
 				</div>
@@ -307,7 +307,7 @@ export const sendWelcomeEmail = async (email, name) => {
 		const response = await resend.emails.send({
 			from: sender,
 			to: email,
-			subject: `🎊 أهلاً وسهلاً بك ${name}! - منصة الحجوزات`,
+			subject: `🎊 أهلاً وسهلاً بك ${name}! - Bookera`,
 			html: html,
 		});
 

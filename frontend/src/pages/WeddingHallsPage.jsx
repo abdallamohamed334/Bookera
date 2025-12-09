@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../store/authStore";
 
-// استيراد المكونات مباشرة بدون lazy loading
+// استيراد المكونات
 import VenueDetails from "../components/wedding/VenueDetails";
 import VenueCard from "../components/wedding/VenueCard";
-import FiltersSidebar from "../components/wedding/FiltersSidebar";
 import MobileFilters from "../components/wedding/MobileFilters";
 import BookingModal from "../components/wedding/BookingModal";
 import Navigation from "../components/shared/Navigation";
@@ -23,40 +22,49 @@ const WeddingHallsPage = () => {
     selectedCity: "all",
     venueType: "all",
     locationType: "all",
-    eventTypes: [], // تغيير إلى مصفوفة
+    eventTypes: [],
     sortBy: "featured",
-    searchQuery: ""
+    searchQuery: "",
+    hasPool: false,
+    hasWifi: false,
+    cateringService: false,
+    hasStage: false,
+    parkingCapacity: 0,
+    minGuests: 0
   });
 
-  // States for filtering - استخدام القيم المحفوظة
+  // States for filtering
   const [priceRange, setPriceRange] = useState(filtersStateRef.current.priceRange);
   const [capacityRange, setCapacityRange] = useState(filtersStateRef.current.capacityRange);
   const [selectedGovernorate, setSelectedGovernorate] = useState(filtersStateRef.current.selectedGovernorate);
   const [selectedCity, setSelectedCity] = useState(filtersStateRef.current.selectedCity);
   const [venueType, setVenueType] = useState(filtersStateRef.current.venueType);
   const [locationType, setLocationType] = useState(filtersStateRef.current.locationType);
-  const [eventTypes, setEventTypes] = useState(filtersStateRef.current.eventTypes); // تغيير إلى مصفوفة
+  const [eventTypes, setEventTypes] = useState(filtersStateRef.current.eventTypes);
   const [sortBy, setSortBy] = useState(filtersStateRef.current.sortBy);
+  const [searchQuery, setSearchQuery] = useState(filtersStateRef.current.searchQuery);
+  const [hasPool, setHasPool] = useState(filtersStateRef.current.hasPool);
+  const [hasWifi, setHasWifi] = useState(filtersStateRef.current.hasWifi);
+  const [cateringService, setCateringService] = useState(filtersStateRef.current.cateringService);
+  const [hasStage, setHasStage] = useState(filtersStateRef.current.hasStage);
+  const [parkingCapacity, setParkingCapacity] = useState(filtersStateRef.current.parkingCapacity);
+  const [minGuests, setMinGuests] = useState(filtersStateRef.current.minGuests);
 
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [filteredVenues, setFilteredVenues] = useState([]);
+  const [displayedVenues, setDisplayedVenues] = useState([]);
   const [currentView, setCurrentView] = useState("list");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [weddingVenues, setWeddingVenues] = useState([]);
   const [dataSource, setDataSource] = useState("");
   const [favorites, setFavorites] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(filtersStateRef.current.searchQuery);
 
   // States for UI
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingType, setBookingType] = useState("");
-
-  // States for Comparison Feature
-  const [comparisonMode, setComparisonMode] = useState(false);
-  const [venuesToCompare, setVenuesToCompare] = useState([]);
-  const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [itemsToShow, setItemsToShow] = useState(10);
 
   // محافظات مصر - الغربية فقط
   const governorates = {
@@ -67,7 +75,7 @@ const WeddingHallsPage = () => {
     }
   };
 
-  // أنواع القاعات والمناسبات - محدثة
+  // أنواع القاعات والمناسبات
   const venueTypes = {
     "all": "كل الأنواع",
     "قاعة_أفراح": "قاعة أفراح",
@@ -77,20 +85,21 @@ const WeddingHallsPage = () => {
     "نادي": "نادي"
   };
 
+  // ⭐⭐ تم التعديل هنا: استخدام venue_environment بدلاً من open/closed ⭐⭐
   const locationTypes = {
     "all": "كل المواقع",
-    "open": "أوبن دور",
-    "closed": "إن دور",
+    "indoor": "إن دور (داخلي)",
+    "outdoor": "أوبن دور (خارجي)",
     "mixed": "مختلط"
   };
 
-  // أنواع المناسبات - محدثة
+  // أنواع المناسبات
   const availableEventTypes = {
     "فرح": "فرح",
     "خطوبة": "خطوبة",
     "كتب_كتاب": "كتب كتاب",
     "عيد_ميلاد": "عيد ميلاد",
-    "مؤتمرات": "مؤتمرات/مناسبات عمل"
+    "مؤتمرات": "مؤتمرات"
   };
 
   const sortOptions = {
@@ -118,41 +127,6 @@ const WeddingHallsPage = () => {
     setEventTypes([]);
   };
 
-  // دوال المقارنة الجديدة
-  const toggleVenueComparison = (venue) => {
-    const venueId = venue.id || venue._id;
-
-    if (venuesToCompare.some(v => (v.id || v._id) === venueId)) {
-      // إزالة من المقارنة
-      setVenuesToCompare(prev => prev.filter(v => (v.id || v._id) !== venueId));
-    } else {
-      // إضافة للمقارنة (بحد أقصى 3 قاعات)
-      if (venuesToCompare.length < 3) {
-        setVenuesToCompare(prev => [...prev, venue]);
-      } else {
-        alert("يمكنك مقارنة حتى 3 قاعات فقط في المرة الواحدة");
-      }
-    }
-  };
-
-  const startComparison = () => {
-    if (venuesToCompare.length >= 2) {
-      setShowComparisonModal(true);
-    } else {
-      alert("يجب اختيار قاعتين على الأقل للمقارنة");
-    }
-  };
-
-  const clearComparison = () => {
-    setVenuesToCompare([]);
-    setComparisonMode(false);
-  };
-
-  const exitComparisonMode = () => {
-    setComparisonMode(false);
-    setVenuesToCompare([]);
-  };
-
   // جلب البيانات من الـ API
   useEffect(() => {
     const fetchWeddingVenues = async () => {
@@ -160,7 +134,7 @@ const WeddingHallsPage = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`https://bookera-production-25ec.up.railway.app/api/wedding-venues/`, {
+        const response = await fetch(`https://bookera-production-25ec.up.railway.app//api/wedding-venues/`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -180,15 +154,40 @@ const WeddingHallsPage = () => {
               amenities: venue.amenities || [],
               rules: venue.rules || [],
               weddingSpecific: venue.weddingSpecific || {},
-              event_types: venue.event_types || getEventTypesFromWeddingSpecific(venue.weddingSpecific),
+              // التأكد من وجود eventTypes من الداتا بيز
+              eventTypes: venue.eventTypes || venue.event_types || [],
               rating: venue.rating || 0,
               reviewCount: venue.reviewCount || 0,
               available: venue.available !== false,
               videos: venue.videos || [],
               specialOffer: venue.specialOffer || null,
               originalPrice: venue.originalPrice || null,
-              discount: venue.discount || null
+              discount: venue.discount || null,
+              // ⭐⭐ تم التعديل هنا: استخدام venue_environment الجديد ⭐⭐
+              venue_environment: venue.venue_environment || (venue.openAir ? "outdoor" : "indoor"),
+              // معلومات إضافية من weddingSpecific
+              hasPool: venue.weddingSpecific?.hasPool || false,
+              hasWifi: venue.weddingSpecific?.hasWifi || false,
+              openAir: venue.weddingSpecific?.openAir || false,
+              catering: venue.weddingSpecific?.catering || false,
+              cateringService: venue.weddingSpecific?.cateringService || false,
+              hasStage: venue.weddingSpecific?.hasStage || false,
+              brideRoom: venue.weddingSpecific?.brideRoom || false,
+              groomRoom: venue.weddingSpecific?.groomRoom || false,
+              hasGarden: venue.weddingSpecific?.hasGarden || false,
+              maxGuests: venue.weddingSpecific?.maxGuests || venue.capacity || 0,
+              minGuests: venue.weddingSpecific?.minGuests || 0,
+              parkingCapacity: venue.weddingSpecific?.parkingCapacity || 0
             }));
+
+            console.log('✅ البيانات المستلمة:', venuesWithId.map(v => ({ 
+              name: v.name, 
+              eventTypes: v.eventTypes,
+              venue_environment: v.venue_environment, // ⭐⭐ تم التعديل هنا ⭐⭐
+              hasPool: v.hasPool,
+              hasWifi: v.hasWifi,
+              cateringService: v.cateringService
+            })));
 
             setWeddingVenues(venuesWithId);
             setDataSource("api");
@@ -202,13 +201,6 @@ const WeddingHallsPage = () => {
         console.error('❌ خطأ في جلب البيانات:', err);
         setDataSource("error");
         setError(`تعذر الاتصال بالخادم: ${err.message}`);
-
-        // Fallback to sample data for demo
-        setTimeout(() => {
-          setWeddingVenues(getSampleVenues());
-          setDataSource("sample");
-          setLoading(false);
-        }, 2000);
       } finally {
         setLoading(false);
       }
@@ -216,262 +208,6 @@ const WeddingHallsPage = () => {
 
     fetchWeddingVenues();
   }, []);
-
-  // دالة لاستخراج event_types من weddingSpecific للبيانات القديمة
-  const getEventTypesFromWeddingSpecific = (weddingSpecific) => {
-    if (!weddingSpecific) return ['فرح']; // قيمة افتراضية
-
-    const events = [];
-    if (weddingSpecific.weddingEvents) events.push('فرح');
-    if (weddingSpecific.engagementEvents) events.push('خطوبة');
-    if (weddingSpecific.katbKitaabEvents) events.push('كتب_كتاب');
-    if (weddingSpecific.birthdayEvents) events.push('عيد_ميلاد');
-    if (weddingSpecific.businessEvents) events.push('مؤتمرات');
-
-    return events.length > 0 ? events : ['فرح'];
-  };
-
-  // بيانات تجريبية محسنة
-  const getSampleVenues = () => [
-    {
-      id: "1",
-      name: "قاعة السراج AL SERAG",
-      type: "قاعة_أفراح",
-      category: "فاخرة",
-      governorate: "الغربية",
-      city: "السنطه",
-      address: "بجوار ماما نونا والنساجون الشرقيون، طريق طنطا زفتي - السنطة",
-      capacity: 250,
-      minCapacity: 100,
-      maxCapacity: 300,
-      price: 30000,
-      minPrice: 20000,
-      maxPrice: 50000,
-      pricingType: "سعر_قاعة",
-      image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80",
-        "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80"
-      ],
-      features: ["اضاءة ممتازه", "تنظيم علي اعلي مستوي", "ديكور فاخر", "مساحة واسعة"],
-      amenities: ["واي فاي مجاني", "موقف سيارات", "تكييف مركزي", "خدمات نظافة"],
-      rules: ["التزام بموعد الحفل", "ممنوع التدخين في الأماكن المغلقة"],
-      description: "استعداد تام لإقامة حفلات الزفاف والخطوبة وكتب الكتاب والمؤتمرات. قاعة فاخرة بتصميم عصري وخدمات متكاملة.",
-      available: true,
-      rating: 4.5,
-      reviewCount: 47,
-      contact: "01095952888",
-      email: "alserag@example.com",
-      whatsapp: "+201095952888",
-      website: "https://alserag.com",
-      locationLat: 30.9695,
-      locationLng: 31.0158,
-      mapLink: "https://maps.google.com/?q=السنطة+الغربية",
-      weddingSpecific: {
-        brideRoom: true,
-        groomRoom: true,
-        photography: true,
-        catering: true,
-        decoration: true,
-        openAir: false,
-        weddingEvents: true,
-        engagementEvents: true,
-        katbKitaabEvents: true,
-        birthdayEvents: true,
-        businessEvents: true,
-        maxGuests: 250,
-        minGuests: 100
-      },
-      event_types: ['فرح', 'خطوبة', 'كتب_كتاب', 'عيد_ميلاد', 'مؤتمرات'],
-      videos: [
-        "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
-      ],
-      specialOffer: "خصم 20% للحجز المبكر",
-      originalPrice: 37500,
-      discount: 20
-    },
-    {
-      id: "2",
-      name: "قصر الأفراح الملكي",
-      type: "قصر",
-      category: "فاخرة",
-      governorate: "الغربية",
-      city: "طنطا",
-      address: "شارع الجلاء، طنطا، الغربية",
-      capacity: 500,
-      minCapacity: 200,
-      maxCapacity: 600,
-      price: 75000,
-      minPrice: 50000,
-      maxPrice: 100000,
-      pricingType: "سعر_قاعة",
-      image: "https://images.unsplash.com/photo-1549451371-64aa98a6f660?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1549451371-64aa98a6f660?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2098&q=80"
-      ],
-      features: ["حديقة خاصة", "نوافير مياه", "إضاءة متطورة", "صوتيات احترافية"],
-      amenities: ["موقف سيارات فاخر", "خدمة فاليه", "غرفة عروسة VIP", "شاشات عرض"],
-      rules: ["الحجز المسبق قبل 3 أشهر", "التزام بالتعليمات"],
-      description: "قصر فاخر لإقامة حفلات الزفاف والمناسبات الكبرى بمواصفات عالمية وخدمات متكاملة.",
-      available: true,
-      rating: 4.8,
-      reviewCount: 89,
-      contact: "01001234567",
-      email: "royal@example.com",
-      whatsapp: "+201001234567",
-      website: "https://royal-palace.com",
-      locationLat: 30.7865,
-      locationLng: 31.0014,
-      mapLink: "https://maps.google.com/?q=طنطا+الغربية",
-      weddingSpecific: {
-        brideRoom: true,
-        groomRoom: true,
-        photography: true,
-        catering: true,
-        decoration: true,
-        openAir: true,
-        weddingEvents: true,
-        engagementEvents: true,
-        katbKitaabEvents: true,
-        birthdayEvents: true,
-        businessEvents: false,
-        maxGuests: 500,
-        minGuests: 200
-      },
-      event_types: ['فرح', 'خطوبة', 'كتب_كتاب', 'عيد_ميلاد'],
-      videos: [],
-      specialOffer: "باقة كاملة بسعر خاص",
-      originalPrice: 90000,
-      discount: 17
-    },
-    {
-      id: "3",
-      name: "فندق ومنتجع النخيل",
-      type: "فندق",
-      category: "5 نجوم",
-      governorate: "الغربية",
-      city: "المحلة الكبري",
-      address: "شارع البحر الأعظم، المحلة الكبري",
-      capacity: 400,
-      minCapacity: 150,
-      maxCapacity: 500,
-      price: 45000,
-      minPrice: 30000,
-      maxPrice: 70000,
-      pricingType: "سعر_قاعة",
-      image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2064&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2064&q=80",
-        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2080&q=80"
-      ],
-      features: ["مسبح خارجي", "حديقة خضراء", "قاعة مؤتمرات", "خدمة كاملة"],
-      amenities: ["غرف فندقية", "سبا", "صالة ألعاب", "مطعم"],
-      rules: ["الحجز قبل أسبوعين", "التزام بالزي الرسمي"],
-      description: "فندق فاخر يقدم خدمات متكاملة لحفلات الزفاف والمناسبات في أجواء راقية.",
-      available: true,
-      rating: 4.7,
-      reviewCount: 63,
-      contact: "01002345678",
-      email: "palmresort@example.com",
-      whatsapp: "+201002345678",
-      website: "https://palmresort.com",
-      locationLat: 30.9685,
-      locationLng: 31.1663,
-      mapLink: "https://maps.google.com/?q=المحلة الكبري+الكبرى+الغربية",
-      weddingSpecific: {
-        brideRoom: true,
-        groomRoom: true,
-        photography: true,
-        catering: true,
-        decoration: true,
-        openAir: true,
-        weddingEvents: true,
-        engagementEvents: true,
-        katbKitaabEvents: true,
-        birthdayEvents: true,
-        businessEvents: true,
-        maxGuests: 400,
-        minGuests: 150
-      },
-      event_types: ['فرح', 'خطوبة', 'كتب_كتاب', 'عيد_ميلاد', 'مؤتمرات'],
-      videos: [],
-      specialOffer: "باقة شهر العسل مجاناً",
-      originalPrice: 55000,
-      discount: 18
-    },
-    {
-      id: "4",
-      name: "نادي النجوم للاحتفالات",
-      type: "نادي",
-      category: "راقي",
-      governorate: "الغربية",
-      city: "كفر الزيات",
-      address: "شارع النيل، كفر الزيات",
-      capacity: 350,
-      minCapacity: 120,
-      maxCapacity: 400,
-      price: 35000,
-      minPrice: 25000,
-      maxPrice: 60000,
-      pricingType: "سعر_قاعة",
-      image: "https://images.unsplash.com/photo-1519677100203-a0e668c92439?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1519677100203-a0e668c92439?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-        "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-      ],
-      features: ["تصميم عصري", "إضاءة LED متطورة", "حديقة خارجية", "ديكورات متميزة"],
-      amenities: ["خدمة بار", "تجهيزات صوتية متكاملة", "شاشات عرض", "واي فاي مجاني"],
-      rules: ["الحجز قبل 10 أيام", "التزام بموعد إنهاء الحفل"],
-      description: "نادي راقي يقدم خدمات متكاملة لحفلات الزفاف والمناسبات الخاصة بتصميمات عصرية وخدمات متميزة.",
-      available: true,
-      rating: 4.6,
-      reviewCount: 38,
-      contact: "01003456789",
-      email: "starsclub@example.com",
-      whatsapp: "+201003456789",
-      website: "https://starsclub.com",
-      locationLat: 30.8245,
-      locationLng: 30.8174,
-      mapLink: "https://maps.google.com/?q=كفر+الزيات+الغربية",
-      weddingSpecific: {
-        brideRoom: true,
-        groomRoom: true,
-        photography: true,
-        catering: true,
-        decoration: true,
-        openAir: true,
-        weddingEvents: true,
-        engagementEvents: false,
-        katbKitaabEvents: true,
-        birthdayEvents: true,
-        businessEvents: false,
-        maxGuests: 350,
-        minGuests: 120
-      },
-      event_types: ['فرح', 'كتب_كتاب', 'عيد_ميلاد'],
-      videos: [],
-      specialOffer: "تصوير مجاني للعروسين",
-      originalPrice: 42000,
-      discount: 17
-    }
-  ];
-
-  // جلب المفضلة من localStorage
-  useEffect(() => {
-    const savedFavorites = localStorage.getItem('weddingVenuesFavorites');
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites));
-    }
-  }, []);
-
-  // حفظ المفضلة في localStorage
-  useEffect(() => {
-    localStorage.setItem('weddingVenuesFavorites', JSON.stringify(favorites));
-  }, [favorites]);
 
   // تحديث حالة الفلاتر في useRef عند تغييرها
   useEffect(() => {
@@ -484,48 +220,129 @@ const WeddingHallsPage = () => {
       locationType,
       eventTypes,
       sortBy,
-      searchQuery
+      searchQuery,
+      hasPool,
+      hasWifi,
+      cateringService,
+      hasStage,
+      parkingCapacity,
+      minGuests
     };
-  }, [priceRange, capacityRange, selectedGovernorate, selectedCity, venueType, locationType, eventTypes, sortBy, searchQuery]);
+  }, [priceRange, capacityRange, selectedGovernorate, selectedCity, venueType, locationType, eventTypes, sortBy, searchQuery, hasPool, hasWifi, cateringService, hasStage, parkingCapacity, minGuests]);
 
-  // فلترة وترتيب الأماكن - محدثة لاستخدام event_types متعددة
+  // فلترة وترتيب الأماكن - معدلة بالكامل
   useEffect(() => {
-    let filtered = weddingVenues.filter(venue => {
-      const matchesSearch = searchQuery === "" ||
-        venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        venue.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        venue.description.toLowerCase().includes(searchQuery.toLowerCase());
+    console.log('🔄 جاري تطبيق الفلاتر...');
+    console.log('🎯 الفلاتر الحالية:', {
+      eventTypes,
+      locationType,
+      hasPool,
+      hasWifi,
+      cateringService,
+      hasStage,
+      parkingCapacity,
+      minGuests,
+      priceRange,
+      capacityRange
+    });
 
-      const matchesPrice = parseInt(venue.price) <= priceRange;
-      const matchesCapacity = parseInt(venue.capacity) <= capacityRange;
+    // إضافة console.log لرؤية بيانات القاعات
+    console.log('📋 بيانات القاعات:', weddingVenues.map(v => ({
+      name: v.name,
+      venue_environment: v.venue_environment,
+      openAir: v.openAir
+    })));
+
+    let filtered = weddingVenues.filter(venue => {
+      // 1. البحث النصي
+      const matchesSearch = searchQuery === "" ||
+        venue.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        venue.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        venue.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // 2. السعر والسعة
+      const matchesPrice = parseInt(venue.price || 0) <= priceRange;
+      const matchesCapacity = parseInt(venue.capacity || 0) <= capacityRange;
+      
+      // 3. المحافظة والمدينة
       const matchesGovernorate = selectedGovernorate === "all" || venue.governorate === selectedGovernorate;
       const matchesCity = selectedCity === "all" || selectedCity === "كل المدن" || venue.city === selectedCity;
+      
+      // 4. نوع القاعة
       const matchesVenueType = venueType === "all" || venue.type === venueType;
-      const matchesLocationType = locationType === "all" ||
-        (locationType === "open" && venue.weddingSpecific?.openAir) ||
-        (locationType === "closed" && !venue.weddingSpecific?.openAir) ||
-        (locationType === "mixed" && venue.weddingSpecific?.openAir !== undefined);
-
+      
+      // ⭐⭐ تم التعديل هنا: فلترة venue_environment مع معالجة القيم ⭐⭐
+      let matchesLocationType = true;
+      if (locationType !== "all") {
+        // الحصول على قيمة venue_environment من القاعة
+        // نستخدم venue.venue_environment أو نعتمد على openAir كبديل
+        let venueEnvironment = venue.venue_environment;
+        
+        // إذا كانت venue_environment غير موجودة، نستخدم openAir كقيمة افتراضية
+        if (!venueEnvironment && venueEnvironment !== "indoor" && venueEnvironment !== "outdoor") {
+          venueEnvironment = venue.openAir ? "outdoor" : "indoor";
+        }
+        
+        // تطبيع القيمة للتأكد من المطابقة
+        const normalizedEnvironment = String(venueEnvironment || "").toLowerCase().trim();
+        
+        if (locationType === "indoor") {
+          matchesLocationType = normalizedEnvironment === "indoor";
+        } else if (locationType === "outdoor") {
+          matchesLocationType = normalizedEnvironment === "outdoor";
+        } else if (locationType === "mixed") {
+          // في حالة mixed نعرض كل القاعات
+          matchesLocationType = true;
+        }
+        
+        console.log(`🔍 القاعة: ${venue.name}, venue_environment: ${venue.venue_environment}, computed: ${normalizedEnvironment}, locationType: ${locationType}, matches: ${matchesLocationType}`);
+      }
+      
+      // 6. أنواع المناسبات
       const matchesEventTypes = eventTypes.length === 0 ||
-        (venue.event_types && eventTypes.some(selectedType =>
-          venue.event_types.includes(selectedType)
-        ));
+        (venue.eventTypes && venue.eventTypes.length > 0 && 
+         eventTypes.some(selectedType => venue.eventTypes.includes(selectedType)));
+      
+      // 7. الخدمات الإضافية
+      const matchesPool = !hasPool || venue.hasPool === true;
+      const matchesWifi = !hasWifi || venue.hasWifi === true;
+      const matchesCatering = !cateringService || venue.cateringService === true;
+      const matchesStage = !hasStage || venue.hasStage === true;
+      
+      // 8. موقف السيارات
+      const matchesParking = parkingCapacity === 0 || 
+        (venue.parkingCapacity && venue.parkingCapacity >= parkingCapacity);
+      
+      // 9. الحد الأدنى للضيوف
+      const matchesMinGuests = minGuests === 0 || 
+        (venue.minGuests && venue.minGuests >= minGuests);
 
-      return matchesSearch && matchesPrice && matchesCapacity && matchesGovernorate &&
-        matchesCity && matchesVenueType && matchesLocationType && matchesEventTypes;
+      const result = matchesSearch && matchesPrice && matchesCapacity && 
+        matchesGovernorate && matchesCity && matchesVenueType && 
+        matchesLocationType && matchesEventTypes && matchesPool && 
+        matchesWifi && matchesCatering && matchesStage && 
+        matchesParking && matchesMinGuests;
+
+      return result;
     });
+
+    console.log(`📊 عدد النتائج بعد التصفية: ${filtered.length}`);
+    console.log('🔍 القاعات المصفاة:', filtered.map(f => ({
+      name: f.name,
+      venue_environment: f.venue_environment
+    })));
 
     // ترتيب النتائج
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "price_low":
-          return a.price - b.price;
+          return (a.price || 0) - (b.price || 0);
         case "price_high":
-          return b.price - a.price;
+          return (b.price || 0) - (a.price || 0);
         case "rating":
           return (b.rating || 0) - (a.rating || 0);
         case "capacity":
-          return b.capacity - a.capacity;
+          return (b.capacity || 0) - (a.capacity || 0);
         case "newest":
           return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         default:
@@ -534,7 +351,22 @@ const WeddingHallsPage = () => {
     });
 
     setFilteredVenues(filtered);
-  }, [searchQuery, priceRange, capacityRange, selectedGovernorate, selectedCity, venueType, locationType, eventTypes, sortBy, weddingVenues]);
+    setItemsToShow(10); // إعادة تعيين عدد العناصر المعروضة
+  }, [
+    searchQuery, priceRange, capacityRange, selectedGovernorate, selectedCity, 
+    venueType, locationType, eventTypes, sortBy, weddingVenues,
+    hasPool, hasWifi, cateringService, hasStage, parkingCapacity, minGuests
+  ]);
+
+  // تحديث القاعات المعروضة بناءً على itemsToShow
+  useEffect(() => {
+    setDisplayedVenues(filteredVenues.slice(0, itemsToShow));
+  }, [filteredVenues, itemsToShow]);
+
+  // دالة لتحميل المزيد من القاعات
+  const loadMoreVenues = () => {
+    setItemsToShow(prev => prev + 5);
+  };
 
   const handleBackToHome = () => {
     navigate("/");
@@ -550,7 +382,13 @@ const WeddingHallsPage = () => {
       locationType: "all",
       eventTypes: [],
       searchQuery: "",
-      sortBy: "featured"
+      sortBy: "featured",
+      hasPool: false,
+      hasWifi: false,
+      cateringService: false,
+      hasStage: false,
+      parkingCapacity: 0,
+      minGuests: 0
     };
 
     setPriceRange(resetValues.priceRange);
@@ -562,6 +400,12 @@ const WeddingHallsPage = () => {
     setEventTypes(resetValues.eventTypes);
     setSearchQuery(resetValues.searchQuery);
     setSortBy(resetValues.sortBy);
+    setHasPool(resetValues.hasPool);
+    setHasWifi(resetValues.hasWifi);
+    setCateringService(resetValues.cateringService);
+    setHasStage(resetValues.hasStage);
+    setParkingCapacity(resetValues.parkingCapacity);
+    setMinGuests(resetValues.minGuests);
 
     filtersStateRef.current = resetValues;
   };
@@ -617,165 +461,10 @@ const WeddingHallsPage = () => {
     }
   };
 
-  // Comparison Modal Component
-  const ComparisonModal = () => {
-    if (!showComparisonModal) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-auto">
-          <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">مقارنة القاعات</h2>
-              <button
-                onClick={() => setShowComparisonModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-right p-4 font-semibold text-gray-700 bg-gray-50">المعايير</th>
-                    {venuesToCompare.map((venue, index) => (
-                      <th key={venue.id || venue._id} className="text-center p-4">
-                        <div className="flex flex-col items-center">
-                          <img
-                            src={venue.image}
-                            alt={venue.name}
-                            className="w-20 h-20 object-cover rounded-lg mb-2"
-                          />
-                          <h3 className="font-bold text-gray-800 text-sm">{venue.name}</h3>
-                          <p className="text-gray-600 text-xs">{venue.city}</p>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">السعر</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <span className="text-lg font-bold text-green-600">
-                          {venue.price?.toLocaleString()} ج
-                        </span>
-                        {venue.originalPrice && (
-                          <div className="text-sm text-gray-500 line-through">
-                            {venue.originalPrice.toLocaleString()} ج
-                          </div>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">السعة</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <span className="font-semibold">{venue.capacity} شخص</span>
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">التقييم</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-yellow-500">⭐</span>
-                          <span className="font-semibold">{venue.rating || 0}</span>
-                          <span className="text-gray-500 text-sm">({venue.reviewCount || 0})</span>
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">نوع القاعة</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                          {venueTypes[venue.type] || venue.type}
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">المدينة</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <span className="text-gray-700">{venue.city}</span>
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">الخدمات</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <div className="space-y-1">
-                          {venue.features?.slice(0, 3).map((feature, idx) => (
-                            <div key={idx} className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                              {feature}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">المناسبات المتاحة</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <div className="space-y-1">
-                          {venue.event_types?.slice(0, 3).map(eventType => (
-                            <div key={eventType} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                              {availableEventTypes[eventType] || eventType}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <td className="p-4 font-semibold text-gray-700 bg-gray-50">الإجراءات</td>
-                    {venuesToCompare.map(venue => (
-                      <td key={venue.id || venue._id} className="p-4 text-center">
-                        <div className="flex flex-col gap-2">
-                          <button
-                            onClick={() => handleBookNow(venue)}
-                            className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            احجز الآن
-                          </button>
-                          <button
-                            onClick={() => {
-                              const venueId = venue.id || venue._id;
-                              window.open(`/venue/${venueId}`, '_blank');
-                            }}
-                            className="border border-gray-300 hover:border-black text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            عرض التفاصيل
-                          </button>
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Render based on current view
   if (currentView === "details" && selectedVenue) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-50">
         <VenueDetails
           venue={selectedVenue}
           onBack={handleBackToList}
@@ -805,16 +494,17 @@ const WeddingHallsPage = () => {
 
   // Main List View
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation محسّن */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Navigation Header - محسن */}
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            {/* Logo والعنوان */}
+            {/* Logo and Title */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center shadow-md">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h6a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a1 1 0 011-1h1a1 1 0 110 2H7a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" />
+                  <path d="M15 12h1a2 2 0 002-2V6a2 2 0 00-2-2h-1a2 2 0 00-2 2v4a2 2 0 002 2zM4 16a2 2 0 002-2v-4a2 2 0 00-2-2H3a2 2 0 00-2 2v4a2 2 0 002 2h1z" />
                 </svg>
               </div>
               <div className="text-right">
@@ -827,12 +517,12 @@ const WeddingHallsPage = () => {
             <div className="hidden lg:flex items-center gap-4">
               <button
                 onClick={handleBackToHome}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-black transition-colors border border-gray-300 rounded-lg hover:border-black bg-white shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-emerald-600 transition-all duration-300 border border-gray-200 rounded-xl hover:border-emerald-300 bg-white shadow-sm hover:shadow"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                <span className="text-sm">العودة للرئيسية</span>
+                <span className="text-sm font-medium">العودة للرئيسية</span>
               </button>
             </div>
 
@@ -850,406 +540,372 @@ const WeddingHallsPage = () => {
         </div>
       </div>
 
-      {/* Floating Back Button for Mobile */}
-      <div className="lg:hidden fixed top-20 left-4 z-40">
-        <button
-          onClick={handleBackToHome}
-          className="flex items-center justify-center w-12 h-12 bg-black hover:bg-gray-800 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Comparison Bar */}
-      {venuesToCompare.length > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 z-40 bg-white border border-gray-200 rounded-2xl shadow-2xl p-4 max-w-md mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                {venuesToCompare.length}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-800">القاعات المختارة للمقارنة</p>
-                <p className="text-xs text-gray-600">اختر {3 - venuesToCompare.length} قاعات أخرى للمقارنة</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={startComparison}
-                disabled={venuesToCompare.length < 2}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${venuesToCompare.length >= 2
-                  ? 'bg-black text-white hover:bg-gray-800 shadow-md'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-              >
-                مقارنة ({venuesToCompare.length})
-              </button>
-              <button
-                onClick={clearComparison}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Hero Section محسّن */}
-      <div className="relative bg-gradient-to-r from-gray-900 to-black text-white py-16 overflow-hidden">
-        {/* Background Pattern */}
+      {/* Hero Section - محسن */}
+      <div className="relative bg-gradient-to-br from-emerald-50 via-white to-teal-50 text-gray-800 py-12 md:py-16 overflow-hidden">
+        {/* Background Decorations */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-400 rounded-full translate-x-1/3 translate-y-1/3"></div>
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-            اكتشف أفضل قاعات الأفراح والمناسبات في الغربية
+          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full mb-6 border border-emerald-200">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium">المنصة الأولى لقاعات الأفراح في الغربية</span>
+          </div>
+          
+          <h1 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-gray-800">
+            اكتشف أفضل قاعات الأفراح والمناسبات
           </h1>
-          <p className="text-lg text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             احجز القاعة المثالية لحفل زفافك، خطوبتك، كتب كتاب، عيد ميلاد، أو مؤتمر عملك.
             اختر من بين أفضل الأماكن المميزة بأسعار مناسبة وتقييمات حقيقية
           </p>
 
-          {/* Event Types Icons */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {["💒 أفراح", "💍 خطوبة", "📖 كتب كتاب", "🎂 أعياد ميلاد"].map((event, index) => (
-              <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
-                <span className="text-sm font-medium">{event}</span>
-              </div>
+          {/* Event Types Quick Filters */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {Object.entries(availableEventTypes).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => handleEventTypeToggle(key)}
+                className={`px-3 py-1.5 rounded-lg transition-all duration-300 text-xs font-medium ${eventTypes.includes(key)
+                  ? 'bg-emerald-500 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-emerald-300'
+                  }`}
+              >
+                {label}
+              </button>
             ))}
           </div>
 
-          {/* Hero Image */}
-          <div className="mb-8 max-w-4xl mx-auto">
-            <img
-              src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80"
-              alt="قاعة أفراح فاخرة"
-              className="w-full h-64 md:h-80 object-cover rounded-2xl shadow-2xl"
-            />
-          </div>
-
-          {/* إحصائيات محسّنة */}
-          <div className="flex flex-wrap justify-center gap-4 mb-6">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/30">
-              <div className="text-xl font-bold">{weddingVenues.length}+</div>
-              <div className="text-sm opacity-90">قاعة مميزة</div>
+          {/* Hero Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 max-w-3xl mx-auto">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 border border-gray-200 shadow-sm">
+              <div className="text-xl font-bold text-emerald-600">{weddingVenues.length}</div>
+              <div className="text-xs text-gray-600">قاعة مميزة</div>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/30">
-              <div className="text-xl font-bold">⭐ 4.7+</div>
-              <div className="text-sm opacity-90">تقييم متوسط</div>
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 border border-gray-200 shadow-sm">
+              <div className="text-xl font-bold text-emerald-600">⭐ 4.7+</div>
+              <div className="text-xs text-gray-600">تقييم متوسط</div>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/30">
-              <div className="text-xl font-bold">🎯</div>
-              <div className="text-sm opacity-90">جميع المناسبات</div>
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 border border-gray-200 shadow-sm">
+              <div className="text-xl font-bold text-emerald-600">💼</div>
+              <div className="text-xs text-gray-600">جميع المناسبات</div>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/30">
-              <div className="text-xl font-bold">📍</div>
-              <div className="text-sm opacity-90">إن دور & أوبن دور</div>
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 border border-gray-200 shadow-sm">
+              <div className="text-xl font-bold text-emerald-600">📍</div>
+              <div className="text-xs text-gray-600">إن دور & أوبن دور</div>
             </div>
-          </div>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap justify-center gap-3">
-            
-            <button
-              onClick={() => setShowMobileFilters(true)}
-              className="border-2 border-white text-white hover:bg-white/10 px-6 py-3 rounded-lg font-semibold transition-all duration-300"
-            >
-              عرض الفلاتر
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Search and Filters Bar محسّن */}
-      <div className="bg-white shadow-lg border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            {/* Search محسّن */}
-           
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Search and Filter Header */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            {/* Search Section */}
+            <div className="flex-1 w-full">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="ابحث عن قاعة، مدينة، أو خدمة..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all duration-300 focus:bg-white"
+                />
+                <svg className="absolute right-4 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
 
-            {/* Controls محسّنة */}
-            <div className="flex gap-3 w-full md:w-auto">
+            {/* Controls */}
+            <div className="flex flex-wrap gap-3 w-full md:w-auto">
               <button
                 onClick={() => setShowMobileFilters(true)}
-                className="flex items-center gap-2 px-4 py-3 bg-black hover:bg-gray-800 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
-                <span>الفلاتر المتقدمة</span>
+                <span>الفلاتر</span>
               </button>
 
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-300 shadow-sm bg-white"
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all duration-300 shadow-sm"
               >
                 {Object.entries(sortOptions).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Desktop Filters Above Venues */}
-        <div className="hidden lg:block mb-8">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">فلاتر البحث المتقدم</h2>
               <button
                 onClick={resetFilters}
-                className="text-black hover:text-gray-800 text-sm font-medium bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
+                className="px-4 py-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 text-sm font-medium"
               >
                 مسح الكل
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Governorate Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">المحافظة</label>
-                <select
-                  value={selectedGovernorate}
-                  onChange={(e) => handleGovernorateChange(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-300"
+          </div>
+
+          {/* Active Filters Display */}
+          {(selectedGovernorate !== "all" || selectedCity !== "all" || venueType !== "all" || locationType !== "all" || eventTypes.length > 0 || searchQuery || hasPool || hasWifi || cateringService || hasStage || parkingCapacity > 0 || minGuests > 0 || priceRange < 50000 || capacityRange < 500) && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-700">الفلاتر النشطة:</span>
+                <button
+                  onClick={resetFilters}
+                  className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
                 >
-                  {Object.entries(governorates).map(([value, gov]) => (
-                    <option key={value} value={value}>{gov.name}</option>
-                  ))}
-                </select>
+                  مسح الكل
+                </button>
               </div>
+              <div className="flex flex-wrap gap-2">
+                {eventTypes.map(eventType => (
+                  <span key={eventType} className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-xs font-medium">
+                    {availableEventTypes[eventType]}
+                    <button
+                      onClick={() => handleEventTypeToggle(eventType)}
+                      className="hover:text-emerald-900 text-xs"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
 
-              {/* City Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">المدينة</label>
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-300"
-                >
-                  {selectedGovernorate !== "all" && governorates[selectedGovernorate]?.cities.map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                  {selectedGovernorate === "all" && (
-                    <option value="all">كل المدن</option>
-                  )}
-                </select>
-              </div>
-
-            
-
-              {/* Location Type Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">نوع المكان</label>
-                <select
-                  value={locationType}
-                  onChange={(e) => setLocationType(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-300"
-                >
-                  {Object.entries(locationTypes).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Event Types Filter */}
-              <div className="lg:col-span-2">
+                {selectedGovernorate !== "all" && (
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs">
+                    {governorates[selectedGovernorate]?.name}
+                    <button onClick={() => setSelectedGovernorate("all")} className="hover:text-gray-900 text-xs">×</button>
+                  </span>
+                )}
                 
+                {selectedCity !== "all" && selectedCity !== "كل المدن" && (
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs">
+                    {selectedCity}
+                    <button onClick={() => setSelectedCity("all")} className="hover:text-gray-900 text-xs">×</button>
+                  </span>
+                )}
                 
-                {eventTypes.length > 0 && (
-                  <button
-                    onClick={clearAllEventTypes}
-                    className="mt-2 text-red-600 hover:text-red-800 text-xs font-medium"
-                  >
-                    مسح الكل
-                  </button>
+                {venueType !== "all" && (
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs">
+                    {venueTypes[venueType]}
+                    <button onClick={() => setVenueType("all")} className="hover:text-gray-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {/* ⭐⭐ تم التعديل هنا: عرض قيمة locationType الجديدة ⭐⭐ */}
+                {locationType !== "all" && (
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs">
+                    {locationTypes[locationType]}
+                    <button onClick={() => setLocationType("all")} className="hover:text-gray-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {hasPool && (
+                  <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-xs">
+                    مسبح
+                    <button onClick={() => setHasPool(false)} className="hover:text-blue-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {hasWifi && (
+                  <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-lg text-xs">
+                    واي فاي
+                    <button onClick={() => setHasWifi(false)} className="hover:text-green-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {cateringService && (
+                  <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-1 rounded-lg text-xs">
+                    كترینج
+                    <button onClick={() => setCateringService(false)} className="hover:text-purple-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {hasStage && (
+                  <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-1 rounded-lg text-xs">
+                    منصة
+                    <button onClick={() => setHasStage(false)} className="hover:text-amber-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {parkingCapacity > 0 && (
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs">
+                    موقف {parkingCapacity}+
+                    <button onClick={() => setParkingCapacity(0)} className="hover:text-gray-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {minGuests > 0 && (
+                  <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2 py-1 rounded-lg text-xs">
+                    {minGuests}+ ضيوف
+                    <button onClick={() => setMinGuests(0)} className="hover:text-red-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {priceRange < 50000 && (
+                  <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-xs">
+                    حتى {priceRange.toLocaleString()} ج
+                    <button onClick={() => setPriceRange(50000)} className="hover:text-emerald-900 text-xs">×</button>
+                  </span>
+                )}
+                
+                {capacityRange < 500 && (
+                  <span className="inline-flex items-center gap-1 bg-teal-50 text-teal-700 px-2 py-1 rounded-lg text-xs">
+                    حتى {capacityRange} شخص
+                    <button onClick={() => setCapacityRange(500)} className="hover:text-teal-900 text-xs">×</button>
+                  </span>
                 )}
               </div>
+            </div>
+          )}
+        </div>
 
-              {/* Price Range Filter - محسن */}
-             
-              {/* Capacity Range Filter - محسن */}
-              <div className="lg:col-span-2">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    عدد الأشخاص
-                  </label>
-                  <span className="text-sm font-bold text-black bg-gray-100 px-2 py-1 rounded">
-                    حتى {capacityRange} شخص
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="50"
-                  max="1000"
-                  step="50"
-                  value={capacityRange}
-                  onChange={(e) => setCapacityRange(parseInt(e.target.value))}
-                  className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
-                  <span className="bg-gray-100 px-2 py-1 rounded">50 شخص</span>
-                  <span className="bg-gray-100 px-2 py-1 rounded">500 شخص</span>
-                  <span className="bg-gray-100 px-2 py-1 rounded">1000 شخص</span>
-                </div>
-              </div>
+        {/* Results Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+              القاعات المتاحة
+              <span className="ml-3 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                {filteredVenues.length} قاعة
+              </span>
+            </h2>
+            <p className="text-gray-600 text-sm mt-1">
+              {loading ? "جاري التحميل..." : `عرض ${displayedVenues.length} من ${filteredVenues.length} قاعة`}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-600">
+              {dataSource === "api" && "🟢 متصل بالخادم"}
+              {dataSource === "error" && "🔴 فشل الاتصال"}
             </div>
           </div>
         </div>
 
-        {/* Results Header محسّن */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span>القاعات المتاحة</span>
-                <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {filteredVenues.length} قاعة
-                </span>
-              </h2>
-            
-            </div>
-
-            {/* Comparison Mode Toggle */}
-            <div className="flex items-center gap-3">
-              {venuesToCompare.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
-                    {venuesToCompare.length} قاعة مختارة
-                  </span>
-                  <button
-                    onClick={clearComparison}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
-                  >
-                    مسح الكل
-                  </button>
-                </div>
-              )}
-              <button
-                onClick={() => setComparisonMode(!comparisonMode)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-300 text-sm font-medium ${comparisonMode
-                  ? 'bg-blue-100 text-blue-800 border-blue-300'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
-                  }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                {comparisonMode ? 'خروج من وضع المقارنة' : 'مقارنة القاعات'}
-              </button>
-            </div>
-          </div>
-
-          {/* Active Filters محسّنة */}
-          {(selectedGovernorate !== "all" || selectedCity !== "all" || venueType !== "all" || locationType !== "all" || eventTypes.length > 0 || searchQuery || priceRange < 50000 || capacityRange < 500) && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="text-sm text-gray-500 font-medium">الفلاتر النشطة:</span>
-
-              {/* Event Types Active Filters */}
-              {eventTypes.map(eventType => (
-                <span key={eventType} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  {availableEventTypes[eventType]}
-                  <button
-                    onClick={() => handleEventTypeToggle(eventType)}
-                    className="hover:text-blue-900 text-xs bg-blue-200 rounded-full w-5 h-5 flex items-center justify-center"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-
-              {selectedGovernorate !== "all" && (
-                <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  {governorates[selectedGovernorate]?.name}
-                  <button onClick={() => setSelectedGovernorate("all")} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
-                </span>
-              )}
-              {selectedCity !== "all" && selectedCity !== "كل المدن" && (
-                <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  {selectedCity}
-                  <button onClick={() => setSelectedCity("all")} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
-                </span>
-              )}
-            
-              {locationType !== "all" && (
-                <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  {locationTypes[locationType]}
-                  <button onClick={() => setLocationType("all")} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
-                </span>
-              )}
-        
-              
-              {capacityRange < 500 && (
-                <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                  سعة: حتى {capacityRange} شخص
-                  <button onClick={() => setCapacityRange(500)} className="hover:text-gray-900 text-xs bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center">×</button>
-                </span>
-              )}
-              <button
-                onClick={resetFilters}
-                className="text-black hover:text-gray-800 text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors"
-              >
-                مسح الكل
-              </button>
-            </div>
-          )}
+        {/* Mobile Filters Button */}
+        <div className="lg:hidden mb-6">
+          <button
+            onClick={() => setShowMobileFilters(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            عرض وتعديل جميع الفلاتر
+          </button>
         </div>
 
         {/* Venues Grid */}
         <div className="flex-1">
           {loading ? (
-            <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-black mx-auto mb-4"></div>
-              <p className="text-gray-600 text-lg">جاري تحميل القاعات...</p>
+            <div className="text-center py-16 bg-white rounded-2xl shadow-md border border-gray-100">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+              <p className="text-gray-600 font-medium">جاري تحميل القاعات...</p>
               <p className="text-gray-500 text-sm mt-2">نبحث عن أفضل الأماكن لحفل زفافك</p>
             </div>
+          ) : error ? (
+            <div className="text-center py-16 bg-white rounded-2xl shadow-md border border-gray-100">
+              <div className="text-4xl mb-4">⚠️</div>
+              <h3 className="text-lg font-bold text-gray-700 mb-3">حدث خطأ في الاتصال</h3>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+              >
+                إعادة المحاولة
+              </button>
+            </div>
           ) : filteredVenues.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-bold text-gray-700 mb-3">لا توجد نتائج</h3>
+            <div className="text-center py-16 bg-white rounded-2xl shadow-md border border-gray-100">
+              <div className="text-4xl mb-4">🔍</div>
+              <h3 className="text-lg font-bold text-gray-700 mb-3">لا توجد نتائج</h3>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">لم نتمكن من العثور على قاعات تطابق معايير البحث. حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
               <button
                 onClick={resetFilters}
-                className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium"
               >
                 مسح كل الفلاتر
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredVenues.map((venue) => (
-                <VenueCard
-                  key={venue.id || venue._id}
-                  venue={venue}
-                  onVenueClick={handleVenueClick}
-                  isFavorite={favorites.includes(venue.id || venue._id)}
-                  onToggleFavorite={(venueId, e) => {
-                    if (e) e.stopPropagation();
-                    if (favorites.includes(venueId)) {
-                      setFavorites(favorites.filter(id => id !== venueId));
-                    } else {
-                      setFavorites([...favorites, venueId]);
-                    }
-                  }}
-                  onBookNow={handleBookNow}
-                  // إضافة خاصية المقارنة
-                  comparisonMode={comparisonMode}
-                  isSelectedForComparison={venuesToCompare.some(v => (v.id || v._id) === (venue.id || venue._id))}
-                  onToggleComparison={() => toggleVenueComparison(venue)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedVenues.map((venue) => (
+                  <VenueCard
+                    key={venue.id || venue._id}
+                    venue={venue}
+                    onVenueClick={handleVenueClick}
+                    isFavorite={favorites.includes(venue.id || venue._id)}
+                    onToggleFavorite={(venueId, e) => {
+                      if (e) e.stopPropagation();
+                      if (favorites.includes(venueId)) {
+                        setFavorites(favorites.filter(id => id !== venueId));
+                      } else {
+                        setFavorites([...favorites, venueId]);
+                      }
+                    }}
+                    onBookNow={handleBookNow}
+                  />
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              {filteredVenues.length > displayedVenues.length && (
+                <div className="text-center mt-12">
+                  <button
+                    onClick={loadMoreVenues}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium inline-flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+                    </svg>
+                    عرض المزيد من القاعات ({filteredVenues.length - displayedVenues.length} متبقية)
+                  </button>
+                  <p className="text-gray-500 text-sm mt-3">
+                    عرض {displayedVenues.length} من أصل {filteredVenues.length} قاعة
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Bottom CTA */}
+      {!loading && filteredVenues.length > 0 && (
+        <div className="bg-emerald-50 border-t border-emerald-100 mt-12">
+          <div className="max-w-7xl mx-auto px-4 py-12">
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">لم تجد القاعة المناسبة؟</h3>
+              <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+                يمكننا مساعدتك في العثور على القاعة المثالية. تواصل مع مستشارينا للحصول على توصيات شخصية
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <button
+                  onClick={() => window.location.href = 'tel:+201234567890'}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                >
+                  📞 تواصل معنا الآن
+                </button>
+                <button
+                  onClick={() => navigate('/contact')}
+                  className="bg-white text-gray-700 border border-gray-300 hover:border-emerald-300 px-6 py-3 rounded-xl transition-all duration-300 shadow-sm hover:shadow font-medium"
+                >
+                  📩 طلب استشارة مجانية
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer onNavigateHome={handleBackToHome} />
 
@@ -1277,6 +933,18 @@ const WeddingHallsPage = () => {
             onCapacityRangeChange: setCapacityRange,
             sortBy,
             onSortChange: setSortBy,
+            hasPool,
+            onHasPoolChange: setHasPool,
+            hasWifi,
+            onHasWifiChange: setHasWifi,
+            cateringService,
+            onCateringServiceChange: setCateringService,
+            hasStage,
+            onHasStageChange: setHasStage,
+            parkingCapacity,
+            onParkingCapacityChange: setParkingCapacity,
+            minGuests,
+            onMinGuestsChange: setMinGuests,
             onResetFilters: resetFilters,
             filteredVenues,
             weddingVenues,
@@ -1299,9 +967,6 @@ const WeddingHallsPage = () => {
         onSetBookingType={setBookingType}
         user={user}
       />
-
-      {/* Comparison Modal */}
-      <ComparisonModal />
     </div>
   );
 };

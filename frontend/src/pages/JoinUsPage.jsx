@@ -68,7 +68,7 @@ const JoinUsPage = () => {
 
     try {
       // إرسال البيانات إلى API
-      const response = await fetch('https://bookera-production-25ec.up.railway.app/api/partners/register', {
+      const response = await fetch('https://bookera-production-25ec.up.railway.app//api/partners/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +225,7 @@ const JoinUsPage = () => {
             انضم إلى عائلة Bookera
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            كن شريكاً معنا واربح مع منصة الحجوزات الرائدة في المملكة
+            كن شريكاً معنا واربح مع Bookera الرائدة في المملكة
           </p>
         </motion.div>
 
@@ -572,11 +572,11 @@ const JoinUsPage = () => {
               <div className="space-y-3 text-gray-600 dark:text-gray-300">
                 <p className="flex items-center space-x-3 space-x-reverse">
                   <span>📧</span>
-                  <span>partners@Bookera.com</span>
+                  <span>eventupcompany@gmail.com</span>
                 </p>
                 <p className="flex items-center space-x-3 space-x-reverse">
                   <span>📞</span>
-                  <span>+201010087245</span>
+                  <span>+201040652783</span>
                 </p>
                 <p className="flex items-center space-x-3 space-x-reverse">
                   <span>🕒</span>

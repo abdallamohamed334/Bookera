@@ -32,7 +32,7 @@ export const signup = async (req, res) => {
 		}
 
 		const userAlreadyExists = await User.findOne({ email });
-		console.log("userAlreadyExists", userAlreadyExists);
+		
 
 		if (userAlreadyExists) {
 			return res.status(400).json({ success: false, message: "User already exists" });
@@ -111,7 +111,7 @@ export const verifyEmail = async (req, res) => {
     try {
       await sendWelcomeEmail(user.email, user.name);
     } catch (emailError) {
-      console.log("Failed to send welcome email:", emailError);
+      
     }
 
     // إرجاع بيانات المستخدم بشكل آمن
@@ -127,7 +127,7 @@ export const verifyEmail = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("Error in verifyEmail:", error);
+    
     res.status(500).json({ 
       success: false, 
       message: "Server error" 
@@ -172,7 +172,7 @@ export const login = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		console.log("Error in login ", error);
+		
 		res.status(400).json({ success: false, message: error.message });
 	}
 };
@@ -205,7 +205,7 @@ export const forgotPassword = async (req, res) => {
 
 		res.status(200).json({ success: true, message: "Password reset link sent to your email" });
 	} catch (error) {
-		console.log("Error in forgotPassword ", error);
+		
 		res.status(400).json({ success: false, message: error.message });
 	}
 };
@@ -236,7 +236,7 @@ export const resetPassword = async (req, res) => {
 
 		res.status(200).json({ success: true, message: "Password reset successful" });
 	} catch (error) {
-		console.log("Error in resetPassword ", error);
+		
 		res.status(400).json({ success: false, message: error.message });
 	}
 };
@@ -262,7 +262,7 @@ export const checkAuth = async (req, res) => {
 			}
 		});
 	} catch (error) {
-		console.log("Error in checkAuth ", error);
+		
 		res.status(400).json({ success: false, message: error.message });
 	}
 };

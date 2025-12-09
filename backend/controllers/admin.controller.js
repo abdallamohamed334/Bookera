@@ -16,7 +16,7 @@ export const adminLogin = async (req, res) => {
   }
 
   try {
-    console.log("🔍 Searching for admin with email:", email);
+    
     
     // البحث في collection الأدمن
     const db = mongoose.connection.db;
@@ -24,23 +24,23 @@ export const adminLogin = async (req, res) => {
       email: email.toLowerCase().trim() 
     });
 
-    console.log("🔎 Admin found:", admin ? "Yes" : "No");
+    
 
     if (!admin) {
-      console.log("❌ No admin found with this email");
+      
       return res.status(400).json({ 
         success: false, 
         message: "بيانات الدخول غير صحيحة" 
       });
     }
 
-    console.log("✅ Admin found, checking password...");
+    
 
     const isPasswordValid = await bcryptjs.compare(password, admin.password);
-    console.log("🔐 Password valid:", isPasswordValid);
+    
 
     if (!isPasswordValid) {
-      console.log("❌ Password is invalid");
+      
       return res.status(400).json({ 
         success: false, 
         message: "بيانات الدخول غير صحيحة" 
@@ -69,7 +69,7 @@ export const adminLogin = async (req, res) => {
       isVerified: true // ⬅️ الأدمن دايماً مفعل
     };
 
-    console.log("📤 Sending user response:", userResponse);
+    
 
     res.status(200).json({
       success: true,
