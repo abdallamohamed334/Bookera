@@ -315,15 +315,7 @@ const FiltersSection = ({
               </div>
               
               {/* زر الفلاتر المتقدمة */}
-              <button 
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-lg hover:from-purple-700 hover:to-violet-700 transition-all duration-200 shadow-sm"
-              >
-                <svg className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-                {isExpanded ? "إخفاء الفلاتر المتقدمة" : "عرض الفلاتر المتقدمة"}
-              </button>
+             
             </div>
           </div>
         </div>

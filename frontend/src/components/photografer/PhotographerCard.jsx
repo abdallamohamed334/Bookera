@@ -87,7 +87,6 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
 
   const images = photographer.portfolio?.map(album => album.coverImage) || [photographer.profileImage];
 
-  // دالة للصورة التالية
   const nextImage = (e) => {
     e.stopPropagation();
     if (images.length > 1) {
@@ -97,7 +96,6 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
     }
   };
 
-  // دالة للصورة السابقة
   const prevImage = (e) => {
     e.stopPropagation();
     if (images.length > 1) {
@@ -107,7 +105,6 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
     }
   };
 
-  // تحقق إذا يجب إظهار الأسهم
   const shouldShowArrows = isMobile || isHovering || images.length > 1;
 
   return (
@@ -123,7 +120,6 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
     >
       {/* صورة كاملة في الأعلى */}
       <div className="relative h-80 w-full flex-shrink-0">
-        {/* الصورة الرئيسية */}
         <div className="relative w-full h-full overflow-hidden">
           <img
             src={images[currentImageIndex]}
@@ -134,33 +130,24 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
             }}
           />
           
-          {/* تدرج غامق من الأسفل */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         </div>
 
-        {/* جميع العنوانات في الأعلى */}
+        {/* العنوانات - أعلى الصورة */}
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
-          {/* الجانب الأيسر */}
           <div className="flex flex-col gap-2">
-            {/* المدينة */}
             <div className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg">
               {photographer.city}
             </div>
-            
-            {/* احجز الآن */}
-            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-lg transform hover:scale-105 transition-transform duration-200">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-lg">
               احجز الآن 🎯
             </div>
           </div>
 
-          {/* الجانب الأيمن */}
           <div className="flex flex-col gap-2 items-end">
-            {/* التقييم */}
             <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-lg">
               {renderStars(photographer.rating)}
             </div>
-            
-            {/* الخصومات */}
             {hasDiscount && (
               <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg">
                 خصم {maxDiscount}% 🎁
@@ -169,26 +156,24 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           </div>
         </div>
 
-        {/* زر المشاركة - في الأسفل اليسار */}
+        {/* زر المشاركة */}
         <div className="absolute bottom-4 left-4 z-20">
           <button
             onClick={handleShare}
-            className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-blue-600 transition-all duration-300 shadow-lg rounded-lg p-2.5 flex items-center justify-center hover:scale-110 active:scale-95"
-            title="مشاركة الفوتوغرافر"
+            className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-blue-600 transition-all p-2.5 shadow-lg rounded-lg"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12a4 4 0 118 0 4 4 0 01-8 0zm4 6v4m0-20v4m8 4h4M2 12H6" />
             </svg>
           </button>
         </div>
 
-        {/* أسهم التنقل - تظهر عند Hover أو على الموبايل */}
+        {/* الأسهم */}
         {images.length > 1 && shouldShowArrows && (
           <>
             <button
               onClick={prevImage}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm text-gray-700 hover:text-blue-600 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl hover:scale-110 z-20 active:scale-95"
-              title="الصورة السابقة"
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center shadow-xl"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -196,8 +181,7 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm text-gray-700 hover:text-blue-600 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl hover:scale-110 z-20 active:scale-95"
-              title="الصورة التالية"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center shadow-xl"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -206,165 +190,67 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           </>
         )}
 
-        {/* مؤشر الصور - في الأسفل */}
-        {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
-            {images.map((_, index) => (
-              <button
-                key={index}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentImageIndex(index);
-                }}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentImageIndex 
-                    ? 'bg-white scale-125' 
-                    : 'bg-white/50 hover:bg-white/70'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* عدد الصور في الأسفل على اليمين */}
-        {images.length > 1 && (
-          <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full z-20">
-            {currentImageIndex + 1}/{images.length}
-          </div>
-        )}
-
-        {/* على الموبايل، إضافة مؤشر أن هناك المزيد من الصور */}
-        {isMobile && images.length > 1 && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-            <div className="bg-black/40 backdrop-blur-sm rounded-full p-2 animate-pulse">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-              </svg>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* المحتوى أسفل الصورة */}
       <div className="p-5 flex-grow flex flex-col">
-        {/* الاسم والخبرة */}
         <div className="flex justify-between items-start mb-4">
           <div>
             <h4 className="text-xl font-bold text-gray-900 mb-1">{photographer.name}</h4>
             <p className="text-blue-600 font-semibold text-sm">{photographer.specialty}</p>
           </div>
-          <span className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+          <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium">
             {photographer.experience} سنة خبرة
           </span>
         </div>
 
         {/* الموقع */}
         <p className="text-gray-600 text-sm mb-4 flex items-center gap-1">
-          <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-          </svg>
           {photographer.city}، {photographer.governorate}
         </p>
-
-        {/* بداية سعر القاعة */}
-        {hallStartingPrice && (
-          <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="bg-blue-100 p-1.5 rounded-lg">
-                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                </span>
-                <div>
-                  <span className="text-blue-800 font-semibold text-sm">بداية سعر القاعة</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-600 font-bold text-lg">{hallStartingPrice.toLocaleString()} ج.م</span>
-                    <span className="text-gray-500 text-xs">/ للفعالية</span>
-                  </div>
-                </div>
-              </div>
-              <span className="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded-full">
-                أفضل سعر ✨
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* الخصومات التفصيلية */}
-        {hasDiscount && (
-          <div className="mb-3 p-3 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-red-700 font-semibold text-sm">عروض خصومات:</span>
-              <span className="text-red-600 text-xs font-bold">Limited Time ⏰</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {discounts.slice(0, 2).map((discount, index) => (
-                <span
-                  key={index}
-                  className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium"
-                >
-                  {discount.name} - {discount.discount}%
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* الخدمات */}
         <div className="flex flex-wrap gap-2 mb-4">
           {photographer.services?.slice(0, 3).map((service, index) => (
             <span
               key={index}
-              className="bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200"
+              className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs font-medium border"
             >
               {service}
             </span>
           ))}
           {photographer.services?.length > 3 && (
-            <span className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-200">
+            <span className="bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-medium border">
               +{photographer.services.length - 3} أكثر
             </span>
           )}
         </div>
 
-        {/* زر التفاصيل */}
-        <div className="mt-auto">
-          <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 rounded-xl font-semibold text-sm transition-all duration-300 transform hover:scale-[1.02] shadow-lg">
-            عرض التفاصيل
-          </button>
-        </div>
-        <div className="mt-3 flex justify-between items-center text-xs text-gray-500">
-          <span className="flex items-center gap-1">
-            <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-            </svg>
-            {photographer.responseTime || "رد سريع"}
-          </span>
-          <span className="flex items-center gap-1">
-            {hasDiscount ? (
-              <span className="text-red-500 font-semibold animate-pulse">عروض حصرية 🔥</span>
-            ) : (
-              <span className="text-green-500 font-semibold">جودة عالية</span>
-            )}
-          </span>
-        </div>
-      </div>
+        {/* محرر فيديو وصور */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {photographer.isVideoEditor && (
+            <span className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-200 flex items-center gap-1">
+              🎬 محترف مونتاج فيديو
+            </span>
+          )}
 
-      {/* إضافة سوايبر للصفحة على الموبايل */}
-      {isMobile && images.length > 1 && (
-        <div className="flex justify-center items-center p-2 border-t border-gray-100">
-          <div className="flex items-center space-x-2">
-            <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-            </svg>
-            <span className="text-sm text-gray-600">اسحب لليمين واليسار لرؤية المزيد من الصور</span>
-            <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-          </div>
+          {photographer.isPhotoEditor && (
+            <span className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-200 flex items-center gap-1">
+              🎨 محرر صور (Photo Editor)
+            </span>
+          )}
+
+          {!photographer.isVideoEditor && !photographer.isPhotoEditor && (
+            <span className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200">
+              لا توجد خدمات تعديل صور/فيديو
+            </span>
+          )}
         </div>
-      )}
+
+        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold shadow-lg">
+          عرض التفاصيل
+        </button>
+      </div>
     </motion.div>
   );
 };

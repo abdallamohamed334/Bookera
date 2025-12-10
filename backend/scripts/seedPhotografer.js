@@ -6,33 +6,31 @@ dotenv.config();
 
 const samplePhotographers = [
   {
-    name: " media_coverage_with_rof3",
-    businessName: "Rof3 Nasser Phg🦂❤️",
-    type: "فردي",
-    specialty: "تصوير مناسبات",
-    experience: 3,
-    governorate: "الزقازيق",
-    city: "التل الكبير",
-    price: "2000",
+    name: "Hesham mohamed mabrouk sayed ",
+    businessName: "Americanestudio",
+    type: "شخصي",
+    specialty: "تصوير منتجات",
+    experience: 9,
+    governorate: "الجيزة",
+    city: " اكتوبر",
+    price: "999",
     portfolio: [
       {
         title: "   ",
         description: "",
         category: "شخصي",
-        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132014/588387458_17931839595137229_4673168025956052475_n_yd0ren.jpg",
+        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361353/467671180_18252579442286871_5145561335980148667_n_hkhtvr.jpg",
         images: [
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132047/589924912_17931839559137229_5524959518508183929_n_swqb8n.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132044/587816443_17931839568137229_2695545241053447091_n_qx7hxg.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132044/589016865_17931839514137229_9204932908858677543_n_lsmhws.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132043/590363737_17931839529137229_1018392782906256488_n_vq4r8q.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132027/588532352_17931839541137229_3236571267809026287_n_wokecc.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132019/590959417_17931839604137229_3074638344392339179_n_kqv3av.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132018/588626339_17931839613137229_6287219628677148394_n_b0vxa6.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132017/588925307_17931839577137229_8555575927182487516_n_wkpon0.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132017/589574014_17931839622137229_7966939066678876595_n_ani9hj.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132015/589038064_17931839586137229_4358061009860431352_n_ysu6sl.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132015/588164459_17931839550137229_7139704980733295857_n_bv2tah.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132014/588387458_17931839595137229_4673168025956052475_n_yd0ren.jpg"
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361360/467620872_18252579415286871_18450063181725225_n_rheh65.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361359/467608737_18252579403286871_3532299275913016529_n_etuemp.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361358/467512578_18252579568286871_2631975435601420777_n_yn2h8f.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361357/467648462_18252579436286871_2055705598099486772_n_cjc5un.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361357/467863597_18252579406286871_577328646460997961_n_okhzsb.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361357/467734971_18252579433286871_1488096685221994541_n_ssnj0d.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361355/467749509_18252579430286871_2033676254240031215_n_uqtcrz.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361354/467625632_18252579439286871_1913273634400438464_n_vmz28n.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361353/467671180_18252579442286871_5145561335980148667_n_hkhtvr.jpg"
+
 
           
 
@@ -42,15 +40,18 @@ const samplePhotographers = [
         title: "   ",
         description: "   ",
         category: "شخصي",
-        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132250/543427272_17922514281137229_6584443799557867093_n_qi6lae.jpg",
+        coverImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361580/371176039_2505912336253140_7537814329357664781_n_vjvst2.jpg",
         images: [
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132254/543648325_17922514308137229_1718243092173555647_n_ii66q0.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132253/543782156_17922514299137229_125401071518811147_n_stigjr.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132252/543452440_17922514326137229_8124832501211728028_n_icrjah.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132250/543427272_17922514281137229_6584443799557867093_n_qi6lae.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132248/544110482_17922514272137229_6998322019409578709_n_jyrk5p.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132247/543889665_17922514263137229_6670793287996494608_n_hu67f8.jpg",
-          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132247/543889665_17922514263137229_6670793287996494608_n_hu67f8.jpg"
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361580/372566889_621508143453557_7542209734207468764_n_w2aecb.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361581/370055317_1143047067082761_2159562564689894127_n_udapvf.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361580/371743511_294524113272398_4911053690351348270_n_putirq.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361580/371004228_839229161099346_3762141567743914691_n_antncv.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361580/371176039_2505912336253140_7537814329357664781_n_vjvst2.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361575/372082770_225876530438598_7485152900305830331_n_gheh66.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361575/372016061_1433328977431163_1446448330576210598_n_nnieec.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361571/371438138_3563694927284944_3505185742312517942_n_uhfekj.jpg",
+          "https://res.cloudinary.com/dwocg88vs/image/upload/v1765361571/371373190_574714741354895_7536338596790947755_n_of7kak.jpg"
+          
          
           
           
@@ -59,19 +60,19 @@ const samplePhotographers = [
       },
 
     ],
-    profileImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1765132361/587302637_17931626184137229_1033197480022946813_n_mhrh2e.jpg",
+    profileImage: "https://res.cloudinary.com/dwocg88vs/image/upload/v1765360567/1707229412930_gonjsh.jpg",
     services: ["تصوير قبل الزفاف", "تصوير حفل الزفاف", "تصوير ما بعد الحفل", "ألبوم كامل", "فيديو"],
-    equipment: ["IPHONE"],
-    description: "MediaCoverage or Sessions by IPhone 📲🎀",
+    equipment: ["Canon 800d ","Canon 2000d","2 lens 50 f1.4","Lens 18-135","Flash godex 685 ","Octa 90 "],
+    description: "احنا شركة متخصصة في التصوير بجميع فروعه ( تصوير الافراح - اعياد الميلاد - المؤتمرات - المقابلات الشخصية - تصوير الطعام - تصوير المنتجات - تصوير الاطفال - تصوير الفاشون )",
     available: true,
     rating: 4.5,
-    contact: "01121437182",
-    email: "rahaf@photography.com",
-    address: " الزقازيق - التل الكبير  ",
+    contact: "01120476575",
+    email: "heshamamericane123@gmail.com",
+    address: " الجيزه- اكتوبر ",
     socialMedia: {
-      instagram: "https://www.instagram.com/media_coverage_with_rof3?igsh=MWI3cXF3OWpsNnAzMQ%3D%3D&utm_source=qr&fbclid=IwY2xjawOipKtleHRuA2FlbQIxMABicmlkETF4VWFQU3dZaDQ4N2lMSmMxc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHgCso9sYVLRc1PqV1n3vcGB0iifgB6trL-gM3EYcQ_0hPjt24bh7BNG4bsgh_aem_3-IsDU118RkqDF-hha1XQA",
-      facebook: "https://www.facebook.com/rahaf.abdelnasser/",
-      website: "www.rafaf-photo.com"
+      instagram: "https://www.instagram.com/americaestudio/",
+      facebook: "https://www.facebook.com/share/1DxEkbfRVJ/",
+      website: "www.hesham-photo.com"
     },
     photographySpecific: {
       hoursCoverage: 8,
@@ -85,6 +86,11 @@ const samplePhotographers = [
       rawFiles: false
     },
     packages: [
+      {
+      "name": "الباقة بالساعه",
+      "price": 999,
+      "description":"باقاتي بالساعه و سعر الساعه ثابت ٩٩٩ ب"
+      }
     
       
     ]
