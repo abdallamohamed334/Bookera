@@ -107,6 +107,10 @@ const photographerSchema = new mongoose.Schema({
     facebook: String,
     website: String
   },
+   category: {
+    type: String,
+    trim: true
+  },
   photographySpecific: {
     hoursCoverage: { type: Number, default: 0 },
     numberOfPhotos: { type: Number, default: 0 },

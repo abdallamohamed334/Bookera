@@ -6,14 +6,14 @@ dotenv.config();
 
 const samplePhotographers = [
   {
-    name: "Hesham mohamed mabrouk sayed ",
-    businessName: "Americanestudio",
+    name: "ZizoPhotography",
+    businessName: "Ziad abdalsalam Ph",
     type: "شخصي",
-    specialty: "تصوير منتجات",
+    specialty: "تصوير مناسبات",
     experience: 9,
-    governorate: "الجيزة",
-    city: " اكتوبر",
-    price: "999",
+    governorate: "الاسنكدرية",
+    city: " الاسكندرية",
+    price: "2000",
     portfolio: [
       {
         title: "   ",
