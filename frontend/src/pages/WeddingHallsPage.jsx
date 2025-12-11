@@ -65,6 +65,7 @@ const WeddingHallsPage = () => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [itemsToShow, setItemsToShow] = useState(10);
+  const [showDesktopFilters, setShowDesktopFilters] = useState(true); // ⭐⭐ جديد: للتحكم في عرض/إخفاء الفلاتر في الكمبيوتر
 
   // محافظات مصر - الغربية فقط
   const governorates = {
@@ -85,7 +86,6 @@ const WeddingHallsPage = () => {
     "نادي": "نادي"
   };
 
-  // ⭐⭐ تم التعديل هنا: استخدام venue_environment بدلاً من open/closed ⭐⭐
   const locationTypes = {
     "all": "كل المواقع",
     "indoor": "إن دور (داخلي)",
@@ -93,13 +93,22 @@ const WeddingHallsPage = () => {
     "mixed": "مختلط"
   };
 
-  // أنواع المناسبات
+  // ⭐⭐ تم التعديل هنا: أنواع المناسبات لمطابقة supported_events من قاعدة البيانات ⭐⭐
   const availableEventTypes = {
-    "فرح": "فرح",
-    "خطوبة": "خطوبة",
-    "كتب_كتاب": "كتب كتاب",
-    "عيد_ميلاد": "عيد ميلاد",
-    "مؤتمرات": "مؤتمرات"
+    "engagement": "خطوبة",
+    "katb_ketab": "كتب كتاب",
+    "islamic_wedding": "فرح",
+    "conference": "مؤتمرات",
+    "birthday": "عيد ميلاد"
+  };
+
+  // ⭐⭐ إضافة: خريطة للتحويل من إنجليزي لعربي للعرض ⭐⭐
+  const eventTypeDisplayNames = {
+    "engagement": "خطوبة",
+    "katb_ketab": "كتب كتاب",
+    "islamic_wedding": "فرح",
+    "conference": "مؤتمرات",
+    "birthday": "عيد ميلاد"
   };
 
   const sortOptions = {
@@ -127,75 +136,99 @@ const WeddingHallsPage = () => {
     setEventTypes([]);
   };
 
-  // جلب البيانات من الـ API
+  // ⭐⭐ دالة لتحويل event types للعرض في الواجهة ⭐⭐
+  const getEventTypeDisplayName = (eventTypeKey) => {
+    return eventTypeDisplayNames[eventTypeKey] || eventTypeKey;
+  };
+
+  // ⭐⭐ جلب البيانات من جميع صفحات الـ API ⭐⭐
   useEffect(() => {
-    const fetchWeddingVenues = async () => {
+    const fetchAllWeddingVenues = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`https://bookera-production-25ec.up.railway.app/api/wedding-venues/`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-https://bookera-production-25ec.up.railway.app
-        if (response.ok) {
-          const data = await response.json();
+        console.log('🔄 جاري جلب جميع القاعات من جميع الصفحات...');
 
-          if (data.venues && data.venues.length > 0) {
-            const venuesWithId = data.venues.map(venue => ({
-              ...venue,
-              _id: venue.id || venue._id,
-              images: venue.images || [venue.image],
-              profile_image: venue.profile_image,
-              features: venue.features || [],
-              amenities: venue.amenities || [],
-              rules: venue.rules || [],
-              weddingSpecific: venue.weddingSpecific || {},
-              // التأكد من وجود eventTypes من الداتا بيز
-              eventTypes: venue.eventTypes || venue.event_types || [],
-              rating: venue.rating || 0,
-              reviewCount: venue.reviewCount || 0,
-              available: venue.available !== false,
-              videos: venue.videos || [],
-              specialOffer: venue.specialOffer || null,
-              originalPrice: venue.originalPrice || null,
-              discount: venue.discount || null,
-              // ⭐⭐ تم التعديل هنا: استخدام venue_environment الجديد ⭐⭐
-              venue_environment: venue.venue_environment || (venue.openAir ? "outdoor" : "indoor"),
-              // معلومات إضافية من weddingSpecific
-              hasPool: venue.weddingSpecific?.hasPool || false,
-              hasWifi: venue.weddingSpecific?.hasWifi || false,
-              openAir: venue.weddingSpecific?.openAir || false,
-              catering: venue.weddingSpecific?.catering || false,
-              cateringService: venue.weddingSpecific?.cateringService || false,
-              hasStage: venue.weddingSpecific?.hasStage || false,
-              brideRoom: venue.weddingSpecific?.brideRoom || false,
-              groomRoom: venue.weddingSpecific?.groomRoom || false,
-              hasGarden: venue.weddingSpecific?.hasGarden || false,
-              maxGuests: venue.weddingSpecific?.maxGuests || venue.capacity || 0,
-              minGuests: venue.weddingSpecific?.minGuests || 0,
-              parkingCapacity: venue.weddingSpecific?.parkingCapacity || 0
-            }));
+        // جلب الصفحتين معاً باستخدام Promise.all للحصول على كل القاعات
+        const [page1Response, page2Response] = await Promise.all([
+          fetch('https://bookera-production-25ec.up.railway.app/api/wedding-venues/', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          }),
+          fetch('https://bookera-production-25ec.up.railway.app/api/wedding-venues/?page=2', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          })
+        ]);
 
-            console.log('✅ البيانات المستلمة:', venuesWithId.map(v => ({ 
+        if (!page1Response.ok || !page2Response.ok) {
+          throw new Error('فشل في جلب البيانات من الخادم');
+        }
+
+        const [page1Data, page2Data] = await Promise.all([
+          page1Response.json(),
+          page2Response.json()
+        ]);
+
+        // جمع القاعات من الصفحتين
+        const allVenues = [
+          ...(page1Data.venues || []),
+          ...(page2Data.venues || [])
+        ];
+
+        console.log(`✅ الصفحة الأولى: ${page1Data.venues?.length || 0} قاعة`);
+        console.log(`✅ الصفحة الثانية: ${page2Data.venues?.length || 0} قاعة`);
+        console.log(`🎉 الإجمالي: ${allVenues.length} قاعة من كل الصفحات`);
+
+        if (allVenues.length > 0) {
+          const venuesWithId = allVenues.map(venue => ({
+            ...venue,
+            _id: venue.id || venue._id,
+            images: venue.images || [venue.image],
+            profile_image: venue.profile_image,
+            features: venue.features || [],
+            amenities: venue.amenities || [],
+            rules: venue.rules || [],
+            weddingSpecific: venue.weddingSpecific || {},
+            // ⭐⭐ تم التعديل هنا: استخدام supported_events من قاعدة البيانات ⭐⭐
+            eventTypes: venue.supported_events || venue.event_types || venue.eventTypes || [],
+            rating: venue.rating || 0,
+            reviewCount: venue.reviewCount || 0,
+            available: venue.available !== false,
+            videos: venue.videos || [],
+            specialOffer: venue.specialOffer || null,
+            originalPrice: venue.originalPrice || null,
+            discount: venue.discount || null,
+            venue_environment: venue.venue_environment || (venue.openAir ? "outdoor" : "indoor"),
+            // معلومات إضافية من weddingSpecific
+            hasPool: venue.weddingSpecific?.hasPool || false,
+            hasWifi: venue.weddingSpecific?.hasWifi || false,
+            openAir: venue.weddingSpecific?.openAir || false,
+            catering: venue.weddingSpecific?.catering || false,
+            cateringService: venue.weddingSpecific?.cateringService || false,
+            hasStage: venue.weddingSpecific?.hasStage || false,
+            brideRoom: venue.weddingSpecific?.brideRoom || false,
+            groomRoom: venue.weddingSpecific?.groomRoom || false,
+            hasGarden: venue.weddingSpecific?.hasGarden || false,
+            maxGuests: venue.weddingSpecific?.maxGuests || venue.capacity || 0,
+            minGuests: venue.weddingSpecific?.minGuests || 0,
+            parkingCapacity: venue.weddingSpecific?.parkingCapacity || 0
+          }));
+
+          console.log('✅ جميع القاعات المستلمة:', venuesWithId.map(v => v.name));
+          console.log('📊 تفاصيل eventTypes:', 
+            venuesWithId.map(v => ({ 
               name: v.name, 
               eventTypes: v.eventTypes,
-              venue_environment: v.venue_environment, // ⭐⭐ تم التعديل هنا ⭐⭐
-              hasPool: v.hasPool,
-              hasWifi: v.hasWifi,
-              cateringService: v.cateringService
-            })));
+              eventTypesLength: v.eventTypes?.length 
+            }))
+          );
 
-            setWeddingVenues(venuesWithId);
-            setDataSource("api");
-          } else {
-            throw new Error('لا توجد بيانات في الـ API');
-          }
+          setWeddingVenues(venuesWithId);
+          setDataSource("api");
         } else {
-          throw new Error(`فشل في جلب البيانات: ${response.status}`);
+          throw new Error('لا توجد بيانات في الـ API');
         }
       } catch (err) {
         console.error('❌ خطأ في جلب البيانات:', err);
@@ -206,7 +239,7 @@ https://bookera-production-25ec.up.railway.app
       }
     };
 
-    fetchWeddingVenues();
+    fetchAllWeddingVenues();
   }, []);
 
   // تحديث حالة الفلاتر في useRef عند تغييرها
@@ -230,11 +263,13 @@ https://bookera-production-25ec.up.railway.app
     };
   }, [priceRange, capacityRange, selectedGovernorate, selectedCity, venueType, locationType, eventTypes, sortBy, searchQuery, hasPool, hasWifi, cateringService, hasStage, parkingCapacity, minGuests]);
 
-  // فلترة وترتيب الأماكن - معدلة بالكامل
+  // فلترة وترتيب الأماكن - معدلة للعمل مع جميع القاعات
   useEffect(() => {
-    console.log('🔄 جاري تطبيق الفلاتر...');
+    console.log('🔄 جاري تطبيق الفلاتر على جميع القاعات...');
+    console.log('📊 إجمالي القاعات:', weddingVenues.length);
     console.log('🎯 الفلاتر الحالية:', {
       eventTypes,
+      eventTypesCount: eventTypes.length,
       locationType,
       hasPool,
       hasWifi,
@@ -245,13 +280,6 @@ https://bookera-production-25ec.up.railway.app
       priceRange,
       capacityRange
     });
-
-    // إضافة console.log لرؤية بيانات القاعات
-    console.log('📋 بيانات القاعات:', weddingVenues.map(v => ({
-      name: v.name,
-      venue_environment: v.venue_environment,
-      openAir: v.openAir
-    })));
 
     let filtered = weddingVenues.filter(venue => {
       // 1. البحث النصي
@@ -271,19 +299,15 @@ https://bookera-production-25ec.up.railway.app
       // 4. نوع القاعة
       const matchesVenueType = venueType === "all" || venue.type === venueType;
       
-      // ⭐⭐ تم التعديل هنا: فلترة venue_environment مع معالجة القيم ⭐⭐
+      // 5. نوع الموقع (إن دور/أوبن دور)
       let matchesLocationType = true;
       if (locationType !== "all") {
-        // الحصول على قيمة venue_environment من القاعة
-        // نستخدم venue.venue_environment أو نعتمد على openAir كبديل
         let venueEnvironment = venue.venue_environment;
         
-        // إذا كانت venue_environment غير موجودة، نستخدم openAir كقيمة افتراضية
         if (!venueEnvironment && venueEnvironment !== "indoor" && venueEnvironment !== "outdoor") {
           venueEnvironment = venue.openAir ? "outdoor" : "indoor";
         }
         
-        // تطبيع القيمة للتأكد من المطابقة
         const normalizedEnvironment = String(venueEnvironment || "").toLowerCase().trim();
         
         if (locationType === "indoor") {
@@ -291,17 +315,34 @@ https://bookera-production-25ec.up.railway.app
         } else if (locationType === "outdoor") {
           matchesLocationType = normalizedEnvironment === "outdoor";
         } else if (locationType === "mixed") {
-          // في حالة mixed نعرض كل القاعات
           matchesLocationType = true;
         }
-        
-        console.log(`🔍 القاعة: ${venue.name}, venue_environment: ${venue.venue_environment}, computed: ${normalizedEnvironment}, locationType: ${locationType}, matches: ${matchesLocationType}`);
       }
       
-      // 6. أنواع المناسبات
-      const matchesEventTypes = eventTypes.length === 0 ||
-        (venue.eventTypes && venue.eventTypes.length > 0 && 
-         eventTypes.some(selectedType => venue.eventTypes.includes(selectedType)));
+      // ⭐⭐ 6. أنواع المناسبات - تم التعديل هنا ليعمل مع supported_events ⭐⭐
+      let matchesEventTypes = true;
+      if (eventTypes.length > 0) {
+        // إذا كان هناك فلاتر event types ننشط
+        if (!venue.eventTypes || venue.eventTypes.length === 0) {
+          // إذا كانت القاعة لا تحتوي على event types، نعتبرها لا تطابق
+          matchesEventTypes = false;
+        } else {
+          // تطبيع القيمتين للتأكد من المطابقة
+          const venueEventTypes = venue.eventTypes.map(type => 
+            String(type).toLowerCase().trim()
+          );
+          
+          // التحقق من أن كل event type مطلوب موجود في القاعة
+          matchesEventTypes = eventTypes.every(selectedType => {
+            const normalizedSelectedType = String(selectedType).toLowerCase().trim();
+            const hasEventType = venueEventTypes.includes(normalizedSelectedType);
+            
+            console.log(`🔍 ${venue.name}: نبحث عن "${normalizedSelectedType}" في [${venueEventTypes}] -> ${hasEventType ? '✅' : '❌'}`);
+            
+            return hasEventType;
+          });
+        }
+      }
       
       // 7. الخدمات الإضافية
       const matchesPool = !hasPool || venue.hasPool === true;
@@ -323,14 +364,16 @@ https://bookera-production-25ec.up.railway.app
         matchesWifi && matchesCatering && matchesStage && 
         matchesParking && matchesMinGuests;
 
+      console.log(`📋 ${venue.name}: ${result ? '✅' : '❌'} | eventTypes: ${venue.eventTypes?.length || 0}`);
+      
       return result;
     });
 
-    console.log(`📊 عدد النتائج بعد التصفية: ${filtered.length}`);
-    console.log('🔍 القاعات المصفاة:', filtered.map(f => ({
-      name: f.name,
-      venue_environment: f.venue_environment
-    })));
+    console.log(`📊 عدد النتائج بعد التصفية: ${filtered.length} من ${weddingVenues.length}`);
+    
+    if (filtered.length > 0) {
+      console.log('✅ القاعات المصفاة:', filtered.map(f => f.name));
+    }
 
     // ترتيب النتائج
     filtered.sort((a, b) => {
@@ -351,7 +394,7 @@ https://bookera-production-25ec.up.railway.app
     });
 
     setFilteredVenues(filtered);
-    setItemsToShow(10); // إعادة تعيين عدد العناصر المعروضة
+    setItemsToShow(10);
   }, [
     searchQuery, priceRange, capacityRange, selectedGovernorate, selectedCity, 
     venueType, locationType, eventTypes, sortBy, weddingVenues,
@@ -495,11 +538,10 @@ https://bookera-production-25ec.up.railway.app
   // Main List View
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Navigation Header - محسن */}
+      {/* Navigation Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            {/* Logo and Title */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -509,11 +551,10 @@ https://bookera-production-25ec.up.railway.app
               </div>
               <div className="text-right">
                 <h1 className="text-lg font-bold text-gray-800 leading-tight">قاعات الأفراح والمناسبات</h1>
-                <p className="text-xs text-gray-500 leading-tight"></p>
+                <p className="text-xs text-gray-500 leading-tight">جميع القاعات في صفحة واحدة</p>
               </div>
             </div>
 
-            {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-4">
               <button
                 onClick={handleBackToHome}
@@ -526,7 +567,6 @@ https://bookera-production-25ec.up.railway.app
               </button>
             </div>
 
-            {/* User Menu */}
             <div className="flex items-center gap-3">
               <Navigation
                 user={user}
@@ -540,9 +580,8 @@ https://bookera-production-25ec.up.railway.app
         </div>
       </div>
 
-      {/* Hero Section - محسن */}
+      {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-emerald-50 via-white to-teal-50 text-gray-800 py-12 md:py-16 overflow-hidden">
-        {/* Background Decorations */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-400 rounded-full translate-x-1/3 translate-y-1/3"></div>
@@ -558,10 +597,13 @@ https://bookera-production-25ec.up.railway.app
           
           <h1 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-gray-800">
             اكتشف أفضل قاعات الأفراح والمناسبات
+            <span className="block text-lg font-normal text-emerald-600 mt-2">
+              ({weddingVenues.length} قاعة متاحة)
+            </span>
           </h1>
           <p className="text-base text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             احجز القاعة المثالية لحفل زفافك، خطوبتك، كتب كتاب، عيد ميلاد، أو مؤتمر عملك.
-            اختر من بين أفضل الأماكن المميزة بأسعار مناسبة وتقييمات حقيقية
+            اختر من بين {weddingVenues.length} مكان مميز بأسعار مناسبة وتقييمات حقيقية
           </p>
 
           {/* Event Types Quick Filters */}
@@ -607,7 +649,6 @@ https://bookera-production-25ec.up.railway.app
         {/* Search and Filter Header */}
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            {/* Search Section */}
             <div className="flex-1 w-full">
               <div className="relative">
                 <input
@@ -623,16 +664,25 @@ https://bookera-production-25ec.up.railway.app
               </div>
             </div>
 
-            {/* Controls */}
             <div className="flex flex-wrap gap-3 w-full md:w-auto">
               <button
                 onClick={() => setShowMobileFilters(true)}
-                className="flex items-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                className="lg:hidden flex items-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
                 <span>الفلاتر</span>
+              </button>
+
+              <button
+                onClick={() => setShowDesktopFilters(!showDesktopFilters)}
+                className="hidden lg:flex items-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span>{showDesktopFilters ? 'إخفاء الفلاتر' : 'عرض الفلاتر'}</span>
               </button>
 
               <select
@@ -667,9 +717,10 @@ https://bookera-production-25ec.up.railway.app
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
+                {/* ⭐⭐ تم التعديل هنا: عرض event types بالعربية ⭐⭐ */}
                 {eventTypes.map(eventType => (
                   <span key={eventType} className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-xs font-medium">
-                    {availableEventTypes[eventType]}
+                    {getEventTypeDisplayName(eventType)}
                     <button
                       onClick={() => handleEventTypeToggle(eventType)}
                       className="hover:text-emerald-900 text-xs"
@@ -700,7 +751,6 @@ https://bookera-production-25ec.up.railway.app
                   </span>
                 )}
                 
-                {/* ⭐⭐ تم التعديل هنا: عرض قيمة locationType الجديدة ⭐⭐ */}
                 {locationType !== "all" && (
                   <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs">
                     {locationTypes[locationType]}
@@ -768,6 +818,92 @@ https://bookera-production-25ec.up.railway.app
           )}
         </div>
 
+        {/* ⭐⭐ Desktop Filters - Show/Hide ⭐⭐ */}
+        {showDesktopFilters && (
+          <div className="hidden lg:block mb-8">
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Event Types Filter */}
+                
+               
+
+                {/* Location & Services */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-semibold text-gray-700 mb-4">الموقع الجغرافي</h4>
+                    <div className="space-y-3">
+                      <select
+                        value={selectedGovernorate}
+                        onChange={(e) => handleGovernorateChange(e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                      >
+                        {Object.entries(governorates).map(([key, gov]) => (
+                          <option key={key} value={key}>{gov.name}</option>
+                        ))}
+                      </select>
+                      
+                      {selectedGovernorate !== "all" && (
+                        <select
+                          value={selectedCity}
+                          onChange={(e) => setSelectedCity(e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                        >
+                          {governorates[selectedGovernorate].cities.map(city => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+
+                
+                </div>
+
+                {/* Price, Capacity & Others */}
+                <div className="space-y-6">
+                  
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-semibold text-gray-700">السعة (شخص)</h4>
+                      <span className="text-sm font-medium text-emerald-600">
+                        حتى {capacityRange} شخص
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="50"
+                      max="500"
+                      step="10"
+                      value={capacityRange}
+                      onChange={(e) => setCapacityRange(parseInt(e.target.value))}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>50 شخص</span>
+                      <span>500 شخص</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    
+                
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-6 pt-6 border-t border-gray-100">
+                <button
+                  onClick={resetFilters}
+                  className="px-6 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-all duration-300 text-sm font-medium"
+                >
+                  مسح كل الفلاتر
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Results Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
@@ -778,12 +914,8 @@ https://bookera-production-25ec.up.railway.app
               </span>
             </h2>
             <p className="text-gray-600 text-sm mt-1">
-              {loading ? "جاري التحميل..." : `عرض ${displayedVenues.length} من ${filteredVenues.length} قاعة`}
+              {loading ? "جاري التحميل..." : `عرض ${displayedVenues.length} من ${filteredVenues.length} قاعة (${weddingVenues.length} قاعة إجمالي)`}
             </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            
           </div>
         </div>
 
@@ -805,7 +937,7 @@ https://bookera-production-25ec.up.railway.app
           {loading ? (
             <div className="text-center py-16 bg-white rounded-2xl shadow-md border border-gray-100">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-              <p className="text-gray-600 font-medium">جاري تحميل القاعات...</p>
+              <p className="text-gray-600 font-medium">جاري تحميل جميع القاعات...</p>
               <p className="text-gray-500 text-sm mt-2">نبحث عن أفضل الأماكن لحفل زفافك</p>
             </div>
           ) : error ? (
@@ -850,6 +982,7 @@ https://bookera-production-25ec.up.railway.app
                       }
                     }}
                     onBookNow={handleBookNow}
+                    getEventTypeDisplayName={getEventTypeDisplayName}
                   />
                 ))}
               </div>
@@ -953,6 +1086,7 @@ https://bookera-production-25ec.up.railway.app
           locationTypes={locationTypes}
           eventTypes={availableEventTypes}
           sortOptions={sortOptions}
+          getEventTypeDisplayName={getEventTypeDisplayName}
         />
       )}
 

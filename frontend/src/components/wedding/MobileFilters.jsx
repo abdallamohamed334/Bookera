@@ -84,20 +84,7 @@ const MobileFilters = ({ onClose, filtersProps, governorates, venueTypes, locati
             
 
             {/* فلترة الموقع */}
-            <div>
-              <h4 className="text-gray-900 font-medium mb-2">الموقع</h4>
-              <select
-                value={locationType}
-                onChange={(e) => onLocationTypeChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
-              >
-                {Object.entries(locationTypes).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          
 
            
 
@@ -151,13 +138,7 @@ const MobileFilters = ({ onClose, filtersProps, governorates, venueTypes, locati
                   <span>في المفضلة:</span>
                   <span className="font-bold">{favorites.length}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>مصدر البيانات:</span>
-                  <span className="font-bold">
-                    {dataSource === "api" ? "قاعدة البيانات" : 
-                     dataSource === "sample" ? "بيانات تجريبية" : "..."}
-                  </span>
-                </div>
+           
               </div>
             </div>
 

@@ -11,9 +11,20 @@ const VenueFilters = ({
   onResetFilters,
   filteredCount,
   totalCount,
-  dataSource
+  dataSource,
+  eventTypes = [], // ⭐⭐ إضافة eventTypes كـ prop
+  onEventTypeToggle, // ⭐⭐ إضافة onEventTypeToggle كـ prop
+  getEventTypeDisplayName, // ⭐⭐ إضافة getEventTypeDisplayName كـ prop
+  clearAllEventTypes // ⭐⭐ إضافة clearAllEventTypes كـ prop
 }) => {
-  const eventCategories = ["all", "فرح", "خطوبة", "كتب_كتاب", "عيد_ميلاد"];
+  // ⭐⭐ تم التعديل هنا: أنواع المناسبات لمطابقة supported_events ⭐⭐
+  const availableEventTypes = {
+    "engagement": "خطوبة",
+    "katb_ketab": "كتب كتاب",
+    "islamic_wedding": "فرح",
+    "conference": "مؤتمرات",
+    "birthday": "عيد ميلاد"
+  };
 
   return (
     <div className="lg:w-1/4 bg-gray-50 p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
@@ -41,10 +52,13 @@ const VenueFilters = ({
           onChange={onCityChange}
         />
 
-        <EventTypeFilter
-          activeFilter={activeFilter}
-          eventCategories={eventCategories}
-          onChange={onFilterChange}
+        {/* ⭐⭐ تم استبدال EventTypeFilter القديم بالمكون الجديد ⭐⭐ */}
+        <EventTypesFilter
+          eventTypes={eventTypes}
+          onEventTypeToggle={onEventTypeToggle}
+          availableEventTypes={availableEventTypes}
+          getEventTypeDisplayName={getEventTypeDisplayName}
+          clearAllEventTypes={clearAllEventTypes}
         />
 
         <FilterStats
@@ -91,6 +105,95 @@ const CityFilter = ({ selectedCity, selectedGovernorate, governorates, onChange 
   </div>
 );
 
+// ⭐⭐ مكون EventTypesFilter الجديد - بدلاً من EventTypeFilter القديم ⭐⭐
+const EventTypesFilter = ({ 
+  eventTypes, 
+  onEventTypeToggle, 
+  availableEventTypes,
+  getEventTypeDisplayName,
+  clearAllEventTypes 
+}) => {
+  return (
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-3">
+        <h4 className="text-gray-900 font-medium">أنواع المناسبات</h4>
+        {eventTypes.length > 0 && (
+          <button
+            onClick={clearAllEventTypes}
+            className="text-sm text-purple-600 hover:text-purple-700"
+          >
+            مسح الكل
+          </button>
+        )}
+      </div>
+      <div className="space-y-2 max-h-60 overflow-y-auto">
+        {Object.entries(availableEventTypes).map(([key, label]) => {
+          const isActive = eventTypes.includes(key);
+          const displayName = getEventTypeDisplayName ? getEventTypeDisplayName(key) : label;
+          
+          return (
+            <button
+              key={key}
+              onClick={() => onEventTypeToggle(key)}
+              className={`w-full text-right px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-between ${
+                isActive
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{getEventIcon(key)}</span>
+                <span>{displayName}</span>
+              </div>
+              {isActive && (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      
+      {/* عرض عدد الأنواع المختارة */}
+      {eventTypes.length > 0 && (
+        <div className="mt-3 text-sm text-purple-700 bg-purple-50 px-3 py-2 rounded-lg">
+          <div className="flex justify-between items-center">
+            <span>مختار ({eventTypes.length})</span>
+            <div className="flex flex-wrap gap-1">
+              {eventTypes.slice(0, 3).map((type, index) => (
+                <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                  {getEventTypeDisplayName ? getEventTypeDisplayName(type) : type}
+                  {index === 2 && eventTypes.length > 3 && ` +${eventTypes.length - 3}`}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ⭐⭐ دالة للحصول على الأيقونة المناسبة ⭐⭐
+const getEventIcon = (eventType) => {
+  const iconMap = {
+    'engagement': '💍',
+    'katb_ketab': '📖',
+    'islamic_wedding': '💒',
+    'conference': '👔',
+    'birthday': '🎂',
+    'فرح': '💒',
+    'خطوبة': '💍',
+    'كتب_كتاب': '📖',
+    'عيد_ميلاد': '🎂',
+    'مؤتمرات': '👔'
+  };
+  
+  return iconMap[eventType] || '🎊';
+};
+
+// ⭐⭐ الاحتفاظ بالمكون القديم للتوافق مع المكونات الأخرى إذا لزم الأمر ⭐⭐
 const EventTypeFilter = ({ activeFilter, eventCategories, onChange }) => {
   // تسميات أنواع المناسبات
   const eventLabels = {
@@ -99,7 +202,12 @@ const EventTypeFilter = ({ activeFilter, eventCategories, onChange }) => {
     "خطوبة": "💍 خطوبة", 
     "كتب_كتاب": "📖 كتب كتاب",
     "عيد_ميلاد": "🎂 عيد ميلاد",
-    "مؤتمرات": "👔 مؤتمرات"
+    "مؤتمرات": "👔 مؤتمرات",
+    "engagement": "💍 خطوبة",
+    "katb_ketab": "📖 كتب كتاب",
+    "islamic_wedding": "💒 فرح",
+    "conference": "👔 مؤتمرات",
+    "birthday": "🎂 عيد ميلاد"
   };
 
   return (

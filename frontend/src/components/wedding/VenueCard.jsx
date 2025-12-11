@@ -9,7 +9,10 @@ const VenueCard = ({
   isSelectedForComparison = false,
   onToggleComparison,
   onBookNow,
-  filters = {}
+  filters = {},
+  getEventTypeDisplayName,
+  onToggleFavorite,
+  isFavorite
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -41,7 +44,13 @@ const VenueCard = ({
     }
   };
 
-  // تحديد حالة القاعة بناءً على البيانات المتاحة
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation();
+    if (onToggleFavorite) {
+      onToggleFavorite(venue.id || venue._id, e);
+    }
+  };
+
   const getVenueStatus = () => {
     if (!venue.available) return { label: "غير متاحة", color: "bg-gray-600" };
     if (venue.is_new) return { label: "جديد", color: "bg-green-500" };
@@ -50,7 +59,6 @@ const VenueCard = ({
     return null;
   };
 
-  // تحويل التقييم إلى نجوم
   const renderStars = (rating) => {
     const numericRating = parseFloat(rating) || 0;
     const fullStars = Math.floor(numericRating);
@@ -72,7 +80,6 @@ const VenueCard = ({
     );
   };
 
-  // الحصول على أول 5 صور فقط
   const getDisplayImages = () => {
     if (!venue.images || venue.images.length === 0) {
       return venue.image ? [venue.image] : ["https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1200"];
@@ -80,13 +87,17 @@ const VenueCard = ({
     return venue.images.slice(0, 5);
   };
 
-  // دالة لتحويل أنواع المناسبات إلى أيقونات
   const getEventTypeIcons = () => {
-    const eventTypes = venue.event_types || [];
+    const eventTypes = venue.eventTypes || venue.event_types || [];
     const icons = [];
     
     const iconMap = {
-      'فرح': { icon: '💒', label: 'أفراح' },
+      'engagement': { icon: '💍', label: 'خطوبة' },
+      'katb_ketab': { icon: '📖', label: 'كتب كتاب' },
+      'islamic_wedding': { icon: '💒', label: 'فرح' },
+      'conference': { icon: '👔', label: 'مؤتمرات' },
+      'birthday': { icon: '🎂', label: 'عيد ميلاد' },
+      'فرح': { icon: '💒', label: 'فرح' },
       'خطوبة': { icon: '💍', label: 'خطوبة' },
       'كتب_كتاب': { icon: '📖', label: 'كتب كتاب' },
       'عيد_ميلاد': { icon: '🎂', label: 'أعياد ميلاد' },
@@ -97,15 +108,43 @@ const VenueCard = ({
     };
     
     eventTypes.forEach(type => {
-      if (iconMap[type]) {
-        icons.push(iconMap[type]);
+      const eventType = String(type).toLowerCase().trim();
+      
+      if (iconMap[eventType]) {
+        icons.push(iconMap[eventType]);
+      } else {
+        const displayName = getEventTypeDisplayName ? getEventTypeDisplayName(eventType) : eventType;
+        icons.push({ 
+          icon: '🎊', 
+          label: displayName 
+        });
       }
     });
     
-    return icons.length > 0 ? icons : [{ icon: '💒', label: 'أفراح' }];
+    if (icons.length === 0) {
+      icons.push({ icon: '💒', label: 'أفراح' });
+    }
+    
+    return icons;
   };
 
-  // الحصول على الصورة الشخصية
+  // ⭐⭐ دالة لمعرفة ما إذا كان هناك سعر ⭐⭐
+  const hasPrice = () => {
+    return venue.price || venue.starting_price || (venue.price_range && venue.price_range.min);
+  };
+
+  // ⭐⭐ دالة للحصول على السعر للعرض ⭐⭐
+  const getDisplayPrice = () => {
+    if (venue.price) {
+      return { type: "بداية السعر", amount: venue.price };
+    } else if (venue.starting_price) {
+      return { type: "بداية السعر", amount: venue.starting_price };
+    } else if (venue.price_range?.min) {
+      return { type: "بداية السعر", amount: venue.price_range.min };
+    }
+    return null;
+  };
+
   const getProfileImage = () => {
     if (profileImageError) {
       return "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=200";
@@ -116,7 +155,6 @@ const VenueCard = ({
     return "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=200";
   };
 
-  // تقييم القاعة بناءً على الميزات
   const getVenueScore = () => {
     let score = venue.rating || 0;
     if (venue.parking) score += 0.2;
@@ -125,20 +163,11 @@ const VenueCard = ({
     return Math.min(5, score).toFixed(1);
   };
 
-  // حساب بداية سعر القاعة
-  const getVenueStartingPrice = () => {
-    if (venue.starting_price) return venue.starting_price;
-    if (venue.price_range?.min) return venue.price_range.min;
-    if (venue.packages && venue.packages.length > 0) {
-      return Math.min(...venue.packages.map(pkg => pkg.price || 0));
-    }
-    return null;
-  };
-
   const displayImages = getDisplayImages();
   const venueStatus = getVenueStatus();
   const eventTypeIcons = getEventTypeIcons();
-  const startingPrice = getVenueStartingPrice();
+  const displayPrice = getDisplayPrice();
+  const hasVenuePrice = hasPrice();
 
   return (
     <motion.div
@@ -154,16 +183,41 @@ const VenueCard = ({
       }`}
       onClick={() => onVenueClick(venue)}
     >
-      {/* Badge Status */}
       {venueStatus && (
         <div className={`absolute top-4 right-4 z-30 ${venueStatus.color} text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm`}>
           {venueStatus.label}
         </div>
       )}
 
-      {/* Comparison Checkbox */}
-      {comparisonMode && (
+      {onToggleFavorite && (
         <div className="absolute top-4 left-4 z-30">
+          <button
+            onClick={handleFavoriteClick}
+            className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
+              isFavorite
+                ? 'bg-gradient-to-br from-red-600 to-red-700 border-red-700 text-white'
+                : 'bg-white/90 border-gray-300 hover:border-red-400 hover:bg-red-50'
+            }`}
+          >
+            <svg 
+              className={`w-5 h-5 ${isFavorite ? 'text-white' : 'text-gray-500'}`} 
+              fill={isFavorite ? "currentColor" : "none"} 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={isFavorite ? 0 : 2} 
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+              />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {comparisonMode && (
+        <div className={`absolute top-4 ${onToggleFavorite ? 'left-16' : 'left-4'} z-30`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -171,14 +225,14 @@ const VenueCard = ({
                 onToggleComparison();
               }
             }}
-            className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
+            className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
               isSelectedForComparison
                 ? 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-700 text-white'
                 : 'bg-white/90 border-gray-300 hover:border-blue-400 hover:bg-blue-50'
             }`}
           >
             {isSelectedForComparison && (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -201,12 +255,12 @@ const VenueCard = ({
         displayImages={displayImages}
         isHovering={isHovering}
         venueScore={getVenueScore()}
+        hasPrice={hasVenuePrice} // ⭐⭐ تمرير المعلومات ⭐⭐
+        displayPrice={displayPrice} // ⭐⭐ تمرير المعلومات ⭐⭐
       />
       
       <div className="p-6 flex-grow flex flex-col">
-        {/* Profile Image and Header Section */}
         <div className="flex items-start gap-4 mb-5">
-          {/* Profile Image */}
           <div className="flex-shrink-0">
             <div className="relative">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-2xl bg-gradient-to-br from-gray-100 to-gray-200">
@@ -217,27 +271,23 @@ const VenueCard = ({
                   onError={handleProfileImageError}
                 />
               </div>
-              {/* Rating Badge على الصورة الشخصية */}
               <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-yellow-400 to-yellow-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg">
                 {getVenueScore()}
               </div>
             </div>
           </div>
 
-          {/* Venue Info */}
           <div className="flex-1 min-w-0">
             <h4 className="text-2xl font-bold text-gray-900 mb-2 line-clamp-1 leading-tight">{venue.name}</h4>
             
-            {/* Rating and Reviews */}
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-center gap-1">
                 {renderStars(venue.rating || 0)}
               </div>
-              <span className="text-gray-600 text-sm font-medium">({venue.review_count || 0} تقييم)</span>
+              <span className="text-gray-600 text-sm font-medium">({venue.review_count || venue.reviewCount || 0} تقييم)</span>
             </div>
 
-            {/* Event Types Display */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4">
               {eventTypeIcons.slice(0, 4).map((type, index) => (
                 <div 
                   key={index}
@@ -249,44 +299,55 @@ const VenueCard = ({
                 </div>
               ))}
               {eventTypeIcons.length > 4 && (
-                <div className="text-sm bg-gradient-to-br from-gray-50 to-white text-gray-500 px-3 py-2 rounded-xl shadow-sm border border-gray-100">
-                  +{eventTypeIcons.length - 4}
+                <div className="text-sm bg-gradient-to-br from-gray-50 to-white text-gray-500 px-3 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
+                  <span>+{eventTypeIcons.length - 4}</span>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Starting Price Banner */}
-        {startingPrice && (
-          <div className="mb-5">
-            <div className="bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-2 h-full bg-white/30"></div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>بداية السعر:</span>
-                  <span className="text-lg font-extrabold">{startingPrice.toLocaleString()} ج.م</span>
-                </div>
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">عرض خاص</span>
+        {/* ⭐⭐ Price Banner - تم التعديل هنا ⭐⭐ */}
+        <div className="mb-5">
+          <div className={`px-5 py-3 rounded-xl text-sm font-bold shadow-lg relative overflow-hidden ${
+            hasVenuePrice 
+              ? 'bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500 text-white'
+              : 'bg-gradient-to-r from-gray-600 via-gray-500 to-gray-600 text-white'
+          }`}>
+            <div className="absolute top-0 left-0 w-2 h-full bg-white/30"></div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {hasVenuePrice ? (
+                  <>
+                    <span>{displayPrice?.type}:</span>
+                    <span className="text-lg font-extrabold">{displayPrice?.amount?.toLocaleString()} ج.م</span>
+                  </>
+                ) : (
+                  <>
+                    <span>السعر:</span>
+                    <span className="text-lg font-extrabold">تواصل لمعرفة السعر</span>
+                  </>
+                )}
               </div>
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                {hasVenuePrice ? 'عرض خاص' : 'تواصل معنا'}
+              </span>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Special Offer Banner */}
-        {venue.special_offer && (
+        {venue.specialOffer && (
           <div className="mb-5">
             <div className="bg-gradient-to-r from-red-500 via-red-400 to-red-500 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg relative overflow-hidden">
               <div className="absolute top-0 left-0 w-2 h-full bg-white/30"></div>
               <div className="flex items-center justify-between">
-                <span>{venue.special_offer}</span>
+                <span>{venue.specialOffer}</span>
                 <span className="text-xs bg-white/20 px-2 py-1 rounded-full">عرض خاص</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Comparison Badge */}
         {comparisonMode && isSelectedForComparison && (
           <div className="mb-5 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 px-5 py-3 rounded-xl text-sm font-bold text-center border-2 border-blue-200 shadow-md">
             <div className="flex items-center justify-center gap-2">
@@ -298,7 +359,6 @@ const VenueCard = ({
           </div>
         )}
         
-        {/* Location and Capacity */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center text-gray-700">
             <div className="p-2.5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm ml-3">
@@ -308,12 +368,11 @@ const VenueCard = ({
               </svg>
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-gray-900 text-lg">{venue.city}</span>
-              <span className="text-gray-600 text-sm">{venue.governorate}</span>
+              <span className="font-bold text-gray-900 text-lg">{venue.city || "غير محدد"}</span>
+              <span className="text-gray-600 text-sm">{venue.governorate || "غير محدد"}</span>
             </div>
           </div>
           
-          {/* Capacity with icon */}
           <div className="text-right">
             <div className="flex flex-col items-center bg-gradient-to-br from-gray-50 to-white px-5 py-3 rounded-xl border border-gray-100 shadow-sm">
               <div className="flex items-center gap-3">
@@ -327,14 +386,12 @@ const VenueCard = ({
           </div>
         </div>
 
-        {/* Venue Features */}
         <VenueFeatures 
           venue={venue} 
           showAllFeatures={showAllFeatures}
           onToggleFeatures={() => setShowAllFeatures(!showAllFeatures)}
         />
         
-        {/* Venue Actions */}
         <VenueActions 
           onVenueClick={onVenueClick}
           venue={venue}
@@ -362,12 +419,13 @@ const VenueImage = ({
   isSelectedForComparison,
   displayImages,
   isHovering,
-  venueScore
+  venueScore,
+  hasPrice, // ⭐⭐ إضافة هذه الخاصية ⭐⭐
+  displayPrice // ⭐⭐ إضافة هذه الخاصية ⭐⭐
 }) => {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   
-  // Auto slide on hover
   useEffect(() => {
     let interval;
     if (isHovering && displayImages.length > 1) {
@@ -396,12 +454,10 @@ const VenueImage = ({
     if (Math.abs(distance) < minSwipeDistance) return;
 
     if (distance > 0 && displayImages.length > 1) {
-      // Swipe left
       setCurrentImageIndex((prev) => 
         prev === displayImages.length - 1 ? 0 : prev + 1
       );
     } else if (distance < 0 && displayImages.length > 1) {
-      // Swipe right
       setCurrentImageIndex((prev) => 
         prev === 0 ? displayImages.length - 1 : prev - 1
       );
@@ -460,15 +516,6 @@ const VenueImage = ({
     }
   };
 
-  // حساب بداية سعر القاعة للعرض في الصورة
-  const getVenueStartingPrice = () => {
-    if (venue.starting_price) return venue.starting_price;
-    if (venue.price_range?.min) return venue.price_range.min;
-    return null;
-  };
-
-  const startingPrice = getVenueStartingPrice();
-
   return (
     <div 
       className={`relative h-72 w-full overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 ${
@@ -477,14 +524,12 @@ const VenueImage = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Loading State */}
       {!imageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center z-0">
           <div className="animate-pulse bg-gradient-to-br from-gray-700 to-gray-800 w-full h-full" />
         </div>
       )}
 
-      {/* Main Image */}
       <div className="relative w-full h-full">
         <img 
           src={imageError ? "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1200" : displayImages[currentImageIndex]} 
@@ -496,10 +541,8 @@ const VenueImage = ({
           onError={onImageError}
         />
         
-        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         
-        {/* Overlay for unavailable venues */}
         {!venue.available && (
           <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10 backdrop-blur-sm">
             <div className="text-center p-6">
@@ -513,19 +556,28 @@ const VenueImage = ({
           </div>
         )}
 
-        {/* Top Controls */}
         <div className="absolute top-4 inset-x-5 flex justify-between items-start z-20">
-          {/* Starting Price Badge */}
-          {startingPrice && (
-            <div className={`bg-gradient-to-r from-blue-500/90 to-blue-600/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-2xl`}>
-              <div className="flex items-center gap-2">
-                <span>بداية السعر:</span>
-                <span className="text-lg">{startingPrice.toLocaleString()} ج.م</span>
-              </div>
+          {/* ⭐⭐ Price Badge - تم التعديل هنا ⭐⭐ */}
+          <div className={`backdrop-blur-sm text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-2xl ${
+            hasPrice 
+              ? 'bg-gradient-to-r from-blue-500/90 to-blue-600/90'
+              : 'bg-gradient-to-r from-gray-600/90 to-gray-700/90'
+          }`}>
+            <div className="flex items-center gap-2">
+              {hasPrice ? (
+                <>
+                  <span>{displayPrice?.type}:</span>
+                  <span className="text-lg">{displayPrice?.amount?.toLocaleString()} ج.م</span>
+                </>
+              ) : (
+                <>
+                  <span>السعر:</span>
+                  <span className="text-lg">تواصل لمعرفة السعر</span>
+                </>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Share Button */}
           <button
             onClick={handleShare}
             className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-full transition-all shadow-2xl hover:bg-white/30 hover:scale-110 border border-white/20"
@@ -536,9 +588,7 @@ const VenueImage = ({
           </button>
         </div>
 
-        {/* Bottom Controls */}
         <div className="absolute bottom-5 inset-x-5 flex justify-between items-end z-20">
-          {/* Venue Name and Rating */}
           <div className="flex flex-col">
             <h3 className="text-white text-xl font-bold drop-shadow-2xl mb-1">{venue.name}</h3>
             <div className="flex items-center gap-2">
@@ -546,7 +596,6 @@ const VenueImage = ({
             </div>
           </div>
 
-          {/* Image Count */}
           {displayImages.length > 1 && (
             <div className="bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/20">
               {currentImageIndex + 1}/{displayImages.length}
@@ -554,7 +603,6 @@ const VenueImage = ({
           )}
         </div>
 
-        {/* Navigation Arrows */}
         {displayImages.length > 1 && (
           <>
             <button
@@ -576,7 +624,6 @@ const VenueImage = ({
           </>
         )}
 
-        {/* Image Indicators - Bottom Center */}
         {displayImages.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
             {displayImages.map((_, index) => (
@@ -596,7 +643,6 @@ const VenueImage = ({
           </div>
         )}
 
-        {/* Venue Score Overlay */}
         <div className="absolute top-14 left-4 bg-gradient-to-br from-yellow-500 to-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-2xl z-20 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -606,7 +652,6 @@ const VenueImage = ({
           </div>
         </div>
 
-        {/* Comparison Selection Indicator */}
         {comparisonMode && isSelectedForComparison && (
           <div className="absolute top-14 right-4 bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-2xl z-20 backdrop-blur-sm">
             <div className="flex items-center gap-2">
@@ -812,7 +857,17 @@ const VenueActions = ({
               التفاصيل
             </button>
             
-            
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onBookNow) {
+                  onBookNow(venue);
+                }
+              }}
+              className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-2xl font-bold text-base transition-all transform hover:scale-[1.02] shadow-lg"
+            >
+              احجز الآن
+            </button>
           </>
         )}
       </div>
