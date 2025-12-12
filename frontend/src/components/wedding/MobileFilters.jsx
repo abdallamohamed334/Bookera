@@ -84,7 +84,32 @@ const MobileFilters = ({ onClose, filtersProps, governorates, venueTypes, locati
             
 
             {/* فلترة الموقع */}
-          
+                {/* فلترة الموقع (إن دور/أوبن دور) */}
+<div>
+  <h4 className="font-semibold text-gray-700 mb-4">الموقع (إن دور / أوبن دور)</h4>
+  <div className="grid grid-cols-1 gap-2">
+    {Object.entries(locationTypes).map(([key, label]) => (
+      <div key={key} className="flex items-center">
+        <input
+          type="radio"
+          id={`location-${key}`}
+          name="locationType"
+          value={key}
+          checked={locationType === key}
+          onChange={(e) => onLocationTypeChange(e.target.value)}
+          className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
+        />
+        <label
+          htmlFor={`location-${key}`}
+          className="mr-2 text-sm text-gray-700 cursor-pointer"
+        >
+          {label}
+        </label>
+      </div>
+    ))}
+  </div>
+</div>
+
 
            
 

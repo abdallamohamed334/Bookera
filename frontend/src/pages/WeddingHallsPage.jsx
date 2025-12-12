@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useNavigate } from "react-router-dom";
 
 // استيراد المكونات
 import VenueDetails from "../components/wedding/VenueDetails";
@@ -8,7 +9,7 @@ import MobileFilters from "../components/wedding/MobileFilters";
 import BookingModal from "../components/wedding/BookingModal";
 import Navigation from "../components/shared/Navigation";
 import Footer from "../components/shared/Footer";
-import { useNavigate } from "react-router-dom";
+import VenuesMap from "../components/wedding/VenueMap";
 
 const WeddingHallsPage = () => {
   const { user, logout } = useAuthStore();
@@ -50,6 +51,7 @@ const WeddingHallsPage = () => {
   const [parkingCapacity, setParkingCapacity] = useState(filtersStateRef.current.parkingCapacity);
   const [minGuests, setMinGuests] = useState(filtersStateRef.current.minGuests);
 
+  // States for venues and UI
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [filteredVenues, setFilteredVenues] = useState([]);
   const [displayedVenues, setDisplayedVenues] = useState([]);
@@ -59,20 +61,20 @@ const WeddingHallsPage = () => {
   const [weddingVenues, setWeddingVenues] = useState([]);
   const [dataSource, setDataSource] = useState("");
   const [favorites, setFavorites] = useState([]);
-
-  // States for UI
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [itemsToShow, setItemsToShow] = useState(10);
-  const [showDesktopFilters, setShowDesktopFilters] = useState(true); // ⭐⭐ جديد: للتحكم في عرض/إخفاء الفلاتر في الكمبيوتر
+  const [showDesktopFilters, setShowDesktopFilters] = useState(true);
+  const [showMap, setShowMap] = useState(false);
+  const [hoveredVenueId, setHoveredVenueId] = useState(null);
 
   // محافظات مصر - الغربية فقط
   const governorates = {
     "all": { name: "كل المحافظات", cities: ["كل المدن"] },
     "الغربية": {
       name: "الغربية",
-      cities: ["كل المدن", "طنطا", "المحلة الكبري", "زفتى", "سمنود", "بسيون", "قطور", "السنطه", "كفر الزيات", "صفتا", "شيخون"]
+      cities: ["كل المدن", "شبرا النملة","طنطا", "المحلة الكبري", "زفتى", "سمنود", "بسيون", "قطور", "السنطه", "كفر الزيات", "صفتا", "شيخون"]
     }
   };
 
@@ -93,7 +95,7 @@ const WeddingHallsPage = () => {
     "mixed": "مختلط"
   };
 
-  // ⭐⭐ تم التعديل هنا: أنواع المناسبات لمطابقة supported_events من قاعدة البيانات ⭐⭐
+  // أنواع المناسبات لمطابقة supported_events من قاعدة البيانات
   const availableEventTypes = {
     "engagement": "خطوبة",
     "katb_ketab": "كتب كتاب",
@@ -102,7 +104,7 @@ const WeddingHallsPage = () => {
     "birthday": "عيد ميلاد"
   };
 
-  // ⭐⭐ إضافة: خريطة للتحويل من إنجليزي لعربي للعرض ⭐⭐
+  // خريطة للتحويل من إنجليزي لعربي للعرض
   const eventTypeDisplayNames = {
     "engagement": "خطوبة",
     "katb_ketab": "كتب كتاب",
@@ -120,6 +122,18 @@ const WeddingHallsPage = () => {
     "newest": "الأحدث"
   };
 
+  // تحميل CSS خاص بـ Leaflet
+  useEffect(() => {
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+      link.crossOrigin = '';
+      document.head.appendChild(link);
+    }
+  }, []);
+
   // دالة لإدارة event types
   const handleEventTypeToggle = (eventType) => {
     setEventTypes(prev => {
@@ -136,12 +150,12 @@ const WeddingHallsPage = () => {
     setEventTypes([]);
   };
 
-  // ⭐⭐ دالة لتحويل event types للعرض في الواجهة ⭐⭐
+  // دالة لتحويل event types للعرض في الواجهة
   const getEventTypeDisplayName = (eventTypeKey) => {
     return eventTypeDisplayNames[eventTypeKey] || eventTypeKey;
   };
 
-  // ⭐⭐ جلب البيانات من جميع صفحات الـ API ⭐⭐
+  // جلب البيانات من جميع صفحات الـ API
   useEffect(() => {
     const fetchAllWeddingVenues = async () => {
       try {
@@ -191,7 +205,7 @@ const WeddingHallsPage = () => {
             amenities: venue.amenities || [],
             rules: venue.rules || [],
             weddingSpecific: venue.weddingSpecific || {},
-            // ⭐⭐ تم التعديل هنا: استخدام supported_events من قاعدة البيانات ⭐⭐
+            // استخدام supported_events من قاعدة البيانات
             eventTypes: venue.supported_events || venue.event_types || venue.eventTypes || [],
             rating: venue.rating || 0,
             reviewCount: venue.reviewCount || 0,
@@ -300,26 +314,23 @@ const WeddingHallsPage = () => {
       const matchesVenueType = venueType === "all" || venue.type === venueType;
       
       // 5. نوع الموقع (إن دور/أوبن دور)
-      let matchesLocationType = true;
-      if (locationType !== "all") {
-        let venueEnvironment = venue.venue_environment;
-        
-        if (!venueEnvironment && venueEnvironment !== "indoor" && venueEnvironment !== "outdoor") {
-          venueEnvironment = venue.openAir ? "outdoor" : "indoor";
-        }
-        
-        const normalizedEnvironment = String(venueEnvironment || "").toLowerCase().trim();
-        
-        if (locationType === "indoor") {
-          matchesLocationType = normalizedEnvironment === "indoor";
-        } else if (locationType === "outdoor") {
-          matchesLocationType = normalizedEnvironment === "outdoor";
-        } else if (locationType === "mixed") {
-          matchesLocationType = true;
-        }
-      }
+     let matchesLocationType = true;
+
+if (locationType !== "all") {
+  const isOutdoor = venue.wedding_specific?.openAir === true;
+  const env = isOutdoor ? "outdoor" : "indoor";
+
+  if (locationType === "indoor") {
+    matchesLocationType = env === "indoor";
+  } else if (locationType === "outdoor") {
+    matchesLocationType = env === "outdoor";
+  } else if (locationType === "mixed") {
+    matchesLocationType = true;
+  }
+}
+
       
-      // ⭐⭐ 6. أنواع المناسبات - تم التعديل هنا ليعمل مع supported_events ⭐⭐
+      // 6. أنواع المناسبات - تم التعديل هنا ليعمل مع supported_events
       let matchesEventTypes = true;
       if (eventTypes.length > 0) {
         // إذا كان هناك فلاتر event types ننشط
@@ -717,7 +728,7 @@ const WeddingHallsPage = () => {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {/* ⭐⭐ تم التعديل هنا: عرض event types بالعربية ⭐⭐ */}
+                {/* عرض event types بالعربية */}
                 {eventTypes.map(eventType => (
                   <span key={eventType} className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-xs font-medium">
                     {getEventTypeDisplayName(eventType)}
@@ -818,14 +829,13 @@ const WeddingHallsPage = () => {
           )}
         </div>
 
-        {/* ⭐⭐ Desktop Filters - Show/Hide ⭐⭐ */}
+        {/* Desktop Filters - Show/Hide */}
         {showDesktopFilters && (
           <div className="hidden lg:block mb-8">
             <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Event Types Filter */}
                 
-               
 
                 {/* Location & Services */}
                 <div className="space-y-6">
@@ -856,12 +866,59 @@ const WeddingHallsPage = () => {
                     </div>
                   </div>
 
-                
+             
+                </div>
+
+                {/* Services & Amenities */}
+                <div className="space-y-6">
+                 
+
+                  <div>
+                    <h4 className="font-semibold text-gray-700 mb-4">الموقع (إن دور/أوبن دور)</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {Object.entries(locationTypes).map(([key, label]) => (
+                        <div key={key} className="flex items-center">
+                          <input
+                            type="radio"
+                            id={`location-${key}`}
+                            name="locationType"
+                            value={key}
+                            checked={locationType === key}
+                            onChange={(e) => setLocationType(e.target.value)}
+                            className="w-4 h-4 text-emerald-500 border-gray-300 focus:ring-emerald-500"
+                          />
+                          <label htmlFor={`location-${key}`} className="mr-2 text-sm text-gray-700 cursor-pointer">
+                            {label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Price, Capacity & Others */}
                 <div className="space-y-6">
-                  
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-semibold text-gray-700">السعر (جنيه مصري)</h4>
+                      <span className="text-sm font-medium text-emerald-600">
+                        حتى {priceRange.toLocaleString()} ج
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5000"
+                      max="50000"
+                      step="1000"
+                      value={priceRange}
+                      onChange={(e) => setPriceRange(parseInt(e.target.value))}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>5,000 ج</span>
+                      <span>50,000 ج</span>
+                    </div>
+                  </div>
 
                   <div>
                     <div className="flex justify-between items-center mb-2">
@@ -886,7 +943,7 @@ const WeddingHallsPage = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    
+               
                 
                   </div>
                 </div>
@@ -908,14 +965,50 @@ const WeddingHallsPage = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-gray-800">
-              القاعات المتاحة
+              {showMap ? 'الخريطة التفاعلية' : 'القاعات المتاحة'}
               <span className="ml-3 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                 {filteredVenues.length} قاعة
               </span>
             </h2>
             <p className="text-gray-600 text-sm mt-1">
-              {loading ? "جاري التحميل..." : `عرض ${displayedVenues.length} من ${filteredVenues.length} قاعة (${weddingVenues.length} قاعة إجمالي)`}
+              {loading ? "جاري التحميل..." : showMap ? 
+                `شاهد مواقع ${filteredVenues.length} قاعة على الخريطة` : 
+                `عرض ${displayedVenues.length} من ${filteredVenues.length} قاعة`}
             </p>
+          </div>
+          
+          {/* أزرار التبديل */}
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1">
+            <button
+              onClick={() => setShowMap(false)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                !showMap 
+                  ? 'bg-emerald-500 text-white shadow-sm' 
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                عرض القائمة
+              </div>
+            </button>
+            <button
+              onClick={() => setShowMap(true)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                showMap 
+                  ? 'bg-emerald-500 text-white shadow-sm' 
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                عرض الخريطة
+              </div>
+            </button>
           </div>
         </div>
 
@@ -932,7 +1025,7 @@ const WeddingHallsPage = () => {
           </button>
         </div>
 
-        {/* Venues Grid */}
+        {/* عرض الخريطة أو القائمة */}
         <div className="flex-1">
           {loading ? (
             <div className="text-center py-16 bg-white rounded-2xl shadow-md border border-gray-100">
@@ -964,7 +1057,68 @@ const WeddingHallsPage = () => {
                 مسح كل الفلاتر
               </button>
             </div>
+          ) : showMap ? (
+            // عرض الخريطة
+            <div className="space-y-6">
+              <VenuesMap
+                venues={filteredVenues}
+                onVenueClick={handleVenueClick}
+                onVenueHover={setHoveredVenueId}
+                activeVenueId={hoveredVenueId}
+              />
+              
+              {/* ملخص تحت الخريطة */}
+              <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center p-3 border border-gray-100 rounded-lg">
+                    <div className="text-lg font-bold text-emerald-600">{filteredVenues.length}</div>
+                    <div className="text-sm text-gray-600">قاعة في الخريطة</div>
+                  </div>
+                  <div className="text-center p-3 border border-gray-100 rounded-lg">
+                    <div className="text-lg font-bold text-emerald-600">
+                      {filteredVenues.filter(v => v.type === 'قاعة_أفراح').length}
+                    </div>
+                    <div className="text-sm text-gray-600">قاعات أفراح</div>
+                  </div>
+                  <div className="text-center p-3 border border-gray-100 rounded-lg">
+                    <div className="text-lg font-bold text-emerald-600">
+                      {filteredVenues.filter(v => v.type === 'قصر').length}
+                    </div>
+                    <div className="text-sm text-gray-600">قصور</div>
+                  </div>
+                  <div className="text-center p-3 border border-gray-100 rounded-lg">
+                    <div className="text-lg font-bold text-emerald-600">
+                      {Math.round(filteredVenues.reduce((sum, v) => sum + (v.price || 0), 0) / filteredVenues.length).toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">متوسط السعر</div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <h4 className="font-semibold text-gray-700 mb-3">نصائح للاستخدام:</h4>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                    <li className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                      انقر على أي علامة لعرض تفاصيل القاعة
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      استخدم عجلة الماوس للتكبير والتصغير
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                      اسحب الخريطة للتنقل بين المناطق
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                      الألوان تمثل أنواع القاعات المختلفة
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           ) : (
+            // عرض القائمة
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedVenues.map((venue) => (
@@ -983,6 +1137,7 @@ const WeddingHallsPage = () => {
                     }}
                     onBookNow={handleBookNow}
                     getEventTypeDisplayName={getEventTypeDisplayName}
+                    isHovered={hoveredVenueId === (venue.id || venue._id)}
                   />
                 ))}
               </div>
@@ -1020,13 +1175,13 @@ const WeddingHallsPage = () => {
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <button
-                  onClick={() => window.location.href = 'tel:+201234567890'}
+                  onClick={() => window.location.href = 'tel:+201040652783'}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg font-medium"
                 >
                   📞 تواصل معنا الآن
                 </button>
                 <button
-                  onClick={() => navigate('/contact')}
+                  onClick={() => navigate('/join-us')}
                   className="bg-white text-gray-700 border border-gray-300 hover:border-emerald-300 px-6 py-3 rounded-xl transition-all duration-300 shadow-sm hover:shadow font-medium"
                 >
                   📩 طلب استشارة مجانية

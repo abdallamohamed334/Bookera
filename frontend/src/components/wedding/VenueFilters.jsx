@@ -18,13 +18,7 @@ const VenueFilters = ({
   clearAllEventTypes // ⭐⭐ إضافة clearAllEventTypes كـ prop
 }) => {
   // ⭐⭐ تم التعديل هنا: أنواع المناسبات لمطابقة supported_events ⭐⭐
-  const availableEventTypes = {
-    "engagement": "خطوبة",
-    "katb_ketab": "كتب كتاب",
-    "islamic_wedding": "فرح",
-    "conference": "مؤتمرات",
-    "birthday": "عيد ميلاد"
-  };
+  
 
   return (
     <div className="lg:w-1/4 bg-gray-50 p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
@@ -196,19 +190,7 @@ const getEventIcon = (eventType) => {
 // ⭐⭐ الاحتفاظ بالمكون القديم للتوافق مع المكونات الأخرى إذا لزم الأمر ⭐⭐
 const EventTypeFilter = ({ activeFilter, eventCategories, onChange }) => {
   // تسميات أنواع المناسبات
-  const eventLabels = {
-    "all": "كل المناسبات",
-    "فرح": "💒 فرح",
-    "خطوبة": "💍 خطوبة", 
-    "كتب_كتاب": "📖 كتب كتاب",
-    "عيد_ميلاد": "🎂 عيد ميلاد",
-    "مؤتمرات": "👔 مؤتمرات",
-    "engagement": "💍 خطوبة",
-    "katb_ketab": "📖 كتب كتاب",
-    "islamic_wedding": "💒 فرح",
-    "conference": "👔 مؤتمرات",
-    "birthday": "🎂 عيد ميلاد"
-  };
+
 
   return (
     <div className="mb-6">
