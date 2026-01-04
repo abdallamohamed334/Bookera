@@ -1,18 +1,28 @@
 import { motion } from "framer-motion";
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from "react";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
 
 const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+<<<<<<< HEAD
   const intervalRef = useRef(null);
 
   // الكشف عن حجم الشاشة مع معالجة الأخطاء
+=======
+
+  // الكشف عن حجم الشاشة
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
     
+<<<<<<< HEAD
     // معالجة حالة SSR
     if (typeof window !== 'undefined') {
       checkMobile();
@@ -77,11 +87,22 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
     if (onPhotographerClick && photographer) {
       onPhotographerClick(photographer);
     }
+=======
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleCardClick = () => {
+    onPhotographerClick(photographer);
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
   };
 
   const handleShare = async (e) => {
     e.stopPropagation();
 
+<<<<<<< HEAD
     try {
       if (!photographer) return;
 
@@ -115,10 +136,36 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
       console.error("Share error:", err);
       if (err.name !== 'AbortError') {
         alert('✅ تم نسخ رابط الفوتوغرافر إلى الحافظة!');
+=======
+    const photographerId = photographer.id || photographer._id;
+    const shareUrl = `${window.location.origin}/photographer/${photographerId}`;
+    const shareText = `📸 اكتشف أعمال ${photographer.name} - ${photographer.specialty} في ${photographer.city}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: photographer.name,
+          text: shareText,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('✅ تم نسخ رابط الفوتوغرافر إلى الحافظة!');
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          alert('✅ تم نسخ رابط الفوتوغرافر إلى الحافظة!');
+        } catch (clipboardErr) {
+          console.error('تعذر نسخ الرابط:', clipboardErr);
+        }
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
       }
     }
   };
 
+<<<<<<< HEAD
   // حساب الخصومات مع معالجة آمنة
   const calculateDiscounts = () => {
     try {
@@ -169,13 +216,47 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
     rating: 0,
     services: [],
     packages: []
+=======
+  // حساب الخصومات
+  const calculateDiscounts = () => {
+    if (!photographer.packages) return [];
+
+    return photographer.packages
+      .filter(pkg => pkg.originalPrice && pkg.originalPrice > pkg.price)
+      .map(pkg => ({
+        name: pkg.name,
+        discount: Math.round(((pkg.originalPrice - pkg.price) / pkg.originalPrice) * 100),
+        originalPrice: pkg.originalPrice,
+        newPrice: pkg.price
+      }));
+  };
+
+  // حساب بداية سعر القاعة
+  const calculateHallStartingPrice = () => {
+    if (!photographer.packages) return null;
+    
+    const hallPackages = photographer.packages.filter(pkg => 
+      pkg.category === 'hall' || pkg.name?.toLowerCase().includes('قاعة') || pkg.name?.toLowerCase().includes('hall')
+    );
+    
+    if (hallPackages.length === 0) return null;
+    
+    const minPrice = Math.min(...hallPackages.map(pkg => pkg.price));
+    return minPrice;
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
   };
 
   const discounts = calculateDiscounts();
   const hasDiscount = discounts.length > 0;
   const maxDiscount = hasDiscount ? Math.max(...discounts.map(d => d.discount)) : 0;
+<<<<<<< HEAD
   const startingPrice = calculateStartingPrice();
   const images = getSafeImages();
+=======
+  const hallStartingPrice = calculateHallStartingPrice();
+
+  const images = photographer.portfolio?.map(album => album.coverImage) || [photographer.profileImage];
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
 
   const nextImage = (e) => {
     e.stopPropagation();
@@ -195,6 +276,7 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
     }
   };
 
+<<<<<<< HEAD
   const shouldShowArrows = (isMobile || isHovering) && images.length > 1;
 
   // التأكد من أن renderStars دالة
@@ -208,6 +290,9 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
       <span className="text-sm text-gray-600 mr-2">({rating || 0})</span>
     </div>
   ));
+=======
+  const shouldShowArrows = isMobile || isHovering || images.length > 1;
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
 
   return (
     <motion.div
@@ -215,7 +300,11 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02, y: -5 }}
       transition={{ duration: 0.3 }}
+<<<<<<< HEAD
       className="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden cursor-pointer transition-all h-full flex flex-col hover:border-blue-400 hover:shadow-2xl group"
+=======
+      className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden cursor-pointer transition-all h-full flex flex-col hover:border-blue-400 hover:shadow-xl group"
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
       onClick={handleCardClick}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -225,6 +314,7 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
         <div className="relative w-full h-full overflow-hidden">
           <img
             src={images[currentImageIndex]}
+<<<<<<< HEAD
             alt={`${safePhotographer.name} work ${currentImageIndex + 1}`}
             className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
             onError={(e) => {
@@ -233,11 +323,22 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           />
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+=======
+            alt={`${photographer.name} work ${currentImageIndex + 1}`}
+            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+            onError={(e) => {
+              e.target.src = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800";
+            }}
+          />
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
         </div>
 
         {/* العنوانات - أعلى الصورة */}
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
           <div className="flex flex-col gap-2">
+<<<<<<< HEAD
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -271,10 +372,29 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
               >
                 خصم {maxDiscount}% 🎁
               </motion.div>
+=======
+            <div className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg">
+              {photographer.city}
+            </div>
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-lg">
+              احجز الآن 🎯
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 items-end">
+            <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-lg">
+              {renderStars(photographer.rating)}
+            </div>
+            {hasDiscount && (
+              <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg">
+                خصم {maxDiscount}% 🎁
+              </div>
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
             )}
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* اسم المصور فوق الصورة */}
         <div className="absolute bottom-20 left-4 right-4 z-20">
           <h3 className="text-2xl font-bold text-white drop-shadow-lg">
@@ -304,26 +424,43 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           </div>
         )}
 
+=======
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
         {/* زر المشاركة */}
         <div className="absolute bottom-4 left-4 z-20">
           <button
             onClick={handleShare}
+<<<<<<< HEAD
             className="bg-white/95 backdrop-blur-md hover:bg-white text-gray-700 hover:text-blue-600 transition-all p-3 shadow-xl rounded-xl hover:scale-110 active:scale-95"
             aria-label="مشاركة"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+=======
+            className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-700 hover:text-blue-600 transition-all p-2.5 shadow-lg rounded-lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12a4 4 0 118 0 4 4 0 01-8 0zm4 6v4m0-20v4m8 4h4M2 12H6" />
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
             </svg>
           </button>
         </div>
 
         {/* الأسهم */}
+<<<<<<< HEAD
         {shouldShowArrows && (
           <>
             <button
               onClick={prevImage}
               className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all z-20"
               aria-label="الصورة السابقة"
+=======
+        {images.length > 1 && shouldShowArrows && (
+          <>
+            <button
+              onClick={prevImage}
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center shadow-xl"
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -331,8 +468,12 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
             </button>
             <button
               onClick={nextImage}
+<<<<<<< HEAD
               className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all z-20"
               aria-label="الصورة التالية"
+=======
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm w-10 h-10 rounded-full flex items-center justify-center shadow-xl"
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -340,10 +481,15 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
             </button>
           </>
         )}
+<<<<<<< HEAD
+=======
+
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
       </div>
 
       {/* المحتوى أسفل الصورة */}
       <div className="p-5 flex-grow flex flex-col">
+<<<<<<< HEAD
         {/* المعلومات الأساسية */}
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -444,6 +590,64 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
             </svg>
           </button>
         </div>
+=======
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h4 className="text-xl font-bold text-gray-900 mb-1">{photographer.name}</h4>
+            <p className="text-blue-600 font-semibold text-sm">{photographer.specialty}</p>
+          </div>
+          <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+            {photographer.experience} سنة خبرة
+          </span>
+        </div>
+
+        {/* الموقع */}
+        <p className="text-gray-600 text-sm mb-4 flex items-center gap-1">
+          {photographer.city}، {photographer.governorate}
+        </p>
+
+        {/* الخدمات */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {photographer.services?.slice(0, 3).map((service, index) => (
+            <span
+              key={index}
+              className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs font-medium border"
+            >
+              {service}
+            </span>
+          ))}
+          {photographer.services?.length > 3 && (
+            <span className="bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-medium border">
+              +{photographer.services.length - 3} أكثر
+            </span>
+          )}
+        </div>
+
+        {/* محرر فيديو وصور */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {photographer.isVideoEditor && (
+            <span className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-200 flex items-center gap-1">
+              🎬 محترف مونتاج فيديو
+            </span>
+          )}
+
+          {photographer.isPhotoEditor && (
+            <span className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-200 flex items-center gap-1">
+              🎨 محرر صور (Photo Editor)
+            </span>
+          )}
+
+          {!photographer.isVideoEditor && !photographer.isPhotoEditor && (
+            <span className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200">
+              لا توجد خدمات تعديل صور/فيديو
+            </span>
+          )}
+        </div>
+
+        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold shadow-lg">
+          عرض التفاصيل
+        </button>
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
       </div>
     </motion.div>
   );

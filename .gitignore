@@ -24,4 +24,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+<<<<<<< HEAD
 scripts/
+=======
+>>>>>>> c28e35099d3fff1ec515406ddb2e0bc39180fa57
