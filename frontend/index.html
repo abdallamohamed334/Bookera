@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <!-- Encoding & Basic Meta -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Primary Meta Tags -->
+    <title>Bookera | احجز أفضل مصوري الأفراح في مصر</title>
+    <meta name="title" content="Bookera | احجز أفضل مصوري الأفراح والقاعات في مصر">
+    <meta name="description" content="منصة Bookera لحجز أفضل مصوري الأفراح والمناسبات في جميع محافظات مصر. تصوير زفاف، مناسبات، تصوير شخصي وعائلي بأسعار مناسبة.">
+    <meta name="keywords" content="مصور أفراح, تصوير زفاف, مصور مناسبات, حجز مصور, تصوير عائلي, تصوير شخصي, مصر, القاهرة, الجيزة, الإسكندرية">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bookeraapp.netlify.app/">
+    <meta property="og:title" content="Bookera | احجز أفضل مصوري والقاعات الأفراح في مصر">
+    <meta property="og:description" content="منصة Bookera لحجز أفضل مصوري الأفراح والمناسبات في جميع محافظات مصر">
+    <meta property="og:image" content="https://bookeraapp.netlify.app/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://bookeraapp.netlify.app/">
+    <meta property="twitter:title" content="Bookera | احجز أفضل مصوري الأفراح في مصر">
+    <meta property="twitter:description" content="منصة Bookera لحجز أفضل مصوري الأفراح والمناسبات في جميع محافظات مصر">
+    <meta property="twitter:image" content="https://bookeraapp.netlify.app/twitter-image.jpg">
+    
+    <!-- Theme & PWA -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Bookera",
+      "alternateName": "بووكيرا",
+      "url": "https://bookeraapp.netlify.app/",
+      "description": "منصة حجز مصوري الأفراح والمناسبات في مصر",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://bookeraapp.netlify.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      },
+      "inLanguage": "ar-EG"
+    }
+    </script>
+    
+    <!-- Local Business Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "Bookera",
+      "description": "منصة حجز مصوري الأفراح والمناسبات في مصر",
+      "url": "https://bookeraapp.netlify.app/",
+      "logo": "https://bookeraapp.netlify.app/logo2.png",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "EG",
+        "addressRegion": "القاهرة"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Egypt"
+      },
+      "sameAs": []
+    }
+    </script>
+    
+    <!-- Google Fonts for Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="d55b43ca-0e9d-42b3-a8f2-5a0c858cb4ec"></script>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease;
+    ">
+        <div style="text-align: center; color: white;">
+            <div style="
+                width: 60px;
+                height: 60px;
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top-color: white;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            "></div>
+            <h1 style="font-family: 'Tajawal', sans-serif; margin: 0;">Bookera</h1>
+            <p style="font-family: 'Tajawal', sans-serif; opacity: 0.8; margin-top: 5px;">جاري التحميل...</p>
+        </div>
+    </div>
+
+    <!-- No JavaScript Warning -->
+    <noscript>
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+            text-align: center;
+        ">
+            <div>
+                <h1 style="color: #dc2626; font-family: 'Tajawal', sans-serif;">⚠️ JavaScript غير مفعل</h1>
+                <p style="font-family: 'Tajawal', sans-serif; color: #374151; max-width: 500px; line-height: 1.6;">
+                    يعتمد موقع Bookera على JavaScript لتقديم تجربة استخدام كاملة.<br>
+                    الرجاء تفعيل JavaScript في متصفحك وتحديث الصفحة.
+                </p>
+                <a href="https://www.enable-javascript.com/ar/" 
+                   style="
+                       display: inline-block;
+                       margin-top: 20px;
+                       padding: 12px 24px;
+                       background: #4f46e5;
+                       color: white;
+                       text-decoration: none;
+                       border-radius: 8px;
+                       font-family: 'Tajawal', sans-serif;
+                       font-weight: 500;
+                   "
+                   target="_blank">
+                   كيفية تفعيل JavaScript
+                </a>
+            </div>
+        </div>
+    </noscript>
+
+    <!-- React Root -->
+    <div id="root"></div>
+
+    <!-- Loading Script -->
+    <script>
+        // Hide loading screen when page is fully loaded
+        function hideLoadingScreen() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 500);
+            }
+        }
+
+        // If page is already loaded
+        if (document.readyState === 'complete') {
+            hideLoadingScreen();
+        } else {
+            window.addEventListener('load', hideLoadingScreen);
+        }
+
+        // Fallback timeout
+        setTimeout(hideLoadingScreen, 3000);
+    </script>
+
+    <!-- Main Script -->
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Global Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            text-align: right;
+            direction: rtl;
+            background: #f9fafb;
+            overflow-x: hidden;
+        }
+
+        #root {
+            min-height: 100vh;
+        }
+
+        /* Loading Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Selection Color */
+        ::selection {
+            background-color: rgba(79, 70, 229, 0.3);
+            color: #1f2937;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a5b4fc;
+        }
+
+        /* Arabic Font Support */
+        @font-face {
+            font-family: 'Tajawal';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Tajawal'), url(https://fonts.gstatic.com/s/tajawal/v9/Iura6YBj_oCad4k1rzaLCrTF.woff2) format('woff2');
+            font-display: swap;
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+                color: black !important;
+            }
+        }
+
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus Styles for Accessibility */
+        :focus {
+            outline: 3px solid rgba(79, 70, 229, 0.5);
+            outline-offset: 2px;
+        }
+
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
+    </style>
+</body>
+</html>

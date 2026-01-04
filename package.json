@@ -1,0 +1,47 @@
+{
+  "name": "auth-tutorial",
+  "version": "1.0.0",
+  "description": "<h1 align=\"center\">Advanced Auth Tutorial 🔒 </h1>",
+  "main": "backend/index.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development nodemon backend/index.js",
+    "start": "node backend/index.js",
+    "build": "echo 'No build needed'"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "module",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@react-oauth/google": "^0.12.2",
+    "@supabase/supabase-js": "^2.78.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.8.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "firebase": "^12.6.0",
+    "jsonwebtoken": "^9.0.2",
+    "leaflet": "1.9",
+    "mailtrap": "^4.3.0",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.19.2",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.4",
+    "pg": "^8.16.3",
+    "react-leaflet": "^4.2.1",
+    "resend": "^6.3.0",
+    "twilio": "^5.10.5",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.21",
+    "cross-env": "^10.1.0",
+    "nodemon": "^3.1.10"
+  }
+}

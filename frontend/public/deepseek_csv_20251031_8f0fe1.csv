@@ -1,0 +1,4 @@
+venue_id,venue_name,venue_image,type,user_name,user_email,user_phone,user_id,date,time,guests,notes,status,governorate,city,price,capacity
+venue_001,قصر الأفراح,https://images.unsplash.com/photo-1511795409834-ef04bbd61622,direct,أحمد محمد,ahmed@email.com,01012345678,user_123,2024-12-25,6 ساعات (6:00 مساءً - 12:00 منتصف الليل),150,أريد تأكيد توفر الديكور,pending,القاهرة,المعادي,50000,200
+venue_002,نادي الضباط,https://images.unsplash.com/photo-1464366400600-7168b8af9bc3,inspection,سارة محمود,sara@email.com,01198765432,user_456,2024-11-20,3:00 عصراً - 6:00 مساءً,200,أحتاج معاينة القاعة قبل الحجز,pending,الجيزة,الدقي,75000,250
+venue_003,فندق شيراتون,https://images.unsplash.com/photo-1445019980597-93fa8acb246c,direct,محمود عبدالله,mahmoud@email.com,01255556666,user_789,2024-10-15,4 ساعات (6:00 مساءً - 10:00 مساءً),100,مطلوب تأكيد موعد الفرح,pending,الإسكندرية,سموحة,60000,150

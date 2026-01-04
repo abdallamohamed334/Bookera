@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WeddingVenue {
+  id              String    @id @default(uuid())
+  name            String
+  type            String
+  category        String
+  governorate     String?
+  city            String?
+  address         String?
+
+  capacity        Int
+  minCapacity     Int?      @map("min_capacity")
+  maxCapacity     Int?      @map("max_capacity")
+
+  price           Int
+  minPrice        Int?      @map("min_price")
+  maxPrice        Int?      @map("max_price")
+  pricingType     String?   @map("pricing_type")
+  originalPrice   Int?      @map("original_price")
+  specialOffer    String?   @map("special_offer")
+
+  image           String?
+  images          String[]
+  videos          String[]
+
+  features        String[]
+  amenities       String[]
+  rules           String[]
+
+  description     String?
+  available       Boolean   @default(true)
+  isFeatured      Boolean   @default(false) @map("is_featured")
+
+  rating          Float?    @default(0)
+  reviewCount     Int?      @default(0) @map("review_count")
+
+  contact         String?
+  email           String?
+  whatsapp        String?
+  website         String?
+
+  locationLat     Float?    @map("location_lat")
+  locationLng     Float?    @map("location_lng")
+  mapLink         String?   @map("map_link")
+
+  weddingSpecific Json?     @map("wedding_specific")
+  viewCount       Int?      @default(0) @map("view_count")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @map("updated_at")
+
+  bookings        Booking[]
+  reviews         Review[]
+  favorites       Favorite[]
+  packages        Package[]     // 👈 تمت الإضافة الجديدة هنا
+
+  @@map("wedding_venues")
+  @@index([governorate])
+  @@index([city])
+  @@index([type])
+  @@index([price])
+  @@index([rating])
+  @@index([isFeatured])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  venueId     String   @map("venue_id")
+  userId      String?  @map("user_id")
+  userName    String   @map("user_name")
+  userEmail   String   @map("user_email")
+  rating      Int
+  comment     String   @map("comment")
+  isVerified  Boolean  @default(false) @map("is_verified")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  venue       WeddingVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  venueId   String   @map("venue_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  venue     WeddingVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, venueId])
+  @@map("favorites")
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  venueId   String   @map("venue_id")
+  venueName String?  @map("venue_name")
+  type      String?
+  userName  String?  @map("user_name")
+  userPhone String?  @map("user_phone")
+  userEmail String?  @map("user_email")
+  date      String?
+  time      String?
+  guests    Int?
+  notes     String?
+  status    String   @default("pending")
+  smsSent   Boolean  @default(false) @map("sms_sent")
+  userId    String?  @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  venue     WeddingVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+//
+//  🎁 جدول Packages الجديد
+//
+model Package {
+  id                 String   @id @default(uuid())
+  venueId            String   @map("venue_id")
+
+  name               String
+  price              Int
+  originalPrice      Int?
+  discount           Int?
+  features           String[]
+  additionalServices String[]
+  description        String?
+  notes              String?
+
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @map("updated_at")
+
+  venue WeddingVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@map("packages")
+}

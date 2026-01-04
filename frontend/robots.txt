@@ -1,0 +1,29 @@
+# Bookera - Wedding Photographers Booking Platform
+# Generated: 2024-01-15
+# Contact: contact@bookera.com
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /dashboard/
+Disallow: /*.json$
+Disallow: /*.xml$
+
+Crawl-delay: 2
+
+Sitemap: https://bookeraapp.netlify.app/sitemap.xml
+
+# Arabic Search Engines
+User-agent: yahoo-mmcrawler
+Allow: /
+
+User-agent: yahoo-blogs
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: NaverBot
+Allow: /
