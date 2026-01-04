@@ -174,10 +174,11 @@ const PhotographerDetailsPage = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  // إصلاح مشكلة تحديد الباقات - التحديد الفردي فقط
   const togglePackageSelection = (pkg) => {
-    const isSamePackage = selectedPackage && selectedPackage.id === pkg.id;
-    
-    if (isSamePackage) {
+    // إذا كانت الباقة المحددة هي نفس الباقة الحالية، قم بإلغاء التحديد
+    // وإلا قم بتحديد الباقة الجديدة فقط
+    if (selectedPackage && selectedPackage._id === pkg._id) {
       setSelectedPackage(null);
     } else {
       setSelectedPackage(pkg);
@@ -702,7 +703,7 @@ const PhotographerDetailsPage = () => {
     );
   };
 
-  // Render packages section
+  // Render packages section - مع إصلاح مشكلة التحديد
   const renderPackagesSection = () => {
     const hasPackages = photographer.packages && photographer.packages.length > 0;
 
@@ -734,12 +735,14 @@ const PhotographerDetailsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {photographer.packages?.map((pkg) => {
-              const isSelected = selectedPackage ? selectedPackage.id === pkg.id : false;
+            {photographer.packages?.map((pkg, index) => {
+              // استخدام معرف فريد لكل باقة
+              const pkgId = pkg._id || pkg.id || `pkg-${index}`;
+              const isSelected = selectedPackage ? selectedPackage._id === pkgId : false;
               
               return (
                 <motion.div
-                  key={pkg.id}
+                  key={pkgId}
                   className={`relative rounded-3xl p-8 transition-all duration-300 cursor-pointer ${
                     isSelected
                       ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-2xl scale-105'
@@ -747,7 +750,7 @@ const PhotographerDetailsPage = () => {
                       ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 shadow-xl hover:shadow-2xl'
                       : 'bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl'
                   }`}
-                  onClick={() => togglePackageSelection(pkg)}
+                  onClick={() => togglePackageSelection({...pkg, _id: pkgId})}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                 >
