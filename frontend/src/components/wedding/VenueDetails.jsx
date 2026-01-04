@@ -42,6 +42,7 @@ const VenueDetails = () => {
   const [selectedReel, setSelectedReel] = useState(null);
   const [showReelsModal, setShowReelsModal] = useState(false);
   const [currentReelIndex, setCurrentReelIndex] = useState(0);
+  const [showMobileBooking, setShowMobileBooking] = useState(true);
   const videoRefs = useRef({});
 
   // 🔥 إعدادات التليجرام
@@ -53,7 +54,7 @@ const VenueDetails = () => {
     enabled: true
   };
 
-  // 🔥 دالة للحصول على صورة بديلة عند الخطأ - محدثة
+  // 🔥 دالة للحصول على صورة بديلة عند الخطأ
   const getFallbackImage = (venueName) => {
     const name = venueName || 'قاعة أفراح';
     const encodedName = encodeURIComponent(name.substring(0, 20));
@@ -65,7 +66,6 @@ const VenueDetails = () => {
     if (!string) return false;
     if (typeof string !== 'string') return false;
     
-    // التحقق إذا كان رابط placeholder
     if (string.includes('via.placeholder.com')) return true;
     
     try {
@@ -85,8 +85,6 @@ const VenueDetails = () => {
         setLoading(true);
         setError(null);
         
-        
-
         // جلب بيانات القاعة
         const venueResponse = await fetch(
           `https://bookera-production-25ec.up.railway.app/api/wedding-venues/${id}`,
@@ -98,8 +96,6 @@ const VenueDetails = () => {
           }
         );
         
-        
-        
         if (!venueResponse.ok) {
           const errorText = await venueResponse.text();
           console.error('❌ خطأ في الاستجابة:', errorText);
@@ -107,7 +103,6 @@ const VenueDetails = () => {
         }
         
         const venueData = await venueResponse.json();
-        
         setVenueData(venueData);
 
         // جلب الباكدجات
@@ -162,16 +157,12 @@ const VenueDetails = () => {
           });
         }
 
-        // 🔥 إعداد الريلز من قاعدة البيانات
-        
-        
+        // 🔥 إعداد الريلز
         if (venueData.reels && venueData.reels.length > 0) {
-          // إذا كانت الريلز مخزنة كـ JSON
           let reelsData;
           try {
             reelsData = Array.isArray(venueData.reels) ? venueData.reels : JSON.parse(venueData.reels || '[]');
             
-            // 🔥 إصلاح الـ thumbnails
             reelsData = reelsData.map((reel, index) => ({
               ...reel,
               id: reel.id || index + 1,
@@ -187,14 +178,12 @@ const VenueDetails = () => {
               source_type: reel.source_type || getVideoSourceType(reel.video_url || reel.videoUrl || reel.url)
             }));
             
-            
           } catch (parseError) {
             console.error('❌ خطأ في تحليل الريلز:', parseError);
             reelsData = [];
           }
           setReels(reelsData);
         } else if (venueData.videos && venueData.videos.length > 0) {
-          
           const reelsData = venueData.videos.map((video, index) => ({
             id: index + 1,
             video_url: video,
@@ -221,7 +210,6 @@ const VenueDetails = () => {
         }
       } finally {
         setLoading(false);
-        
       }
     };
 
@@ -503,7 +491,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     setSelectedReel(null);
     setCurrentReelIndex(0);
     
-    // إيقاف جميع الفيديوهات عند الإغلاق
     Object.values(videoRefs.current).forEach(ref => {
       if (ref && ref.pause) ref.pause();
     });
@@ -624,7 +611,7 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     );
   };
 
-  // 🔥 AUTO SLIDER EFFECT - محدث
+  // 🔥 AUTO SLIDER EFFECT
   useEffect(() => {
     const allImages = venueData?.images || (venueData?.image ? [venueData.image] : []);
     const displayImages = Array.isArray(allImages) ? allImages : [];
@@ -638,39 +625,85 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     return () => clearInterval(interval);
   }, [venueData?.images, venueData?.image]);
 
-  // 🔥 سلايدر الصور المحسن والمصحح
+  // 🔥 تتبع السكرول لعرض أزرار الحجز على الموبايل
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerWidth < 768) {
+        const scrollPosition = window.scrollY;
+        if (scrollPosition > 300) {
+          setShowMobileBooking(true);
+        } else {
+          setShowMobileBooking(false);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 🔥 سلايدر الصور الرئيسي - تصميم مذهل
   const renderImageSlider = () => {
     const allImages = venueData?.images || (venueData?.image ? [venueData.image] : []);
-    
-    // تجنب الأخطاء إذا كانت الصور غير محددة
     const safeImages = Array.isArray(allImages) ? allImages : [];
     const displayImages = safeImages.slice(0, 6);
 
     if (displayImages.length === 0) {
       return (
-        <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
-          <div className="text-center">
-            <div className="text-4xl mb-3">📷</div>
-            <p className="text-gray-600 font-medium">لا توجد صور متاحة</p>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="relative w-full h-[500px] md:h-[600px] rounded-3xl overflow-hidden bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 shadow-2xl"
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-white p-8">
+              <div className="text-7xl mb-4">🏰</div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">{venueData?.name}</h1>
+              <p className="text-lg opacity-90">قاعة أفراح فاخرة</p>
+            </div>
           </div>
-        </div>
+        </motion.div>
       );
     }
 
     return (
-      <div className="relative w-full h-96 rounded-2xl overflow-hidden shadow-xl">
-        {/* حاوية الصور مع scroll افتراضي */}
+      <div className="relative w-full h-[500px] md:h-[600px] rounded-3xl overflow-hidden shadow-2xl">
+        {/* صور الخلفية مع تأثير تمويه */}
+        {displayImages.map((image, index) => (
+          <motion.div
+            key={index}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: index === selectedImage ? 0.4 : 0,
+              scale: index === selectedImage ? 1.1 : 1
+            }}
+            transition={{ duration: 1 }}
+          >
+            <img 
+              src={image} 
+              alt=""
+              className="w-full h-full object-cover blur-2xl"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = getFallbackImage(venueData?.name);
+              }}
+            />
+          </motion.div>
+        ))}
+        
+        {/* الصورة الرئيسية */}
         <div className="relative w-full h-full">
           {displayImages.map((image, index) => (
             <motion.div
               key={index}
               className="absolute inset-0"
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ 
                 opacity: index === selectedImage ? 1 : 0,
-                scale: index === selectedImage ? 1 : 1.05
+                scale: index === selectedImage ? 1 : 0.95
               }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.7, ease: "easeInOut" }}
             >
               <img 
                 src={image} 
@@ -681,9 +714,53 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                   e.target.src = getFallbackImage(venueData?.name);
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
             </motion.div>
           ))}
+        </div>
+        
+        {/* طبقة التدرج */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+        
+        {/* معلومات القاعة */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="max-w-3xl"
+          >
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              {venueData?.is_featured && (
+                <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-2">
+                  <span className="text-base">🌟</span>
+                  <span>قاعة مميزة</span>
+                </span>
+              )}
+              <span className="bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full font-medium text-sm">
+                {venueData?.city || 'القاهرة'}
+              </span>
+            </div>
+            
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
+              {venueData?.name}
+            </h1>
+            
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                <span>{venueData?.address || 'عنوان القاعة'}</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                <span>سعة {venueData?.capacity || 250}+ شخص</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
         
         {/* أزرار التنقل */}
@@ -691,34 +768,34 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
           <>
             <button
               onClick={() => setSelectedImage(prev => prev === 0 ? displayImages.length - 1 : prev - 1)}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all z-10"
+              className="absolute left-4 md:left-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all z-10"
               aria-label="الصورة السابقة"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={() => setSelectedImage(prev => prev === displayImages.length - 1 ? 0 : prev + 1)}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all z-10"
+              className="absolute right-4 md:right-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all z-10"
               aria-label="الصورة التالية"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </>
         )}
         
         {/* مؤشر الصور */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+        <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
           {displayImages.map((_, index) => (
             <button
               key={index}
               onClick={() => setSelectedImage(index)}
-              className={`w-3 h-3 rounded-full transition-all ${
+              className={`w-3 h-3 rounded-full transition-all transform ${
                 index === selectedImage 
-                  ? 'bg-white scale-125' 
+                  ? 'bg-white scale-125 shadow-lg' 
                   : 'bg-white/50 hover:bg-white/80 hover:scale-110'
               }`}
               aria-label={`الذهاب إلى الصورة ${index + 1}`}
@@ -726,38 +803,30 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
           ))}
         </div>
 
-        {/* شارة القاعة المميزة */}
-        {venueData?.is_featured && (
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 z-10">
-            <span>⭐</span>
-            <span>مميزة</span>
-          </div>
-        )}
-        
-        {/* العداد */}
-        {displayImages.length > 1 && (
-          <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1.5 rounded-full text-sm z-10">
+        {/* العداد والتحكم */}
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm flex items-center gap-4">
+          <span className="flex items-center gap-2">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+            </svg>
             {selectedImage + 1} / {displayImages.length}
-          </div>
-        )}
-        
-        {/* زر فتح المعرض */}
-        {displayImages.length > 1 && (
+          </span>
+          
           <button
             onClick={() => openImageModal(selectedImage)}
-            className="absolute bottom-4 left-4 bg-black/60 hover:bg-black/80 text-white px-3 py-1.5 rounded-full text-sm flex items-center gap-1 transition-colors z-10"
+            className="flex items-center gap-2 hover:text-blue-300 transition-colors"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
-            فتح المعرض
+            معرض الصور
           </button>
-        )}
+        </div>
       </div>
     );
   };
 
-  // معرض الصور المودال البسيط
+  // 🔥 معرض الصور المودال
   const renderImageModal = () => {
     const images = venueData?.images || [];
     
@@ -773,62 +842,60 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4"
             onClick={closeImageModal}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-4xl w-full max-h-[90vh]"
+              className="relative w-full max-w-6xl h-full max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* زر الإغلاق */}
               <button
                 onClick={closeImageModal}
-                className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full"
+                className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full hover:scale-110 transition-all"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
 
-              {/* الصورة */}
               <img 
                 src={isImageValid ? currentImage : getFallbackImage(venueData?.name)} 
                 alt={`${venueData?.name || 'القاعة'} - صورة ${selectedGalleryImage + 1}`}
-                className="w-full h-full object-contain max-h-[80vh] rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = getFallbackImage(venueData?.name);
                 }}
               />
               
-              {/* أزرار التنقل */}
               {images.length > 1 && (
                 <>
                   <button
                     onClick={() => navigateImage('prev')}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
                   <button
                     onClick={() => navigateImage('next')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
                 </>
               )}
               
-              {/* العداد */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm">
-                {selectedGalleryImage + 1} / {images.length}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-2 rounded-full text-sm flex items-center gap-4">
+                <span>{selectedGalleryImage + 1} / {images.length}</span>
+                <span className="text-gray-300">|</span>
+                <span>{venueData?.name}</span>
               </div>
             </motion.div>
           </motion.div>
@@ -845,61 +912,61 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     
     if (allMedia.length === 0) {
       return (
-        <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 mb-4 shadow-lg border border-blue-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-            </svg>
-            الصور والفيديوهات
-          </h3>
-          <div className="text-center py-8">
-            <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p className="text-gray-600 text-sm">لا توجد صور أو فيديوهات متاحة حالياً</p>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-white to-indigo-50 rounded-3xl p-8 mb-6 shadow-2xl border border-indigo-100"
+        >
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-12 h-12 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">الصور والفيديوهات</h3>
+            <p className="text-gray-600">سيتم إضافة الصور والفيديوهات قريباً</p>
           </div>
-        </div>
+        </motion.div>
       );
     }
 
     return (
-      <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 mb-4 shadow-lg border border-blue-100">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-          </svg>
-          الصور والفيديوهات ({allMedia.length})
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-white to-indigo-50 rounded-3xl p-8 mb-6 shadow-2xl border border-indigo-100"
+      >
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">معرض الصور والفيديوهات</h3>
+            <p className="text-gray-600 mt-1">اكتشف جمال {venueData?.name}</p>
+          </div>
+          <div className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full font-bold">
+            {allMedia.length} ملف
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {allImages.map((image, index) => (
             <motion.div 
               key={`image-${index}`} 
-              className="aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all cursor-pointer group relative"
-              whileHover={{ scale: 1.05 }}
+              className="aspect-square rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group relative"
+              whileHover={{ scale: 1.05, y: -5 }}
               onClick={() => openImageModal(index)}
             >
               <img 
                 src={image} 
                 alt={`${venueData.name} - صورة ${index + 1}`}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = getFallbackImage(venueData?.name);
                 }}
               />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </span>
-              </div>
-              <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs">
-                <svg className="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                </svg>
-                صورة
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute bottom-4 left-4 right-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm font-medium">صورة {index + 1}</div>
+                <div className="text-xs opacity-90">انقر للتكبير</div>
               </div>
             </motion.div>
           ))}
@@ -907,15 +974,15 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
           {reels.map((reel, index) => (
             <motion.div 
               key={`reel-${reel.id || index}`} 
-              className="aspect-[9/16] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all cursor-pointer group relative"
-              whileHover={{ scale: 1.05 }}
+              className="aspect-[9/16] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group relative"
+              whileHover={{ scale: 1.05, y: -5 }}
               onClick={() => openReelsModal(reel, index)}
             >
               <div className="relative w-full h-full">
                 <img 
                   src={reel.thumbnail || getFallbackImage(venueData?.name)} 
                   alt={reel.title || `فيديو ${index + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = getFallbackImage(venueData?.name);
@@ -925,129 +992,191 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                 
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-black/50 rounded-full p-2 group-hover:scale-110 transition-transform">
+                  <motion.div 
+                    className="bg-gradient-to-r from-red-500 to-pink-500 rounded-full p-3 group-hover:scale-110 transition-transform duration-300 shadow-2xl"
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
                     <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                     </svg>
-                  </div>
+                  </motion.div>
                 </div>
                 
-                <div className="absolute bottom-2 left-2 right-2">
-                  <div className="flex items-center justify-between text-white text-xs">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="flex items-center gap-1 font-medium">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                         <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                       </svg>
-                      <span>{(reel.views || 0).toLocaleString()}</span>
+                      {(reel.views || 0).toLocaleString()}
                     </span>
-                    <span>{reel.duration || "0:30"}</span>
+                    <span className="bg-black/60 px-2 py-1 rounded text-xs">{reel.duration || "0:30"}</span>
                   </div>
-                </div>
-                
-                <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                  <svg className="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-                  </svg>
-                  فيديو
+                  <div className="text-xs opacity-90 truncate">{reel.title || `فيديو ${index + 1}`}</div>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     );
   };
 
   // 🔥 عرض معلومات سريعة
   const renderQuickInfo = () => {
     return (
-      <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 mb-4 shadow-lg border border-blue-100">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-          معلومات سريعة
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-8 mb-6 shadow-2xl border border-blue-100"
+      >
+        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <span>معلومات سريعة</span>
         </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div className="mb-2">
-              <svg className="w-8 h-8 text-blue-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="bg-gradient-to-br from-white to-blue-50 p-5 rounded-2xl shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
               </svg>
             </div>
-            <div className="font-bold text-gray-900 text-lg">{venueData.capacity || 250}+</div>
-            <div className="text-gray-600 text-sm">السعة</div>
+            <div className="text-center">
+              <div className="font-bold text-gray-900 text-2xl mb-1">{venueData.capacity || 250}+</div>
+              <div className="text-gray-600 text-sm">سعة القاعة</div>
+            </div>
           </div>
           
-          <div className="text-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div className="mb-2">
-              <svg className="w-8 h-8 text-yellow-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+          <div className="bg-gradient-to-br from-white to-yellow-50 p-5 rounded-2xl shadow-lg border border-yellow-100 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
             </div>
-            {renderStars(venueData.rating || 4.5)}
-            <div className="text-gray-600 text-sm mt-1">التقييم</div>
+            <div className="text-center">
+              {renderStars(venueData.rating || 4.5)}
+              <div className="text-gray-600 text-sm mt-2">التقييم العام</div>
+            </div>
           </div>
           
-          <div className="text-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div className="mb-2">
-              <svg className="w-8 h-8 text-gray-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gradient-to-br from-white to-purple-50 p-5 rounded-2xl shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div className="font-bold text-gray-900 text-lg">6 ساعات</div>
-            <div className="text-gray-600 text-sm">المدة</div>
+            <div className="text-center">
+              <div className="font-bold text-gray-900 text-2xl mb-1">6 ساعات</div>
+              <div className="text-gray-600 text-sm">مدة الحفلة</div>
+            </div>
           </div>
           
-          <div className="text-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div className="mb-2">
-              <svg className="w-8 h-8 text-green-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+          <div className="bg-gradient-to-br from-white to-green-50 p-5 rounded-2xl shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            <div className={`font-bold text-lg ${venueData.available ? 'text-green-600' : 'text-red-600'}`}>
-              {venueData.available ? 'متاحة' : 'غير متاحة'}
+            <div className="text-center">
+              <div className={`font-bold text-2xl mb-1 ${venueData.available ? 'text-green-600' : 'text-red-600'}`}>
+                {venueData.available ? 'متاحة' : 'غير متاحة'}
+              </div>
+              <div className="text-gray-600 text-sm">الحجوزات</div>
             </div>
-            <div className="text-gray-600 text-sm">الحجوزات</div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
-  // 🔥 عرض معلومات التواصل مع إزالة السعر
+  // 🔥 عرض معلومات التواصل
   const renderContactInfo = () => {
     return (
-      <div className="bg-gradient-to-br from-white to-green-50 rounded-2xl p-6 mb-4 shadow-lg border border-green-100">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-          </svg>
-          معلومات التواصل
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
-            <span className="bg-blue-100 p-2 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-            </span>
-            <div className="flex-1">
-              <p className="font-bold text-gray-900">العنوان</p>
-              <p className="text-gray-600 text-sm mt-1">{venueData.address || 'بجوار محطة المترو، طريق رئيسي، المحافظة'}</p>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-white to-emerald-50 rounded-3xl p-8 mb-6 shadow-2xl border border-emerald-100"
+      >
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">معلومات التواصل</h3>
+            <p className="text-gray-600 mt-1">تواصل معنا للحجز والاستفسارات</p>
+          </div>
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+            </svg>
+          </div>
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <div className="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-1">العنوان</h4>
+                  <p className="text-gray-700">{venueData.address || 'بجوار محطة المترو، طريق رئيسي'}</p>
+                  <p className="text-gray-600 text-sm mt-1">
+                    {venueData.city || 'القاهرة'}، {venueData.governorate || 'محافظة القاهرة'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-bold text-gray-900 mb-2">اتصل بنا</h4>
+              <p className="text-gray-600 mb-3">للحجز والاستفسارات</p>
+              <a 
+                href={`tel:${venueOwner?.phone}`}
+                className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg"
+              >
+                {venueOwner?.phone}
+              </a>
             </div>
           </div>
           
-          
-          
-          {/* 🔥 قسم الأسعار مع إخفائه */}
-          <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 text-center">
-            <p className="text-gray-700 font-bold text-sm">📞 السعر عند التواصل</p>
-            <p className="text-gray-600 text-xs mt-1">تواصل مع القاعة مباشرة للاستفسار عن الأسعار والعروض المتاحة</p>
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-bold text-gray-900 mb-2">مواعيد العمل</h4>
+            </div>
+            
+            <div className="space-y-3">
+              {[
+                { day: 'السبت - الخميس', time: '9:00 صباحاً - 12:00 مساءً' },
+                { day: 'الجمعة', time: '3:00 مساءً - 12:00 مساءً' },
+                { day: 'العطلات الرسمية', time: 'طوال اليوم' }
+              ].map((schedule, index) => (
+                <div key={index} className="flex justify-between items-center p-3 bg-white/80 rounded-lg">
+                  <span className="font-medium text-gray-800">{schedule.day}</span>
+                  <span className="text-gray-600">{schedule.time}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
@@ -1056,392 +1185,260 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     const features = venueData?.features || [];
 
     return (
-      <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 mb-4 shadow-lg border border-purple-100">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          المميزات والخدمات ({features.length})
-        </h3>
-        <div className="grid grid-cols-1 gap-3">
-          {features.slice(0, showAllFeatures ? features.length : 6).map((feature, index) => (
-            <div key={index} className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-              <span className="text-green-500 text-lg bg-green-50 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-white to-purple-50 rounded-3xl p-8 mb-6 shadow-2xl border border-purple-100"
+      >
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">المميزات والخدمات</h3>
+            <p className="text-gray-600 mt-1">كل ما تحتاجه في قاعة واحدة</p>
+          </div>
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full font-bold">
+            {features.length} ميزة
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {features.slice(0, showAllFeatures ? features.length : 8).map((feature, index) => (
+            <motion.div 
+              key={index} 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-purple-50"
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-              </span>
-              <span className="text-gray-700 text-sm font-medium flex-1">{feature}</span>
-            </div>
+              </div>
+              <span className="text-gray-800 font-medium flex-1">{feature}</span>
+            </motion.div>
           ))}
         </div>
-        {features.length > 6 && (
-          <button
-            onClick={() => setShowAllFeatures(!showAllFeatures)}
-            className="text-blue-600 hover:text-blue-700 font-bold mt-4 flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors text-sm w-full justify-center"
+        
+        {features.length > 8 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-6 pt-6 border-t border-purple-100"
           >
-            {showAllFeatures ? 'عرض أقل' : `عرض ${features.length - 6} ميزة أخرى`}
-            <svg className={`w-4 h-4 transform transition-transform ${showAllFeatures ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
+            <button
+              onClick={() => setShowAllFeatures(!showAllFeatures)}
+              className="w-full py-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 text-purple-700 font-bold rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 group"
+            >
+              <span>{showAllFeatures ? 'عرض عدد أقل من المميزات' : `عرض ${features.length - 8} ميزة إضافية`}</span>
+              <svg className={`w-5 h-5 transform transition-transform duration-300 ${showAllFeatures ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     );
   };
 
-  // 🔥 عرض كل تفاصيل الباكدجات - متوافق مع جدول الباكدجات
+  // 🔥 عرض كل تفاصيل الباكدجات
   const renderPackagesSection = () => {
     const packagesToShow = packages && packages.length > 0 ? packages : [];
     const venueMeals = venueData?.meals || [];
 
-    // إذا لا توجد باكدجات
     if (packagesToShow.length === 0) {
       return (
-        <div className="bg-gradient-to-br from-white to-yellow-50 rounded-2xl p-6 mb-4 shadow-lg border border-yellow-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
-            </svg>
-            الباكدجات والعروض
-          </h3>
-          <div className="text-center py-8">
-            <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
-            </svg>
-            <p className="text-gray-600 text-sm">لا توجد باكدجات متاحة حالياً</p>
-            <p className="text-gray-500 text-xs mt-1">يمكنك التواصل مع القاعة مباشرة للاستفسار عن العروض المتاحة</p>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-white to-amber-50 rounded-3xl p-8 mb-6 shadow-2xl border border-amber-100"
+        >
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-12 h-12 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">الباكدجات والعروض</h3>
+            <p className="text-gray-600 mb-6">تواصل مع القاعة مباشرة للاستفسار عن العروض المتاحة</p>
+            <button
+              onClick={() => openBookingModal('inspection')}
+              className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg"
+            >
+              طلب عرض أسعار
+            </button>
           </div>
-        </div>
+        </motion.div>
       );
     }
 
-    // دالة لمعالجة بيانات الوجبات
-    const parseMeals = (mealsData) => {
-      if (!mealsData) return [];
-      
-      try {
-        if (Array.isArray(mealsData)) {
-          // إذا كانت مصفوفة من الأجسام (JSONB)
-          return mealsData.map((meal, index) => ({
-            id: meal.id || `meal-${index}`,
-            name: meal.name || `وجبة ${index + 1}`,
-            price: parseInt(meal.price) || 0,
-            description: meal.description || '',
-            type: meal.type || 'وجبة',
-            items: meal.items || []
-          }));
-        } else if (typeof mealsData === 'string') {
-          // إذا كانت نص JSON
-          const parsed = JSON.parse(mealsData);
-          if (Array.isArray(parsed)) {
-            return parsed.map((meal, index) => ({
-              id: meal.id || `meal-${index}`,
-              name: meal.name || `وجبة ${index + 1}`,
-              price: parseInt(meal.price) || 0,
-              description: meal.description || '',
-              type: meal.type || 'وجبة',
-              items: meal.items || []
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing meals:', error);
-      }
-      
-      return [];
-    };
-
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* قسم الباكدجات الأساسية */}
-        <div className="bg-gradient-to-br from-white to-yellow-50 rounded-2xl p-6 shadow-lg border border-yellow-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.2 6.5 10.266a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
-              </svg>
-              كل الباكدجات المتاحة ({packagesToShow.length})
-            </h3>
-            <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-              اختر الباكدج المناسب لك
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-white to-amber-50 rounded-3xl p-8 shadow-2xl border border-amber-100"
+        >
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">الباكدجات المتاحة</h3>
+              <p className="text-gray-600 mt-1">اختر الباكدج الذي يناسب احتياجاتك</p>
+            </div>
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-full font-bold">
+              {packagesToShow.length} باكدج
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             {packagesToShow.map((pkg, index) => {
-              const packageMeals = parseMeals(pkg.meals);
+              const isSelected = selectedPackage === index;
               
               return (
                 <motion.div
                   key={pkg.id || index}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`border-2 rounded-2xl p-5 transition-all ${
-                    selectedPackage === index
-                      ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-white shadow-xl'
-                      : 'border-gray-200 bg-white hover:border-blue-300 shadow-lg hover:shadow-xl'
+                  className={`relative rounded-3xl p-2 transition-all duration-300 ${
+                    isSelected
+                      ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10'
+                      : 'hover:bg-gradient-to-r hover:from-amber-50/50 hover:to-orange-50/50'
                   }`}
                 >
-                  {/* رأس الباكدج */}
-                  <div className="flex flex-col md:flex-row md:items-start gap-4 mb-6">
-                    {/* رقم الباكدج */}
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
-                      {index + 1}
+                  {/* شارة الأفضل قيمة */}
+                  {index === 0 && (
+                    <div className="absolute -top-3 -right-3 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-1.5 rounded-full font-bold text-sm z-10 shadow-lg">
+                      🏆 الأفضل قيمة
                     </div>
-                    
-                    {/* معلومات الباكدج */}
-                    <div className="flex-1">
-                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                        <div>
-                          <h4 className="text-xl font-bold text-gray-900 mb-2">{pkg.name || `الباكدج ${index + 1}`}</h4>
-                          <p className="text-gray-600 text-sm leading-relaxed">
-                            {pkg.description || 'باكدج شامل لجميع الخدمات'}
-                          </p>
-                        </div>
-                        
-                        {/* السعر */}
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-green-600">
-                            {parseInt(pkg.price || 0).toLocaleString()} جنيه
-                          </div>
-                          {pkg.originalPrice && pkg.originalPrice > pkg.price && (
-                            <div className="flex items-center gap-2 mt-2 justify-end">
-                              <div className="text-sm text-gray-500 line-through">
-                                {parseInt(pkg.originalPrice).toLocaleString()} جنيه
-                              </div>
-                              <div className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                                🔥 توفير {Math.round((1 - pkg.price / pkg.originalPrice) * 100)}%
-                              </div>
-                            </div>
-                          )}
+                  )}
+                  
+                  <div className={`bg-white rounded-2xl p-8 shadow-xl border-2 transition-all duration-300 ${
+                    isSelected ? 'border-blue-500 shadow-blue-100' : 'border-amber-100 hover:border-amber-300'
+                  }`}>
+                    {/* رأس الباكدج */}
+                    <div className="flex flex-col lg:flex-row gap-6 mb-8">
+                      <div className="flex-shrink-0">
+                        <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                          {index + 1}
                         </div>
                       </div>
                       
-                      {/* 🔥 شارات الباكدج */}
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {pkg.discount && pkg.discount > 0 && (
-                          <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-bold">
-                            🎁 خصم {pkg.discount}%
+                      <div className="flex-1">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                          <div className="flex-1">
+                            <h4 className="text-2xl font-bold text-gray-900 mb-3">{pkg.name || `الباكدج ${index + 1}`}</h4>
+                            <p className="text-gray-600 leading-relaxed">
+                              {pkg.description || 'باكدج شامل لجميع الخدمات الأساسية والاضافية'}
+                            </p>
+                          </div>
+                          
+                          {/* السعر */}
+                          <div className="text-right">
+                            <div className="text-3xl font-bold text-green-600 mb-2">
+                              {parseInt(pkg.price || 0).toLocaleString()} جنيه
+                            </div>
+                            {pkg.originalPrice && pkg.originalPrice > pkg.price && (
+                              <div className="flex items-center gap-3 justify-end">
+                                <div className="text-lg text-gray-500 line-through">
+                                  {parseInt(pkg.originalPrice).toLocaleString()} جنيه
+                                </div>
+                                <div className="text-sm font-bold bg-red-100 text-red-700 px-3 py-1 rounded-full">
+                                  توفير {Math.round((1 - pkg.price / pkg.originalPrice) * 100)}%
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* شارات الباكدج */}
+                        <div className="flex flex-wrap gap-2">
+                          {pkg.discount && pkg.discount > 0 && (
+                            <span className="bg-green-100 text-green-800 text-sm px-3 py-1.5 rounded-full font-bold">
+                              🎁 خصم {pkg.discount}%
+                            </span>
+                          )}
+                          {pkg.originalPrice && pkg.originalPrice > pkg.price && (
+                            <span className="bg-red-100 text-red-800 text-sm px-3 py-1.5 rounded-full font-bold">
+                              💰 وفر {parseInt(pkg.originalPrice - pkg.price).toLocaleString()} جنيه
+                            </span>
+                          )}
+                          <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1.5 rounded-full font-bold">
+                            📦 شامل
                           </span>
-                        )}
-                        {pkg.originalPrice && pkg.originalPrice > pkg.price && (
-                          <span className="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-bold">
-                            💰 وفر {parseInt(pkg.originalPrice - pkg.price).toLocaleString()} جنيه
-                          </span>
-                        )}
-                        {packageMeals.length > 0 && (
-                          <span className="bg-orange-100 text-orange-800 text-xs px-3 py-1 rounded-full font-bold">
-                            🍽️ {packageMeals.length} وجبة
-                          </span>
-                        )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* 🔥 كل تفاصيل الباكدج */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* العمود الأيسر: التفاصيل الأساسية */}
-                    <div className="space-y-5">
+                    {/* تفاصيل الباكدج */}
+                    <div className="grid lg:grid-cols-2 gap-8 mb-8">
                       {/* المميزات */}
                       {pkg.features && pkg.features.length > 0 && (
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                          <h5 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                            المميزات المتضمنة ({pkg.features.length})
-                          </h5>
-                          <div className="grid grid-cols-1 gap-2">
-                            {pkg.features.map((feature, idx) => (
-                              <div key={idx} className="flex items-start gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-                                <span className="text-green-500 mt-0.5">
-                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                </span>
-                                <span className="text-gray-700 text-sm flex-1">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* الخدمات الإضافية */}
-                      {pkg.additionalServices && pkg.additionalServices.length > 0 && (
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                          <h5 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-                            </svg>
-                            الخدمات الإضافية ({pkg.additionalServices.length})
-                          </h5>
-                          <div className="space-y-2">
-                            {pkg.additionalServices.map((service, idx) => (
-                              <div key={idx} className="flex items-center gap-2">
-                                <span className="text-blue-500">+</span>
-                                <span className="text-gray-700 text-sm">{service}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* الملاحظات */}
-                      {pkg.notes && (
-                        <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
-                          <h5 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
-                            ملاحظات هامة
-                          </h5>
-                          <div className="space-y-2 text-sm text-gray-700">
-                            {pkg.notes.split('\n').map((note, idx) => (
-                              <div key={idx} className="flex items-start gap-2">
-                                <span className="text-yellow-600 mt-1">•</span>
-                                <span>{note}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* العمود الأيمن: المعلومات التقنية */}
-                    <div className="space-y-5">
-                      {/* معلومات السعة والمدة */}
-                      <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h5 className="font-bold text-gray-900 text-sm mb-3">المعلومات الفنية</h5>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="text-center bg-gray-50 p-3 rounded-lg">
-                            <div className="text-xs text-gray-600 mb-1">السعة</div>
-                            <div className="font-bold text-gray-900 text-lg">
-                              {pkg.capacity || venueData.capacity || 'غير محدد'}
-                            </div>
-                            <div className="text-gray-500 text-xs mt-1">شخص</div>
-                          </div>
-                          <div className="text-center bg-gray-50 p-3 rounded-lg">
-                            <div className="text-xs text-gray-600 mb-1">السعر</div>
-                            <div className="font-bold text-gray-900 text-lg">
-                              {parseInt(pkg.price || 0).toLocaleString()}
-                            </div>
-                            <div className="text-gray-500 text-xs mt-1">جنيه</div>
-                          </div>
-                          {pkg.discount && (
-                            <div className="text-center bg-green-50 p-3 rounded-lg">
-                              <div className="text-xs text-gray-600 mb-1">الخصم</div>
-                              <div className="font-bold text-green-600 text-lg">
-                                {pkg.discount}%
-                              </div>
-                            </div>
-                          )}
-                          {pkg.originalPrice && (
-                            <div className="text-center bg-red-50 p-3 rounded-lg">
-                              <div className="text-xs text-gray-600 mb-1">السعر الأصلي</div>
-                              <div className="font-bold text-gray-500 text-lg line-through">
-                                {parseInt(pkg.originalPrice).toLocaleString()}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 🔥 الوجبات (Meals) */}
-                      {packageMeals.length > 0 && (
-                        <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 border border-orange-200">
-                          <h5 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M18 8.25a.75.75 0 01.75.75c0 1.12-.472 2.187-1.32 2.937l-.26.23c-.38.338-.74.658-1.08.956l.037.036a.75.75 0 01-1.06 1.06l-2.28-2.28a.75.75 0 01.53-1.28h2.69l.671-.669a.75.75 0 01.75-.75h.75z" />
-                              <path d="M9 13.5a.75.75 0 01.75.75v.75H12a.75.75 0 010 1.5H9.75v.75a.75.75 0 01-1.5 0v-.75H6a.75.75 0 010-1.5h2.25v-.75A.75.75 0 019 13.5z" />
-                              <path fillRule="evenodd" d="M10 1a3.5 3.5 0 00-3.5 3.5v.094a4.75 4.75 0 00-.75 9.406v.75H5.5a.75.75 0 000 1.5h9a.75.75 0 000-1.5h-.25v-.75a4.75 4.75 0 00-.75-9.406V4.5A3.5 3.5 0 0010 1zm2.5 6.5a2.5 2.5 0 10-5 0 2.5 2.5 0 005 0z" clipRule="evenodd" />
-                            </svg>
-                            قوائم الطعام المتاحة ({packageMeals.length})
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+                          <h5 className="font-bold text-gray-900 text-lg mb-4 flex items-center gap-2">
+                            <span className="text-green-500">✓</span>
+                            المميزات المتضمنة
                           </h5>
                           <div className="space-y-3">
-                            {packageMeals.map((meal, mealIndex) => (
-                              <div key={mealIndex} className="bg-white border border-orange-100 rounded-lg p-3 hover:border-orange-300 transition-colors">
-                                <div className="flex justify-between items-start mb-2">
-                                  <h6 className="font-bold text-orange-800 text-sm flex-1">{meal.name}</h6>
-                                  <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full ml-2">
-                                    {parseInt(meal.price).toLocaleString()} جنيه
-                                  </span>
+                            {pkg.features.slice(0, 5).map((feature, idx) => (
+                              <div key={idx} className="flex items-start gap-3">
+                                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
                                 </div>
-                                
-                                {/* 🔥 تحليل محتوى الوجبة */}
-                                {meal.name && (
-                                  <div className="text-xs text-gray-600 mt-2">
-                                    <div className="font-semibold mb-1">المكونات:</div>
-                                    {/* استخراج العناصر من اسم الوجبة */}
-                                    {meal.name.split('+').map((item, itemIdx) => (
-                                      <div key={itemIdx} className="flex items-center gap-1 mb-1">
-                                        <span className="text-orange-500 text-xs">•</span>
-                                        <span>{item.trim()}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                                <span className="text-gray-700">{feature}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* معلومات التوقيت */}
-                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                        <h5 className="font-bold text-gray-900 text-sm mb-2 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                          </svg>
-                          معلومات التوقيت
-                        </h5>
-                        <div className="space-y-2 text-sm text-gray-700">
-                          {pkg.created_at && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">تاريخ الإنشاء:</span>
-                              <span className="font-medium">{new Date(pkg.created_at).toLocaleDateString('ar-EG')}</span>
+                      {/* المعلومات الفنية */}
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+                        <h5 className="font-bold text-gray-900 text-lg mb-4">المعلومات الفنية</h5>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white rounded-xl p-4 text-center">
+                            <div className="text-2xl font-bold text-gray-900 mb-1">
+                              {pkg.capacity || venueData.capacity || 'غير محدد'}
                             </div>
-                          )}
-                          {pkg.updated_at && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">آخر تحديث:</span>
-                              <span className="font-medium">{new Date(pkg.updated_at).toLocaleDateString('ar-EG')}</span>
+                            <div className="text-gray-600 text-sm">السعة</div>
+                          </div>
+                          <div className="bg-white rounded-xl p-4 text-center">
+                            <div className="text-2xl font-bold text-green-600 mb-1">
+                              {parseInt(pkg.price || 0).toLocaleString()}
                             </div>
-                          )}
+                            <div className="text-gray-600 text-sm">السعر</div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* 🔥 زر الاختيار */}
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    {/* أزرار التحكم */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
+                      <div className="flex items-center gap-3">
+                        <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-sm text-gray-700">
-                          الباكدج شامل: {pkg.features ? pkg.features.length : 0} ميزة + {pkg.additionalServices ? pkg.additionalServices.length : 0} خدمة إضافية
-                          {packageMeals.length > 0 && ` + ${packageMeals.length} وجبة`}
+                        <span className="text-gray-700">
+                          شامل: {pkg.features?.length || 0} ميزة
                         </span>
                       </div>
                       
                       <div className="flex gap-3">
                         <button
-                          onClick={() => setSelectedPackage(selectedPackage === index ? null : index)}
-                          className={`px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-lg ${
-                            selectedPackage === index
-                              ? 'bg-red-500 hover:bg-red-600 text-white'
-                              : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white'
+                          onClick={() => setSelectedPackage(isSelected ? null : index)}
+                          className={`px-8 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg ${
+                            isSelected
+                              ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white'
+                              : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white'
                           }`}
                         >
-                          {selectedPackage === index ? '✓ تم اختيار الباكدج' : 'اختيار هذا الباكدج'}
+                          {isSelected ? '✓ تم الاختيار' : 'اختيار الباكدج'}
                         </button>
                         
                         <button
                           onClick={() => openBookingModal('booking')}
-                          className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-bold transition-all hover:scale-105 shadow-lg"
+                          className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl font-bold transition-all hover:scale-105 shadow-lg"
                         >
                           احجز الآن
                         </button>
@@ -1452,147 +1449,88 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
               );
             })}
           </div>
-        </div>
+        </motion.div>
 
-        {/* 🔥 قسم قوائم الطعام الرئيسية (من venueData.meals) */}
-        {Array.isArray(venueMeals) && venueMeals.length > 0 && (
-          <div className="bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg border border-orange-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <svg className="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+        {/* 🔥 قسم الوجبات */}
+        {venueMeals.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-white to-orange-50 rounded-3xl p-8 shadow-2xl border border-orange-100"
+          >
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center">
+                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
                 </svg>
-                قوائم الطعام الإضافية ({venueMeals.length})
-              </h3>
-              <div className="text-xs text-gray-600 bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-bold">
-                🍽️ يمكن إضافتها مع أي باكدج
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">قوائم الطعام</h3>
+                <p className="text-gray-600 mt-1">تشكيلة متنوعة من الوجبات الفاخرة</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {venueMeals.map((meal, index) => {
                 const mealData = typeof meal === 'object' ? meal : {};
                 
                 return (
-                  <div key={index} className="bg-white border border-orange-200 rounded-xl p-4 hover:shadow-lg transition-all">
-                    <div className="mb-3">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-gray-900 text-sm flex-1">
+                  <motion.div 
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-orange-100 hover:border-orange-300 hover:-translate-y-2"
+                  >
+                    <div className="mb-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-bold text-gray-900 text-lg">
                           {mealData.name || `قائمة طعام ${index + 1}`}
                         </h4>
-                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                        <span className="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full">
                           {mealData.type || 'وجبة'}
                         </span>
                       </div>
                       
                       {mealData.description && (
-                        <p className="text-gray-600 text-xs mb-3">{mealData.description}</p>
+                        <p className="text-gray-600 text-sm mb-4">{mealData.description}</p>
                       )}
                     </div>
 
-                    {/* 🔥 تحليل محتوى الوجبة */}
-                    {mealData.name && (
-                      <div className="mb-3">
-                        <h5 className="text-xs font-bold text-gray-700 mb-2">المكونات:</h5>
-                        <div className="text-xs text-gray-600">
-                          {mealData.name.split('+').map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-1 mb-1">
-                              <span className="text-orange-500 text-xs">•</span>
-                              <span className="flex-1">{item.trim()}</span>
-                            </div>
-                          ))}
-                        </div>
+                    <div className="mb-6">
+                      <h5 className="text-sm font-bold text-gray-700 mb-2">يشمل:</h5>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        {mealData.name?.split('+').map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
+                            <span>{item.trim()}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="pt-4 border-t border-gray-100">
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="text-xs text-gray-600">السعر</div>
-                          <div className="text-lg font-bold text-green-600">
+                          <div className="text-xs text-gray-600">السعر للشخص</div>
+                          <div className="text-xl font-bold text-green-600">
                             {mealData.price ? parseInt(mealData.price).toLocaleString() : '???'} جنيه
                           </div>
-                          <div className="text-xs text-gray-500">للشخص</div>
                         </div>
                         <button
-                          onClick={() => {
-                            const mealIndex = packagesToShow.length + index;
-                            setSelectedPackage(selectedPackage === mealIndex ? null : mealIndex);
-                          }}
-                          className={`px-4 py-2 rounded-lg text-xs font-bold ${
-                            selectedPackage === packagesToShow.length + index
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                          }`}
+                          onClick={() => openBookingModal('booking')}
+                          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:scale-105"
                         >
-                          {selectedPackage === packagesToShow.length + index ? 'محدد' : 'اختيار'}
+                          إضافة للطلب
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         )}
-
-        {/* 🔥 قسم مخصص لتحليل وتنسيق الوجبات */}
-        <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 shadow-lg border border-green-200">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M6 3a1 1 0 011-1h.01a1 1 0 010 2H7a1 1 0 01-1-1zm2 3a1 1 0 00-2 0v1a2 2 0 00-2 2v1a2 2 0 00-2 2v.683a3.7 3.7 0 011.055.485 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0A3.7 3.7 0 0118 12.683V12a2 2 0 00-2-2V9a2 2 0 00-2-2V6a1 1 0 10-2 0v1h-1V6a1 1 0 10-2 0v1H8V6zm10 8.868a3.704 3.704 0 01-4.055-.036 1.704 1.704 0 00-1.89 0 3.704 3.704 0 01-4.11 0 1.704 1.704 0 00-1.89 0A3.704 3.704 0 012 14.868V17a1 1 0 001 1h14a1 1 0 001-1v-2.132zM9 3a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm3 0a1 1 0 011-1h.01a1 1 0 110 2H13a1 1 0 01-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">✨ نظام الوجبات المميز</h3>
-              <p className="text-gray-600 text-sm">تشكيلة متنوعة من الوجبات السريعة والخفيفة</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {packagesToShow.map((pkg, pkgIndex) => {
-              const packageMeals = parseMeals(pkg.meals);
-              if (packageMeals.length === 0) return null;
-
-              return (
-                <div key={pkgIndex} className="bg-white rounded-xl p-4 border border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                      {pkg.name || `الباكدج ${pkgIndex + 1}`}
-                    </span>
-                    <span className="text-sm text-gray-600">- {packageMeals.length} وجبة</span>
-                  </h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {packageMeals.map((meal, mealIndex) => (
-                      <div key={mealIndex} className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-lg p-3">
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-bold text-orange-800 text-sm">{meal.name}</h5>
-                          <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            {parseInt(meal.price).toLocaleString()} ج.م
-                          </span>
-                        </div>
-                        
-                        <div className="text-xs text-gray-700">
-                          <div className="font-semibold mb-1">يشمل:</div>
-                          <ul className="space-y-1">
-                            {meal.name.split('+').map((item, idx) => (
-                              <li key={idx} className="flex items-center gap-1">
-                                <span className="text-orange-500">•</span>
-                                <span className="flex-1">{item.trim()}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
     );
   };
@@ -1609,67 +1547,74 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     };
 
     return (
-      <div className="space-y-6">
-        <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg border border-blue-100">
-          <h4 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-            <span className="bg-blue-100 p-2 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-8 shadow-2xl border border-blue-100">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">موقع القاعة</h3>
+              <p className="text-gray-600 mt-1">تعرف على كيفية الوصول إلينا</p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
               </svg>
-            </span>
-            معلومات الموقع
-          </h4>
-          <div className="space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h5 className="font-semibold text-gray-900 text-lg">{venueData.name}</h5>
-                <p className="text-gray-600 mt-1">{venueData.address}</p>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-lg mb-1">{venueData?.name}</h4>
+                    <p className="text-gray-700">{venueData?.address}</p>
+                    <p className="text-gray-600 text-sm mt-2">
+                      {venueData?.city}، {venueData?.governorate}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  <div className="text-center bg-blue-50 p-4 rounded-xl">
+                    <svg className="w-8 h-8 text-blue-600 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                      <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h4v1a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H20a1 1 0 001-1v-4.577a1 1 0 00-.293-.707l-2-2A1 1 0 0018 8V5a1 1 0 00-1-1h-1.05a2.5 2.5 0 00-4.9 0H4a1 1 0 00-1 1v2.5a1 1 0 001 1h6a1 1 0 001-1V8a1 1 0 011-1h2a1 1 0 011 1v.5a1 1 0 001 1h1a1 1 0 011 1v1.5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-.5a1 1 0 00-1-1h-2a1 1 0 00-1 1v3.5a1 1 0 01-1 1H4a1 1 0 01-1-1v-5.5a1 1 0 00-1-1H2a1 1 0 010-2h1a1 1 0 001-1V5a1 1 0 011-1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 011-1h4a1 1 0 011 1v2.5a1 1 0 001 1h1a1 1 0 011 1v1.5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-.5a1 1 0 00-1-1h-2a1 1 0 00-1 1v.5a1 1 0 01-1 1H7a1 1 0 01-1-1v-2.5a1 1 0 00-1-1H4a1 1 0 01-1-1V5a1 1 0 011-1h8a1 1 0 011 1v2.5a1 1 0 001 1h1a1 1 0 011 1v1.5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-.5a1 1 0 00-1-1h-2a1 1 0 00-1 1v3.5a1 1 0 01-1 1H4a1 1 0 01-1-1v-5.5a1 1 0 00-1-1H2a1 1 0 010-2h1a1 1 0 001-1V5z" />
+                    </svg>
+                    <p className="text-sm font-bold text-gray-900">موقف سيارات</p>
+                    <p className="text-green-600 text-xs mt-1">متوفر</p>
+                  </div>
+                  
+                </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-700 font-medium">الموقع: {venueData.city}، {venueData.governorate}</p>
-                {venueData.area && (
-                  <p className="text-gray-600 text-sm mt-1">المنطقة: {venueData.area}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-                <div className="mb-2">
-                  <svg className="w-8 h-8 text-blue-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h4v1a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H20a1 1 0 001-1v-4.577a1 1 0 00-.293-.707l-2-2A1 1 0 0018 8V5a1 1 0 00-1-1h-1.05a2.5 2.5 0 00-4.9 0H4a1 1 0 00-1 1v2.5a1 1 0 001 1h6a1 1 0 001-1V8a1 1 0 011-1h2a1 1 0 011 1v.5a1 1 0 001 1h1a1 1 0 011 1v1.5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-.5a1 1 0 00-1-1h-2a1 1 0 00-1 1v3.5a1 1 0 01-1 1H4a1 1 0 01-1-1v-5.5a1 1 0 00-1-1H2a1 1 0 010-2h1a1 1 0 001-1V5z" />
-                  </svg>
+            {/* خريطة جوجل */}
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 flex items-center justify-center">
+              <div className="w-full h-64 rounded-xl overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-white p-6">
+                    <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <h4 className="text-xl font-bold mb-2">موقع القاعة</h4>
+                    <p className="opacity-90">اضغط لفتح الخريطة</p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-600">موقف سيارات</p>
-                <p className="font-bold text-green-600 text-sm">متوفر</p>
-              </div>
-              <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-                <div className="mb-2">
-                  <svg className="w-8 h-8 text-purple-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <p className="text-xs text-gray-600">قريب من المترو</p>
-                <p className="font-bold text-green-600 text-sm">نعم</p>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
@@ -1677,28 +1622,29 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
   const renderTabs = () => {
     const tabs = [
       { id: "details", label: "التفاصيل", icon: "📋" },
-      { id: "gallery", label: "الصور والفيديوهات", icon: "🖼️" },
-      { id: "reviews", label: "التقييمات", icon: "⭐" },
-      { id: "location", label: "الموقع", icon: "📍" },
+      { id: "gallery", label: " المعرض", icon: "🖼️" },
       { id: "packages", label: "الباكدجات", icon: "💰" },
+      { id: "location", label: "الموقع", icon: "📍" },
+      { id: "reviews", label: "التقييمات", icon: "⭐" },
+      
     ];
 
     return (
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-lg">
-        <div className="max-w-7xl mx-auto px-3">
-          <div className="flex overflow-x-auto scrollbar-hide">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex overflow-x-auto scrollbar-hide px-4">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-2 transition-all font-bold text-xs ${
+                className={`flex items-center gap-3 px-6 py-4 whitespace-nowrap border-b-2 transition-all font-bold text-sm ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50/50'
                     : 'border-transparent text-gray-600 hover:text-blue-500 hover:bg-gray-50'
                 }`}
               >
-                <span className="text-sm">{tab.icon}</span>
-                <span className="text-xs">{tab.label}</span>
+                <span className="text-lg">{tab.icon}</span>
+                <span>{tab.label}</span>
               </button>
             ))}
           </div>
@@ -1712,7 +1658,7 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     switch (activeTab) {
       case "details":
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {renderQuickInfo()}
             {renderContactInfo()}
             {renderFeatures()}
@@ -1724,15 +1670,24 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       
       case "reviews":
         return (
-          <div className="bg-gradient-to-br from-white to-yellow-50 rounded-2xl p-6 shadow-lg border border-yellow-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              التقييمات والآراء
-            </h3>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-white to-yellow-50 rounded-3xl p-8 shadow-2xl border border-yellow-100"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">التقييمات والآراء</h3>
+                <p className="text-gray-600 mt-1">رأي زوارنا في القاعة</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </div>
+            </div>
             {renderReviewsSection()}
-          </div>
+          </motion.div>
         );
 
       case "location":
@@ -1741,16 +1696,8 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       case "packages":
         return renderPackagesSection();
       
-      case "features":
-        return renderFeatures();
-      
       default:
-        return (
-          <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-3">{activeTab}</h3>
-            <p className="text-gray-600 text-sm">محتويات هذا القسم قريباً...</p>
-          </div>
-        );
+        return null;
     }
   };
 
@@ -1758,14 +1705,44 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
   const renderReviewsSection = () => {
     if (loadingReviews) {
       return (
-        <div className="flex justify-center items-center py-8">
+        <div className="flex justify-center items-center py-12">
           <LoadingSpinner size="medium" text="جاري تحميل التقييمات..." />
         </div>
       );
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* متوسط التقييم */}
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="text-center">
+              <div className="text-5xl font-bold text-gray-900 mb-2">4.8</div>
+              {renderStars(4.8)}
+              <div className="text-gray-600 text-sm mt-2">{reviews.length} تقييم</div>
+            </div>
+            <div className="flex-1">
+              <div className="space-y-2">
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <div key={rating} className="flex items-center gap-3">
+                    <div className="w-10 text-right text-sm text-gray-700">{rating} نجوم</div>
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-yellow-400 to-orange-500" 
+                        style={{ width: `${(rating === 5 ? 75 : rating === 4 ? 15 : rating === 3 ? 5 : rating === 2 ? 3 : 2)}%` }}
+                      ></div>
+                    </div>
+                    <div className="w-10 text-sm text-gray-600">
+                      {rating === 5 ? '75%' : rating === 4 ? '15%' : rating === 3 ? '5%' : rating === 2 ? '3%' : '2%'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* قائمة التقييمات */}
         {reviews.length > 0 ? (
           reviews.map((review, index) => (
             <motion.div 
@@ -1773,30 +1750,38 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
                     {review.user_name?.charAt(0) || 'ز'}
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900 text-sm">{review.user_name || 'زائر'}</p>
-                    <p className="text-gray-500 text-xs">{new Date(review.created_at).toLocaleDateString('ar-EG')}</p>
+                    <h4 className="font-bold text-gray-900">{review.user_name || 'زائر'}</h4>
+                    <p className="text-gray-500 text-sm">{new Date(review.created_at).toLocaleDateString('ar-EG')}</p>
                   </div>
                 </div>
                 {renderStars(review.rating)}
               </div>
-              <p className="text-gray-700 text-sm leading-relaxed">{review.comment}</p>
+              <p className="text-gray-700 leading-relaxed">{review.comment}</p>
             </motion.div>
           ))
         ) : (
-          <div className="text-center py-8">
-            <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
-            <p className="text-gray-600 text-sm mb-2">لا توجد تقييمات حتى الآن</p>
-            <p className="text-gray-500 text-xs">كن أول من يقيم هذه القاعة</p>
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h4 className="text-xl font-bold text-gray-900 mb-2">لا توجد تقييمات حتى الآن</h4>
+            <p className="text-gray-600 mb-6">كن أول من يقيم هذه القاعة</p>
+            <button
+              onClick={() => alert('ميزة إضافة التقييم قريباً')}
+              className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg"
+            >
+              أضف تقييمك
+            </button>
           </div>
         )}
       </div>
@@ -1824,7 +1809,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
               className="relative w-full h-full max-w-md max-h-[90vh] aspect-[9/16] bg-black"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* زر الإغلاق */}
               <button
                 onClick={closeReelsModal}
                 className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
@@ -1834,7 +1818,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 </svg>
               </button>
 
-              {/* الفيديو */}
               <div className="w-full h-full">
                 {renderVideoBySource(selectedReel)}
               </div>
@@ -1844,7 +1827,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 <h4 className="font-bold text-lg mb-2">{selectedReel.title || `فيديو ${currentReelIndex + 1}`}</h4>
                 <p className="text-sm text-gray-300 mb-3">{selectedReel.description || "جولة داخل القاعة وتصميماتها الفاخرة"}</p>
                 
-                {/* إحصائيات الريلز */}
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
@@ -1859,12 +1841,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                       </svg>
                       <span>{(selectedReel.comments || 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                      </svg>
-                      <span>{(selectedReel.shares || 0).toLocaleString()}</span>
-                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -1876,7 +1852,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 </div>
               </div>
 
-              {/* أزرار التنقل بين الريلز */}
               {reels.length > 1 && (
                 <>
                   <button
@@ -1894,7 +1869,6 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 </>
               )}
 
-              {/* مؤشر الريلز */}
               {reels.length > 1 && (
                 <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex gap-2">
                   {reels.map((_, index) => (
@@ -1914,12 +1888,58 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
     );
   };
 
+  // 🔥 أزرار الحجز على الموبايل
+  const renderMobileBookingButtons = () => {
+    if (window.innerWidth >= 768) return null;
+
+    return (
+      <AnimatePresence>
+        {showMobileBooking && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-4 left-4 right-4 z-40"
+          >
+            <div className="bg-gradient-to-r from-blue-500/95 to-purple-600/95 backdrop-blur-lg rounded-2xl p-3 shadow-2xl border border-white/20">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => openBookingModal('inspection')}
+                  className="bg-white/20 hover:bg-white/30 text-white py-3 rounded-xl font-bold text-sm transition-all backdrop-blur-sm"
+                >
+                  طلب معاينة
+                </button>
+                <button
+                  onClick={() => openBookingModal('booking')}
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-lg"
+                >
+                  حجز مباشر
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
+
   // حالات التحميل والأخطاء
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <LoadingSpinner size="medium" text="جاري تحميل بيانات القاعة..." />
+          <div className="relative mb-6">
+            <div className="w-24 h-24 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">جاري تحميل بيانات القاعة</h2>
+          <p className="text-gray-600">يرجى الانتظار...</p>
         </div>
       </div>
     );
@@ -1928,46 +1948,52 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
   if (error || !venueData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-6 shadow-2xl text-center max-w-sm w-full border border-gray-100">
-          <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h2 className="text-lg font-bold text-gray-900 mb-3">تعذر تحميل البيانات</h2>
-          <p className="text-gray-600 mb-6 text-sm">{error || 'حدث خطأ في تحميل بيانات القاعة'}</p>
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm w-full border border-gray-100"
+        >
+          <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">حدث خطأ</h2>
+          <p className="text-gray-600 mb-8">{error || 'تعذر تحميل بيانات القاعة'}</p>
           <div className="space-y-3">
             <button
               onClick={() => window.location.reload()}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg text-sm"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg"
             >
               إعادة المحاولة
             </button>
             <button
               onClick={() => navigate('/')}
-              className="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg text-sm"
+              className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg"
             >
               العودة للرئيسية
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* 🔥 زر المشاركة فقط */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* 🔥 زر المشاركة */}
       <button
         onClick={handleShareClick}
-        className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/90 hover:bg-white text-gray-800 px-3 py-2 rounded-xl font-bold transition-all hover:scale-105 shadow-lg backdrop-blur-sm"
+        className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/95 hover:bg-white text-gray-800 px-4 py-3 rounded-2xl font-bold transition-all hover:scale-105 shadow-2xl backdrop-blur-sm border border-gray-100"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
         </svg>
-        <span className="text-xs">مشاركة</span>
+        <span className="text-sm">مشاركة</span>
       </button>
 
-      {/* سكرول الصور الرئيسي */}
-      <div className="px-3 pt-4">
+      {/* سلايدر الصور الرئيسي */}
+      <div className="px-4 pt-6">
         {renderImageSlider()}
       </div>
 
@@ -1975,86 +2001,100 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
       {renderTabs()}
 
       {/* المحتوى الرئيسي */}
-      <div className="max-w-7xl mx-auto px-3 py-4">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex flex-col lg:flex-row gap-8">
           {/* المحتوى الرئيسي */}
           <div className="flex-1">
             {renderTabContent()}
           </div>
 
           {/* 🔥 أزرار الحجز الثابتة في اليمين */}
-          <div className="lg:w-72">
-            <div className="sticky top-24 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200 p-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">إجراء سريع</h3>
+          <div className="lg:w-80">
+            <div className="sticky top-24 bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200 p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">إجراء سريع</h3>
+                <p className="text-gray-600 text-sm mt-1">احجز الآن بسهولة</p>
+              </div>
               
-              {/* 🔥 أزرار الحجز المصغرة */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <button
                   onClick={() => openBookingModal('inspection')}
                   disabled={bookingSubmitted}
-                  className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all shadow-md ${
+                  className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-bold text-lg transition-all shadow-lg ${
                     bookingSubmitted 
                       ? 'bg-gray-300 cursor-not-allowed text-gray-500' 
                       : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hover:scale-105'
                   }`}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                     <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                   </svg>
-                  <span>{bookingSubmitted ? 'تم الإرسال' : 'طلب معاينة'}</span>
+                  <span>طلب معاينة</span>
                 </button>
                 
                 <button
                   onClick={() => openBookingModal('booking')}
                   disabled={bookingSubmitted}
-                  className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs transition-all shadow-md ${
+                  className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-bold text-lg transition-all shadow-lg ${
                     bookingSubmitted
                       ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                       : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:scale-105'
                   }`}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>{bookingSubmitted ? 'تم الإرسال' : 'حجز مباشر'}</span>
+                  <span>حجز مباشر</span>
                 </button>
               </div>
 
               {/* معلومات سريعة */}
-              <div className="mt-6 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                <h4 className="font-bold text-gray-900 text-xs mb-2">معلومات سريعة</h4>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between">
+              <div className="mt-8 p-5 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200">
+                <h4 className="font-bold text-gray-900 text-lg mb-4">معلومات سريعة</h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-white rounded-xl">
                     <span className="text-gray-600">السعة:</span>
-                    <span className="font-bold">{venueData.capacity || 250}+</span>
+                    <span className="font-bold text-gray-900">{venueData.capacity || 250}+</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center p-3 bg-white rounded-xl">
                     <span className="text-gray-600">التقييم:</span>
-                    <span className="font-bold">{venueData.rating || 4.5} ⭐</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-yellow-400">★</span>
+                      <span className="font-bold text-gray-900">{venueData.rating || 4.5}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">الحجوزات:</span>
-                    <span className={`font-bold ${venueData.available ? 'text-green-600' : 'text-red-600'}`}>
-                      {venueData.available ? 'متاحة' : 'غير متاحة'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center p-3 bg-white rounded-xl">
                     <span className="text-gray-600">الهاتف:</span>
-                    <span className="font-bold text-blue-600">{venueOwner?.phone?.slice(0, 12)}...</span>
+                    <a href={`tel:${venueOwner?.phone}`} className="font-bold text-blue-600 hover:text-blue-700">
+                      {venueOwner?.phone}
+                    </a>
                   </div>
                 </div>
               </div>
               
               {/* 🔥 ملاحظة الأسعار */}
-              <div className="mt-4 p-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                <p className="text-blue-800 text-xs text-center font-bold">📞 السعر عند التواصل</p>
-                <p className="text-blue-600 text-[10px] text-center mt-1">تواصل مع القاعة للاستفسار عن الأسعار</p>
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl border border-blue-200 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-blue-800 font-bold">السعر عند التواصل</p>
+                </div>
+                <p className="text-blue-600 text-sm">تواصل مع القاعة للاستفسار عن الأسعار والعروض</p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* 🔥 أزرار الحجز على الموبايل */}
+      {renderMobileBookingButtons()}
 
       {/* 🔥 معرض الصور المودال */}
       {renderImageModal()}
@@ -2069,23 +2109,26 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-3"
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
             onClick={closeBookingModal}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100"
+              className="bg-white rounded-3xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {bookingType === 'inspection' ? 'طلب معاينة' : 'حجز مباشر'}
-                </h3>
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {bookingType === 'inspection' ? 'طلب معاينة' : 'حجز مباشر'}
+                  </h3>
+                  <p className="text-gray-600 text-sm mt-1">املأ النموذج وسنتصل بك</p>
+                </div>
                 <button
                   onClick={closeBookingModal}
-                  className="text-gray-500 hover:text-gray-700 transition-colors p-1 hover:bg-gray-100 rounded-lg"
+                  className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-xl"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -2093,9 +2136,9 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 </button>
               </div>
 
-              <form onSubmit={handleBookingSubmit} className="space-y-4">
+              <form onSubmit={handleBookingSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     الاسم بالكامل *
                   </label>
                   <input
@@ -2103,13 +2146,13 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                     required
                     value={bookingForm.name}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="أدخل اسمك بالكامل"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     رقم الهاتف *
                   </label>
                   <input
@@ -2117,26 +2160,26 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                     required
                     value={bookingForm.phone}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="أدخل رقم هاتفك"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     البريد الإلكتروني
                   </label>
                   <input
                     type="email"
                     value={bookingForm.email}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="أدخل بريدك الإلكتروني"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     تاريخ المناسبة *
                   </label>
                   <input
@@ -2144,44 +2187,44 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                     required
                     value={bookingForm.eventDate}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, eventDate: e.target.value }))}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     عدد الضيوف المتوقع
                   </label>
                   <input
                     type="number"
                     value={bookingForm.guestCount}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, guestCount: e.target.value }))}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="أدخل عدد الضيوف"
                     min="1"
                   />
                 </div>
 
                 {selectedPackage !== null && packages[selectedPackage] && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
                     <h4 className="font-bold text-blue-900 text-sm mb-1">الباكدج المختار</h4>
-                    <p className="text-blue-700 text-sm">{packages[selectedPackage]?.name}</p>
-                    <p className="text-blue-600 font-bold text-sm">
+                    <p className="text-blue-700 font-medium">{packages[selectedPackage]?.name}</p>
+                    <p className="text-blue-600 font-bold text-lg mt-1">
                       {parseInt(packages[selectedPackage]?.price || 0).toLocaleString()} جنيه
                     </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     ملاحظات إضافية
                   </label>
                   <textarea
                     value={bookingForm.notes}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, notes: e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="أي ملاحظات أو متطلبات إضافية..."
                   />
                 </div>
@@ -2189,7 +2232,7 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                 <button
                   type="submit"
                   disabled={isSubmitting || bookingSubmitted}
-                  className={`w-full py-3 px-4 rounded-lg font-bold text-sm transition-all shadow-lg ${
+                  className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all shadow-xl ${
                     isSubmitting || bookingSubmitted
                       ? 'bg-gray-400 cursor-not-allowed text-white'
                       : bookingType === 'inspection'
@@ -2198,12 +2241,17 @@ ${bookingData.package_price ? `💰 سعر الباكدج: ${parseInt(bookingDat
                   }`}
                 >
                   {isSubmitting ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <LoadingSpinner size="small" />
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       جاري الإرسال...
                     </div>
                   ) : bookingSubmitted ? (
-                    '✅ تم الإرسال بنجاح'
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      تم الإرسال بنجاح
+                    </div>
                   ) : (
                     bookingType === 'inspection' ? 'إرسال طلب المعاينة' : 'إرسال طلب الحجز'
                   )}

@@ -159,31 +159,287 @@
         </div>
     </noscript>
 
+    <!-- Guest Access Modal (تظهر عند دخول زائر غير مسجل) -->
+    <div id="guest-modal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9998;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    ">
+        <div style="
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        ">
+            <h2 style="
+                font-family: 'Tajawal', sans-serif;
+                color: #1f2937;
+                margin-bottom: 15px;
+            ">
+                مرحباً بك في Bookera! 👋
+            </h2>
+            
+            <p style="
+                font-family: 'Tajawal', sans-serif;
+                color: #6b7280;
+                line-height: 1.6;
+                margin-bottom: 25px;
+            ">
+                يمكنك تصفح المنصة كزائر دون تسجيل دخول. بعض الميزات مثل الحجز والتقييم تتطلب تسجيل حساب.
+            </p>
+            
+            <div style="display: flex; gap: 15px; flex-direction: column;">
+                <button id="continue-as-guest" style="
+                    padding: 14px;
+                    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-family: 'Tajawal', sans-serif;
+                    font-weight: 500;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                "
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(79, 70, 229, 0.3)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    استمر كزائر
+                </button>
+                
+                <button id="login-btn" style="
+                    padding: 14px;
+                    background: white;
+                    color: #4f46e5;
+                    border: 2px solid #4f46e5;
+                    border-radius: 8px;
+                    font-family: 'Tajawal', sans-serif;
+                    font-weight: 500;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                "
+                onmouseover="this.style.background='#f5f3ff';"
+                onmouseout="this.style.background='white';">
+                    تسجيل الدخول / إنشاء حساب
+                </button>
+            </div>
+            
+            <div style="
+                margin-top: 25px;
+                padding-top: 20px;
+                border-top: 1px solid #e5e7eb;
+            ">
+                <p style="
+                    font-family: 'Tajawal', sans-serif;
+                    color: #9ca3af;
+                    font-size: 14px;
+                ">
+                    بالإستمرار، فإنك توافق على <a href="/terms" style="color: #4f46e5; text-decoration: none;">شروط الاستخدام</a> 
+                    و <a href="/privacy" style="color: #4f46e5; text-decoration: none;">سياسة الخصوصية</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- React Root -->
     <div id="root"></div>
 
     <!-- Loading Script -->
     <script>
-        // Hide loading screen when page is fully loaded
+        // إعدادات الزائر (Guest Settings)
+        const guestSettings = {
+            isGuest: true,
+            guestId: 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            guestName: 'زائر',
+            allowedPages: ['home', 'search', 'photographers', 'categories', 'about', 'contact', 'portfolio', 'pricing'],
+            sessionStart: new Date().toISOString(),
+            // تخزين البيانات محلياً للزوار
+            localStorageKey: 'bookera_guest_data'
+        };
+
+        // تهيئة بيانات الزائر
+        function initGuestSession() {
+            const existingGuest = localStorage.getItem(guestSettings.localStorageKey);
+            
+            if (!existingGuest) {
+                const guestData = {
+                    ...guestSettings,
+                    visitedPages: [],
+                    favoritePhotographers: [],
+                    searchHistory: []
+                };
+                localStorage.setItem(guestSettings.localStorageKey, JSON.stringify(guestData));
+            }
+            
+            // تحديث وقت الجلسة
+            const guestData = JSON.parse(localStorage.getItem(guestSettings.localStorageKey) || '{}');
+            guestData.sessionStart = new Date().toISOString();
+            localStorage.setItem(guestSettings.localStorageKey, JSON.stringify(guestData));
+        }
+
+        // تسجيل زيارة صفحة للزائر
+        function trackGuestPageVisit(page) {
+            const guestData = JSON.parse(localStorage.getItem(guestSettings.localStorageKey) || '{}');
+            
+            if (!guestData.visitedPages) {
+                guestData.visitedPages = [];
+            }
+            
+            // إضافة الصفحة للتاريخ إذا لم تكن موجودة
+            if (!guestData.visitedPages.includes(page)) {
+                guestData.visitedPages.push(page);
+                localStorage.setItem(guestSettings.localStorageKey, JSON.stringify(guestData));
+            }
+        }
+
+        // التحقق من صلاحيات الوصول للصفحة
+        function checkPageAccess(page) {
+            const guestData = JSON.parse(localStorage.getItem(guestSettings.localStorageKey) || '{}');
+            
+            // السماح بجميع الصفحات للزوار (حسب المطلب)
+            if (guestData.isGuest !== false) {
+                trackGuestPageVisit(page);
+                return true;
+            }
+            
+            return false;
+        }
+
+        // معالجة التنقل للزوار
+        function handleGuestNavigation() {
+            // استخراج الصفحة الحالية من URL
+            const currentPath = window.location.pathname.replace('/', '') || 'home';
+            const allowed = checkPageAccess(currentPath);
+            
+            if (!allowed) {
+                // توجيه للصفحة الرئيسية إذا لم يكن مسموحاً
+                window.location.href = '/';
+                return;
+            }
+            
+            // إظهار إشعار للزوار على صفحات معينة
+            showGuestNotification(currentPath);
+        }
+
+        // إظهار إشعار للزوار
+        function showGuestNotification(page) {
+            const notificationPages = ['photographers', 'portfolio', 'pricing'];
+            
+            if (notificationPages.includes(page)) {
+                // يمكن إضافة إشعار هنا
+                console.log('زائر يشاهد صفحة:', page);
+            }
+        }
+
+        // إدارة نافذة الزائر
+        function showGuestModal() {
+            const guestModal = document.getElementById('guest-modal');
+            const guestData = localStorage.getItem(guestSettings.localStorageKey);
+            
+            // إظهار النافذة فقط في أول زيارة
+            if (!guestData || JSON.parse(guestData).isFirstVisit === undefined) {
+                guestModal.style.display = 'flex';
+                
+                // تحديث بيانات الزائر
+                const data = JSON.parse(localStorage.getItem(guestSettings.localStorageKey) || '{}');
+                data.isFirstVisit = false;
+                localStorage.setItem(guestSettings.localStorageKey, JSON.stringify(data));
+            }
+        }
+
+        // إخفاء شاشة التحميل
         function hideLoadingScreen() {
             const overlay = document.getElementById('loading-overlay');
             if (overlay) {
                 overlay.style.opacity = '0';
                 setTimeout(() => {
                     overlay.style.display = 'none';
+                    // إظهار نافذة الزائر بعد إخفاء شاشة التحميل
+                    setTimeout(showGuestModal, 300);
                 }, 500);
             }
         }
 
-        // If page is already loaded
-        if (document.readyState === 'complete') {
-            hideLoadingScreen();
-        } else {
-            window.addEventListener('load', hideLoadingScreen);
+        // تهيئة التطبيق
+        function initializeApp() {
+            initGuestSession();
+            handleGuestNavigation();
+            
+            // إعداد معالجات الأزرار
+            const continueGuestBtn = document.getElementById('continue-as-guest');
+            const loginBtn = document.getElementById('login-btn');
+            
+            if (continueGuestBtn) {
+                continueGuestBtn.addEventListener('click', () => {
+                    document.getElementById('guest-modal').style.display = 'none';
+                    // يمكن إضافة أي إجراءات إضافية هنا
+                });
+            }
+            
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    // توجيه لصفحة تسجيل الدخول
+                    window.location.href = '/login';
+                });
+            }
+            
+            // إضافة مستمعين للروابط
+            document.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') {
+                    const href = e.target.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                        const page = href.replace('/', '') || 'home';
+                        trackGuestPageVisit(page);
+                    }
+                }
+            });
+            
+            // إضافة زر للتبديل بين الزائر والمستخدم المسجل
+            addGuestToggle();
         }
 
-        // Fallback timeout
+        
+
+        // بدء التطبيق عند تحميل الصفحة
+        if (document.readyState === 'complete') {
+            initializeApp();
+            setTimeout(hideLoadingScreen, 1000);
+        } else {
+            window.addEventListener('load', () => {
+                initializeApp();
+                setTimeout(hideLoadingScreen, 1000);
+            });
+        }
+
+        // نسخة احتياطية
         setTimeout(hideLoadingScreen, 3000);
+
+        // تصدير الدوال للاستخدام في React
+        window.bookeraGuest = {
+            initGuestSession,
+            trackGuestPageVisit,
+            checkPageAccess,
+            getGuestData: () => JSON.parse(localStorage.getItem(guestSettings.localStorageKey) || '{}'),
+            clearGuestData: () => localStorage.removeItem(guestSettings.localStorageKey),
+            upgradeToUser: (userData) => {
+                const guestData = JSON.parse(localStorage.getItem(guestSettings.localStorageKey) || '{}');
+                // دمج بيانات الزائر مع بيانات المستخدم الجديد
+                const mergedData = { ...guestData, ...userData, isGuest: false };
+                localStorage.setItem(guestSettings.localStorageKey, JSON.stringify(mergedData));
+                return mergedData;
+            }
+        };
     </script>
 
     <!-- Main Script -->
@@ -250,9 +506,47 @@
             font-display: swap;
         }
 
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Guest Specific Styles */
+        .guest-restricted {
+            position: relative;
+        }
+
+        .guest-restricted::after {
+            content: "ميزة للمستخدمين المسجلين";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4f46e5;
+            font-weight: 500;
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
         /* Print Styles */
         @media print {
             .no-print {
+                display: none !important;
+            }
+            
+            #user-status {
                 display: none !important;
             }
             
@@ -283,6 +577,45 @@
 
         :focus:not(:focus-visible) {
             outline: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #guest-modal > div {
+                padding: 20px;
+                margin: 15px;
+            }
+            
+            #user-status {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                justify-content: center;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #111827;
+                color: #f9fafb;
+            }
+            
+            #guest-modal > div {
+                background: #1f2937;
+                color: #f9fafb;
+            }
+            
+            #user-status {
+                background: #374151;
+                color: #e5e7eb;
+                border-color: #4b5563;
+            }
+        }
+
+        /* Performance Optimizations */
+        .will-change-transform {
+            will-change: transform;
         }
     </style>
 </body>
