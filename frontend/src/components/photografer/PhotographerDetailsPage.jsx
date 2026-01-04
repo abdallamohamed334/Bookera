@@ -19,6 +19,7 @@ const PhotographerDetailsPage = () => {
   const [albumImageIndex, setAlbumImageIndex] = useState(0);
   const [sliderImages, setSliderImages] = useState([]);
   const [socialMediaVisible, setSocialMediaVisible] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // دالة محسنة لاختيار صور عشوائية
   const getRandomSliderImages = (portfolio, count = 4) => {
@@ -64,6 +65,26 @@ const PhotographerDetailsPage = () => {
     }
     
     return cleanNumber;
+  };
+
+  // دالة لتنسيق وعرض معلومات التواصل بشكل آمن
+  const formatContactInfo = (contact, isEmail = false) => {
+    if (!contact) return "غير متوفر";
+    
+    if (isEmail) {
+      // إخفاء جزء من الإيميل لحماية الخصوصية
+      const [username, domain] = contact.split('@');
+      if (username.length > 3) {
+        return `${username.substring(0, 3)}***@${domain}`;
+      }
+      return `***@${domain}`;
+    } else {
+      // إخفاء جزء من رقم الهاتف لحماية الخصوصية
+      if (contact.length > 7) {
+        return `${contact.substring(0, 4)} *** ***`;
+      }
+      return contact;
+    }
   };
 
   // Auto slide for gallery
@@ -503,12 +524,564 @@ const PhotographerDetailsPage = () => {
     );
   };
 
+  // Render details section (combines about, services, reviews, schedule)
+  const renderDetailsSection = () => {
+    return (
+      <div className="space-y-8">
+        {/* About Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-3xl border border-blue-200 shadow-lg"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <span className="bg-blue-500 text-white p-3 rounded-2xl">👤</span>
+            معلومات عن المصور
+          </h3>
+          <div className="space-y-6">
+            <p className="text-gray-700 leading-relaxed text-xl bg-white p-6 rounded-2xl shadow-sm border border-blue-100">
+              {photographer.description}
+            </p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
+                <div className="text-3xl font-bold mb-2">{photographer.experience}+</div>
+                <div className="text-blue-100 text-lg">سنوات خبرة</div>
+              </div>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
+                <div className="text-3xl font-bold mb-2">100+</div>
+                <div className="text-green-100 text-lg">عميل سعيد</div>
+              </div>
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
+                <div className="text-3xl font-bold mb-2">500+</div>
+                <div className="text-purple-100 text-lg">جلسة تصوير</div>
+              </div>
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
+                <div className="text-3xl font-bold mb-2">50+</div>
+                <div className="text-orange-100 text-lg">جائزة وتكريم</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Services Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-r from-green-50 to-emerald-50 p-8 rounded-3xl border border-green-200 shadow-lg"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <span className="bg-green-500 text-white p-3 rounded-2xl">⚡</span>
+            الخدمات المقدمة
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {photographer.services?.map((service, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-xl">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-gray-800 mb-2">{service}</h4>
+                    <p className="text-gray-600 text-lg">خدمة احترافية متكاملة</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Equipment Section */}
+          <div className="mt-8 bg-white rounded-2xl p-6 border border-blue-200">
+            <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+              <span className="text-blue-500">🔧</span>
+              المعدات المستخدمة
+            </h4>
+            <div className="flex flex-wrap gap-4">
+              {photographer.equipment?.map((item, index) => (
+                <span key={index} className="bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 px-6 py-3 rounded-xl text-lg border border-blue-300 shadow-sm hover:shadow-md transition-shadow font-medium">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Reviews Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-gradient-to-r from-yellow-50 to-orange-50 p-8 rounded-3xl border border-yellow-200 shadow-lg"
+        >
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+                <span className="bg-yellow-500 text-white p-3 rounded-2xl">⭐</span>
+                تقييمات العملاء
+              </h3>
+              <p className="text-gray-600 text-lg">آراء العملاء السابقين عن جودة العمل</p>
+            </div>
+            <div className="text-center bg-white p-6 rounded-2xl shadow-lg">
+              <div className="text-5xl font-bold text-yellow-600 mb-2">{photographer.rating}</div>
+              {renderStars(photographer.rating)}
+              <p className="text-gray-600 mt-2">بناءً على {photographer.reviews?.length || 0} تقييم</p>
+            </div>
+          </div>
+
+          {/* Reviews List */}
+          <div className="space-y-6">
+            {photographer.reviews?.slice(0, 3).map((review, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-shadow shadow-lg"
+              >
+                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                      {review.user.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-xl">{review.user}</h4>
+                      <div className="flex items-center gap-2 mt-2">
+                        {review.verified && (
+                          <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full flex items-center gap-2 w-fit">
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            ✓ موثق
+                          </span>
+                        )}
+                        <span className="text-gray-500 text-sm">{review.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {renderStars(review.rating)}
+                  </div>
+                </div>
+                <p className="text-gray-700 text-xl leading-relaxed bg-gray-50 p-6 rounded-xl">
+                  "{review.comment}"
+                </p>
+              </motion.div>
+            ))}
+            
+            {photographer.reviews?.length > 3 && (
+              <div className="text-center mt-8">
+                <button className="text-blue-600 hover:text-blue-700 font-bold text-lg">
+                  عرض المزيد من التقييمات ({photographer.reviews.length - 3}+) →
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Schedule Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-gradient-to-r from-purple-50 to-pink-50 p-8 rounded-3xl border border-purple-200 shadow-lg"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <span className="bg-purple-500 text-white p-3 rounded-2xl">📅</span>
+            مواعيد العمل
+          </h3>
+          {renderWorkingHours()}
+        </motion.div>
+      </div>
+    );
+  };
+
+  // Render packages section
+  const renderPackagesSection = () => {
+    const hasPackages = photographer.packages && photographer.packages.length > 0;
+
+    return (
+      <div className="space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-purple-50 to-pink-50 p-8 rounded-3xl border border-purple-200 shadow-lg"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+            <span className="bg-purple-500 text-white p-3 rounded-2xl">💰</span>
+            اختر الباقة المناسبة لك
+          </h3>
+          <p className="text-gray-600 text-xl">اختر الباقة التي تناسب احتياجاتك وميزانيتك</p>
+        </motion.div>
+        
+        {!hasPackages ? (
+          <div className="text-center p-12 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
+            <div className="text-8xl mb-6">💼</div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">لا توجد باقات متاحة حالياً</h3>
+            <p className="text-gray-600 text-xl mb-6">يمكنك التواصل مع المصور للاستفسار عن الأسعار</p>
+            <button 
+              onClick={handleConsultation}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              التواصل للاستفسار
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {photographer.packages?.map((pkg) => {
+              const isSelected = selectedPackage ? selectedPackage.id === pkg.id : false;
+              
+              return (
+                <motion.div
+                  key={pkg.id}
+                  className={`relative rounded-3xl p-8 transition-all duration-300 cursor-pointer ${
+                    isSelected
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-2xl scale-105'
+                      : pkg.popular
+                      ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 shadow-xl hover:shadow-2xl'
+                      : 'bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl'
+                  }`}
+                  onClick={() => togglePackageSelection(pkg)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {/* Badge for popular package */}
+                  {pkg.popular && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-2 rounded-full text-base font-bold shadow-2xl z-10">
+                      ⭐ الأكثر طلباً
+                    </div>
+                  )}
+                  
+                  {/* Selection indicator */}
+                  <div className={`absolute top-8 right-8 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                    isSelected 
+                      ? 'bg-white border-white' 
+                      : pkg.popular
+                      ? 'border-yellow-400'
+                      : 'border-gray-300'
+                  }`}>
+                    {isSelected ? (
+                      <span className="text-blue-600 text-xl font-bold">✓</span>
+                    ) : pkg.popular ? (
+                      <span className="text-yellow-400 text-lg">★</span>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className={`text-3xl font-bold mb-3 ${isSelected ? 'text-white' : 'text-gray-800'}`}>{pkg.name}</h4>
+                      <p className={`text-lg leading-relaxed ${isSelected ? 'text-blue-100' : 'text-gray-600'}`}>{pkg.description}</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className={`text-4xl font-bold mb-2 ${isSelected ? 'text-white' : 'text-blue-600'}`}>
+                        {pkg.price.toLocaleString()} جنيه
+                      </div>
+                      {pkg.originalPrice && (
+                        <div className={`text-lg line-through ${isSelected ? 'text-blue-200' : 'text-gray-400'}`}>
+                          {pkg.originalPrice.toLocaleString()} جنيه
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <h5 className={`text-xl font-bold ${isSelected ? 'text-white' : 'text-gray-700'}`}>المميزات:</h5>
+                      {pkg.features?.map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                          <span className={`${isSelected ? 'text-green-300' : 'text-green-500'} text-xl`}>✓</span>
+                          <span className={`text-lg ${isSelected ? 'text-white' : 'text-gray-700'}`}>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <button 
+                      className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
+                        isSelected
+                          ? 'bg-white text-blue-600 hover:bg-gray-100'
+                          : pkg.popular
+                          ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
+                          : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
+                      }`}
+                    >
+                      {isSelected ? '✓ مختارة' : 'اختيار الباقة'}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render portfolio section
+  const renderPortfolioSection = () => {
+    return (
+      <div className="space-y-8">
+        {/* Albums Grid - تصميم جديد */}
+        {photographer.portfolio && photographer.portfolio.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {photographer.portfolio.map((album, index) => (
+              <motion.div
+                key={album._id || index}
+                className="group relative bg-white rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500 border border-gray-200 hover:border-blue-300"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+              >
+                {/* Album Cover */}
+                <div 
+                  className="relative h-72 cursor-pointer overflow-hidden"
+                  onClick={() => openAlbumModal(album)}
+                >
+                  <img
+                    src={album.coverImage || "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800"}
+                    alt={album.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  
+                  {/* Overlay Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <div className="text-white text-center">
+                        <div className="text-4xl mb-3">👁️</div>
+                        <p className="font-bold text-lg">عرض الألبوم</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Quick Info Badge */}
+                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-xl">
+                    <span className="text-blue-600 font-bold text-sm">
+                      {album.images?.length || 0} صورة
+                    </span>
+                  </div>
+                  
+                  {/* Category Badge */}
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-2xl text-sm font-bold shadow-xl">
+                      {album.category}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Album Info */}
+                <div className="p-6">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-3 truncate">
+                    {album.title}
+                  </h3>
+                  
+                  <p className="text-gray-600 text-lg leading-relaxed mb-6 line-clamp-2 min-h-[56px]">
+                    {album.description}
+                  </p>
+                  
+                  {/* Stats */}
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-6">
+                    <div className="flex items-center gap-4">
+                      {album.videos && album.videos.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-500 text-xl">🎥</span>
+                          <span className="text-gray-600 text-sm">{album.videos.length}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-500 text-xl">🖼️</span>
+                        <span className="text-gray-600 text-sm">{album.images?.length || 0}</span>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => openAlbumModal(album)}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-2xl text-base font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                      استعراض الألبوم
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
+            <div className="text-9xl mb-8">📷</div>
+            <h3 className="text-3xl font-bold text-gray-800 mb-4">لا توجد ألبومات متاحة</h3>
+            <p className="text-gray-600 text-xl">لم يقم المصور برفع أي ألبومات حتى الآن</p>
+          </div>
+        )}
+        
+        {/* Albums Summary */}
+        {photographer.portfolio && photographer.portfolio.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-8 border border-blue-200 shadow-lg"
+          >
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="text-center md:text-right mb-6 md:mb-0">
+                <h4 className="text-2xl font-bold text-gray-800 mb-3">📊 ملخص الألبومات</h4>
+                <p className="text-gray-600 text-xl">إجمالي {photographer.portfolio.length} ألبوم</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
+                  <div className="text-3xl font-bold text-blue-600">
+                    {photographer.portfolio.reduce((total, album) => total + (album.images?.length || 0), 0)}
+                  </div>
+                  <div className="text-gray-600 text-lg">صورة</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
+                  <div className="text-3xl font-bold text-red-600">
+                    {photographer.portfolio.reduce((total, album) => total + (album.videos?.length || 0), 0)}
+                  </div>
+                  <div className="text-gray-600 text-lg">فيديو</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
+                  <div className="text-3xl font-bold text-green-600">
+                    {new Set(photographer.portfolio.map(album => album.category)).size}
+                  </div>
+                  <div className="text-gray-600 text-lg">فئة</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
+                  <div className="text-3xl font-bold text-purple-600">
+                    {photographer.portfolio.length}
+                  </div>
+                  <div className="text-gray-600 text-lg">ألبوم</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
+  // Render profile sidebar for mobile
+  const renderMobileSidebar = () => {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: '100%' }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: '100%' }}
+        className="fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl z-50 overflow-y-auto"
+      >
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-2xl font-bold text-gray-800">معلومات التواصل</h3>
+            <button
+              onClick={() => setMobileSidebarOpen(false)}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Profile Info */}
+          <div className="flex items-center gap-4 mb-8 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
+            <div className="relative">
+              <img 
+                src={photographer.profileImage} 
+                alt={photographer.name}
+                className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg"
+              />
+              <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-green-400 rounded-full border-2 border-white shadow-lg"></div>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-gray-800">{photographer.name}</h2>
+              <p className="text-blue-600 font-semibold">{photographer.specialty}</p>
+            </div>
+          </div>
+
+          {/* Contact Info */}
+          <div className="space-y-4 mb-8">
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white text-xl">
+                  📞
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">رقم الهاتف</div>
+                  <div className="font-bold text-gray-800 text-lg">
+                    {formatContactInfo(photographer.contact)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white text-xl">
+                  📧
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">البريد الإلكتروني</div>
+                  <div className="font-bold text-gray-800 text-lg">
+                    {formatContactInfo(photographer.email, true)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center text-white text-xl">
+                  📍
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">العنوان</div>
+                  <div className="font-bold text-gray-800">{photographer.address}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3 mb-8">
+            <button 
+              onClick={() => {
+                handleConsultation();
+                setMobileSidebarOpen(false);
+              }}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              💬 تواصل للاستشارة
+            </button>
+
+            {selectedPackage && (
+              <button 
+                onClick={() => {
+                  handleBookPhotographer();
+                  setMobileSidebarOpen(false);
+                }}
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                💎 احجز الآن
+              </button>
+            )}
+          </div>
+
+          {/* Social Media */}
+          {renderSocialMedia()}
+        </div>
+      </motion.div>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-700 text-lg font-medium">جاري تحميل بيانات المصور...</p>
+          <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600 mx-auto mb-6"></div>
+          <p className="text-gray-700 text-xl font-bold">جاري تحميل بيانات المصور...</p>
+          <p className="text-gray-500 text-lg mt-2">يرجى الانتظار قليلاً</p>
         </div>
       </div>
     );
@@ -516,14 +1089,14 @@ const PhotographerDetailsPage = () => {
 
   if (error || !photographer) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-2xl border border-gray-200">
-          <div className="text-6xl mb-4">😕</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">المصور غير موجود</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="text-center bg-white p-12 rounded-3xl border border-gray-200 shadow-2xl max-w-md">
+          <div className="text-8xl mb-6">😕</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">المصور غير موجود</h1>
+          <p className="text-gray-600 text-xl mb-8">{error}</p>
           <button 
             onClick={() => navigate('/photographers')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             العودة للقائمة
           </button>
@@ -533,31 +1106,53 @@ const PhotographerDetailsPage = () => {
   }
 
   const hasMultipleImages = sliderImages.length > 1;
-  const hasPackages = photographer.packages && photographer.packages.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileSidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 z-40"
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+            {renderMobileSidebar()}
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+            >
+              <span className="text-xl">👤</span>
+            </button>
             
-            
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-gray-800">
+            <div className="text-center flex-1">
+              <h1 className="text-2xl font-bold text-gray-800">
                 {photographer.businessName}
               </h1>
-              <p className="text-gray-600 text-sm">مصور محترف متخصص في {photographer.specialty}</p>
+              <p className="text-gray-600 text-lg">مصور محترف متخصص في {photographer.specialty}</p>
             </div>
             
             <button
               onClick={() => {
                 const shareUrl = window.location.href;
                 navigator.clipboard.writeText(shareUrl);
-                alert('تم نسخ رابط المصور!');
+                alert('✅ تم نسخ رابط المصور!');
               }}
-              className="text-blue-600 hover:text-blue-700 font-medium text-lg transition-colors duration-200"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hidden lg:flex items-center gap-2"
             >
+              <span>📤</span>
               مشاركة
             </button>
           </div>
@@ -567,13 +1162,13 @@ const PhotographerDetailsPage = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Portfolio & Details */}
+          {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Portfolio Gallery */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+              className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-2xl"
             >
               {/* Main Image Slider */}
               <div className="relative h-96 lg:h-[500px] bg-gray-100">
@@ -591,13 +1186,13 @@ const PhotographerDetailsPage = () => {
                       <>
                         <button
                           onClick={prevImage}
-                          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
                         >
                           ←
                         </button>
                         <button
                           onClick={nextImage}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
                         >
                           →
                         </button>
@@ -606,29 +1201,29 @@ const PhotographerDetailsPage = () => {
 
                     {/* Image Counter */}
                     {hasMultipleImages && (
-                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-lg font-bold shadow-lg">
                         {selectedImage + 1} / {sliderImages.length}
                       </div>
                     )}
 
                     {/* Auto Slide Toggle */}
                     {hasMultipleImages && (
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-4 right-4">
                         <button
                           onClick={() => setAutoSlide(!autoSlide)}
-                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                          className={`px-3 py-2 rounded-xl text-base font-bold transition-all duration-300 shadow-lg ${
                             autoSlide 
                               ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                              : 'bg-gray-600 hover:bg-gray-700 text-white'
+                              : 'bg-gray-700 hover:bg-gray-800 text-white'
                           }`}
                         >
-                          {autoSlide ? '⏸️' : '▶️'}
+                          {autoSlide ? '⏸️ إيقاف' : '▶️ تشغيل'}
                         </button>
                       </div>
                     )}
 
                     {/* Badge */}
-                    <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+                    <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-2xl text-base font-bold shadow-2xl">
                       🎰 عرض عشوائي من الأعمال
                     </div>
                   </>
@@ -641,22 +1236,22 @@ const PhotographerDetailsPage = () => {
 
               {/* Thumbnails */}
               {hasMultipleImages && (
-                <div className="p-4 bg-gray-50">
-                  <div className="flex space-x-2 overflow-x-auto pb-1">
+                <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50">
+                  <div className="flex space-x-4 overflow-x-auto pb-2">
                     {sliderImages.map((image, index) => (
                       <button
                         key={index}
                         onClick={() => setSelectedImage(index)}
-                        className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                        className={`flex-shrink-0 rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-lg ${
                           selectedImage === index 
-                            ? 'border-blue-500 scale-105' 
-                            : 'border-gray-300 hover:border-blue-300'
+                            ? 'border-blue-500 scale-110 shadow-xl' 
+                            : 'border-gray-300 hover:border-blue-300 hover:scale-105'
                         }`}
                       >
                         <img 
                           src={image} 
                           alt={`${photographer.name} ${index + 1}`}
-                          className="w-20 h-16 object-cover"
+                          className="w-24 h-20 object-cover"
                         />
                       </button>
                     ))}
@@ -670,49 +1265,46 @@ const PhotographerDetailsPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-to-r from-gray-900 to-blue-900 text-white rounded-2xl p-6 text-center shadow-xl"
+              className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white rounded-3xl p-8 text-center shadow-2xl"
             >
-              <div className="text-3xl font-bold mb-2">
+              <div className="text-5xl font-bold mb-3">
                 {selectedPackage ? selectedPackage.price.toLocaleString() : parseInt(photographer.price || 0).toLocaleString()} جنيه
               </div>
-              <div className="text-gray-300">
+              <div className="text-gray-300 text-xl">
                 {selectedPackage ? `سعر ${selectedPackage.name}` : 'يبدأ السعر من'}
               </div>
               {selectedPackage && selectedPackage.originalPrice && (
-                <div className="text-gray-400 text-sm line-through mt-1">
+                <div className="text-gray-400 text-lg line-through mt-3">
                   {selectedPackage.originalPrice.toLocaleString()} جنيه
                 </div>
               )}
             </motion.div>
 
-            {/* Tabs Section */}
+            {/* Tabs Section - Updated */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl border border-gray-200 shadow-sm"
+              className="bg-white rounded-3xl border border-gray-200 shadow-2xl"
             >
-              {/* Tabs Header */}
+              {/* Tabs Header - Only Portfolio and Packages */}
               <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
-                <nav className="flex space-x-6 px-4 overflow-x-auto">
+                <nav className="flex space-x-2 p-2 overflow-x-auto">
                   {[
                     { id: "portfolio", name: "المعرض", icon: "🖼️" },
-                    { id: "about", name: "عن المصور", icon: "👤" },
-                    { id: "services", name: "الخدمات", icon: "⚡" },
-                    { id: "reviews", name: "التقييمات", icon: "⭐" },
                     { id: "packages", name: "الباقات", icon: "💰" },
-                    { id: "schedule", name: "المواعيد", icon: "📅" }
+                    { id: "details", name: "التفاصيل", icon: "📋" }
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`py-4 px-3 border-b-2 font-medium text-sm transition-all duration-300 whitespace-nowrap ${
+                      className={`py-4 px-6 border-b-4 font-bold text-lg transition-all duration-300 whitespace-nowrap rounded-xl ${
                         activeTab === tab.id
-                          ? 'border-blue-500 text-blue-600 bg-white shadow-sm rounded-t-lg'
-                          : 'border-transparent text-gray-600 hover:text-blue-500 hover:bg-white/50'
+                          ? 'border-blue-500 text-blue-600 bg-white shadow-xl'
+                          : 'border-transparent text-gray-600 hover:text-blue-500 hover:bg-white/70'
                       }`}
                     >
-                      <span className="ml-2 text-lg">{tab.icon}</span>
+                      <span className="ml-3 text-2xl">{tab.icon}</span>
                       {tab.name}
                     </button>
                   ))}
@@ -720,401 +1312,62 @@ const PhotographerDetailsPage = () => {
               </div>
 
               {/* Tabs Content */}
-              <div className="p-6">
-                {activeTab === "portfolio" && (
-                  <div className="space-y-8">
-                    {/* Albums Grid - تصميم جديد */}
-                    {photographer.portfolio && photographer.portfolio.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {photographer.portfolio.map((album, index) => (
-                          <motion.div
-                            key={album._id || index}
-                            className="group relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-200 hover:border-blue-300"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
-                            whileHover={{ y: -8, scale: 1.02 }}
-                          >
-                            {/* Album Cover */}
-                            <div 
-                              className="relative h-64 cursor-pointer overflow-hidden"
-                              onClick={() => openAlbumModal(album)}
-                            >
-                              <img
-                                src={album.coverImage || "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800"}
-                                alt={album.title}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                              />
-                              
-                              {/* Overlay Gradient */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="absolute bottom-4 left-4 right-4">
-                                  <div className="text-white text-center">
-                                    <div className="text-3xl mb-2">👁️</div>
-                                    <p className="font-bold text-sm">عرض الألبوم</p>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {/* Quick Info Badge */}
-                              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
-                                <span className="text-blue-600 font-bold text-sm">
-                                  {album.images?.length || 0} صورة
-                                </span>
-                              </div>
-                              
-                              {/* Category Badge */}
-                              <div className="absolute top-3 left-3">
-                                <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                                  {album.category}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            {/* Album Info */}
-                            <div className="p-5">
-                              <h3 className="text-xl font-bold text-gray-800 mb-3 truncate">
-                                {album.title}
-                              </h3>
-                              
-                              <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
-                                {album.description}
-                              </p>
-                              
-                              {/* Stats */}
-                              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-                                <div className="flex items-center gap-2">
-                                  {album.videos && album.videos.length > 0 && (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-red-500">🎥</span>
-                                      <span className="text-gray-600 text-xs">{album.videos.length}</span>
-                                    </div>
-                                  )}
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-blue-500">🖼️</span>
-                                    <span className="text-gray-600 text-xs">{album.images?.length || 0}</span>
-                                  </div>
-                                </div>
-                                
-                                <button 
-                                  onClick={() => openAlbumModal(album)}
-                                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                                >
-                                  استعراض
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-16 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
-                        <div className="text-7xl mb-6">📷</div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-3">لا توجد ألبومات متاحة</h3>
-                        <p className="text-gray-600 text-lg">لم يقم المصور برفع أي ألبومات حتى الآن</p>
-                        <button className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full font-semibold transition-colors duration-300 shadow-lg">
-                          ← العودة للمعرض
-                        </button>
-                      </div>
-                    )}
-                    
-                    {/* Albums Summary */}
-                    {photographer.portfolio && photographer.portfolio.length > 0 && (
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
-                        <div className="flex flex-col md:flex-row justify-between items-center">
-                          <div className="text-center md:text-right mb-4 md:mb-0">
-                            <h4 className="text-xl font-bold text-gray-800 mb-2">📊 ملخص الألبومات</h4>
-                            <p className="text-gray-600">إجمالي {photographer.portfolio.length} ألبوم</p>
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                              <div className="text-2xl font-bold text-blue-600">
-                                {photographer.portfolio.reduce((total, album) => total + (album.images?.length || 0), 0)}
-                              </div>
-                              <div className="text-gray-600 text-sm">صورة</div>
-                            </div>
-                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                              <div className="text-2xl font-bold text-red-600">
-                                {photographer.portfolio.reduce((total, album) => total + (album.videos?.length || 0), 0)}
-                              </div>
-                              <div className="text-gray-600 text-sm">فيديو</div>
-                            </div>
-                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                              <div className="text-2xl font-bold text-green-600">
-                                {new Set(photographer.portfolio.map(album => album.category)).size}
-                              </div>
-                              <div className="text-gray-600 text-sm">فئة</div>
-                            </div>
-                            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                              <div className="text-2xl font-bold text-purple-600">
-                                {photographer.portfolio.length}
-                              </div>
-                              <div className="text-gray-600 text-sm">ألبوم</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === "about" && (
-                  <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span>📖</span>
-                        السيرة الذاتية
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed text-lg">{photographer.description}</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-2xl text-center shadow-lg">
-                        <div className="text-2xl font-bold mb-1">{photographer.experience}+</div>
-                        <div className="text-blue-100 text-sm">سنوات خبرة</div>
-                      </div>
-                      <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-2xl text-center shadow-lg">
-                        <div className="text-2xl font-bold mb-1">100+</div>
-                        <div className="text-green-100 text-sm">عميل سعيد</div>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-2xl text-center shadow-lg">
-                        <div className="text-2xl font-bold mb-1">500+</div>
-                        <div className="text-purple-100 text-sm">جلسة تصوير</div>
-                      </div>
-                      <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-2xl text-center shadow-lg">
-                        <div className="text-2xl font-bold mb-1">50+</div>
-                        <div className="text-orange-100 text-sm">جائزة وتكريم</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "services" && (
-                  <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-2xl border border-green-200">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span>🎯</span>
-                        الخدمات المقدمة
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {photographer.services?.map((service, index) => (
-                          <div key={index} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
-                            <span className="text-gray-700 font-medium">{service}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-2xl border border-blue-200">
-                      <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span>🔧</span>
-                        المعدات المستخدمة
-                      </h4>
-                      <div className="flex flex-wrap gap-3">
-                        {photographer.equipment?.map((item, index) => (
-                          <span key={index} className="bg-white text-blue-700 px-4 py-2 rounded-xl text-sm border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "reviews" && (
-                  <div className="space-y-6">
-                    {/* Rating Summary */}
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-2xl border border-yellow-200">
-                      <div className="flex items-center justify-between">
-                        <div className="text-center">
-                          <div className="text-5xl font-bold text-yellow-600 mb-2">{photographer.rating}</div>
-                          {renderStars(photographer.rating)}
-                          <p className="text-gray-600 mt-2">بناءً على {photographer.reviews?.length || 0} تقييم</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Reviews List */}
-                    <div className="space-y-4">
-                      {photographer.reviews?.map((review, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-shadow"
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg">
-                                {review.user.charAt(0)}
-                              </div>
-                              <div>
-                                <h4 className="font-bold text-gray-800 text-lg">{review.user}</h4>
-                                {review.verified && (
-                                  <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full flex items-center gap-1 w-fit mt-1">
-                                    ✓ موثق
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {renderStars(review.rating)}
-                              <span className="text-gray-500 text-sm">{review.date}</span>
-                            </div>
-                          </div>
-                          <p className="text-gray-700 text-lg leading-relaxed">{review.comment}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "packages" && (
-                  <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-200">
-                      <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-                        <span>💰</span>
-                        اختر الباقة المناسبة لك
-                      </h3>
-                      <p className="text-gray-600 text-lg">اختر الباقة التي تناسب احتياجاتك وميزانيتك</p>
-                    </div>
-                    
-                    {!hasPackages ? (
-                      <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-200">
-                        <div className="text-6xl mb-4">💼</div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">لا توجد باقات متاحة حالياً</h3>
-                        <p className="text-gray-600">يمكنك التواصل مع المصور للاستفسار عن الأسعار</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {photographer.packages?.map((pkg) => {
-                          const isSelected = selectedPackage ? selectedPackage.id === pkg.id : false;
-                          
-                          return (
-                            <motion.div
-                              key={pkg.id}
-                              className={`border-2 rounded-2xl p-6 transition-all duration-300 cursor-pointer relative bg-white ${
-                                isSelected
-                                  ? 'border-blue-500 bg-blue-50 shadow-xl scale-105'
-                                  : pkg.popular
-                                  ? 'border-yellow-400 bg-gradient-to-br from-yellow-50 to-orange-50 hover:border-yellow-500'
-                                  : 'border-gray-200 hover:border-blue-300 hover:shadow-lg'
-                              }`}
-                              onClick={() => togglePackageSelection(pkg)}
-                              whileHover={{ scale: 1.02 }}
-                            >
-                              {/* Badge for popular package */}
-                              {pkg.popular && (
-                                <div className="absolute -top-3 left-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-                                  ⭐ الأكثر طلباً
-                                </div>
-                              )}
-                              
-                              {/* Selection indicator */}
-                              <div className={`absolute top-6 right-6 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                isSelected 
-                                  ? 'bg-blue-500 border-blue-500' 
-                                  : 'border-gray-300'
-                              }`}>
-                                {isSelected && (
-                                  <span className="text-white text-sm">✓</span>
-                                )}
-                              </div>
-
-                              <div className="flex justify-between items-start mb-4">
-                                <div className="flex-1">
-                                  <h4 className="text-2xl font-bold text-gray-800 mb-2">{pkg.name}</h4>
-                                  <p className="text-gray-600 text-lg leading-relaxed">{pkg.description}</p>
-                                </div>
-                                <div className="text-right ml-4">
-                                  <div className="text-3xl font-bold text-blue-600">{pkg.price.toLocaleString()} جنيه</div>
-                                  {pkg.originalPrice && (
-                                    <div className="text-gray-400 text-lg line-through mt-1">{pkg.originalPrice.toLocaleString()} جنيه</div>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-3 mt-6">
-                                {pkg.features?.map((feature, idx) => (
-                                  <div key={idx} className="flex items-center gap-3">
-                                    <span className="text-green-500 text-lg">✓</span>
-                                    <span className="text-gray-700 text-lg">{feature}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === "schedule" && (
-                  <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-2xl border border-green-200">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span>📅</span>
-                        مواعيد العمل
-                      </h3>
-                      {renderWorkingHours()}
-                    </div>
-                  </div>
-                )}
+              <div className="p-6 lg:p-8">
+                {activeTab === "portfolio" && renderPortfolioSection()}
+                {activeTab === "packages" && renderPackagesSection()}
+                {activeTab === "details" && renderDetailsSection()}
               </div>
             </motion.div>
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
+          {/* Right Column - Sidebar (Hidden on Mobile) */}
+          <div className="hidden lg:block space-y-6">
             {/* Profile Card */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-2xl border border-gray-200 p-6 self-start shadow-sm"
+              className="bg-white rounded-3xl border border-gray-200 p-8 self-start shadow-2xl"
             >
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-6 mb-8">
                 <div className="relative">
                   <img 
                     src={photographer.profileImage} 
                     alt={photographer.name}
-                    className="w-24 h-24 rounded-2xl object-cover border-4 border-blue-100 shadow-lg"
+                    className="w-28 h-28 rounded-3xl object-cover border-4 border-blue-100 shadow-2xl"
                   />
-                  <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-2 border-white shadow-lg"></div>
+                  <div className="absolute -bottom-3 -right-3 w-7 h-7 bg-green-400 rounded-full border-3 border-white shadow-2xl"></div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-800">{photographer.name}</h2>
-                  <p className="text-blue-600 font-semibold">{photographer.specialty}</p>
-                  <p className="text-gray-600 text-sm">{photographer.businessName}</p>
+                  <h2 className="text-2xl font-bold text-gray-800">{photographer.name}</h2>
+                  <p className="text-blue-600 font-bold text-lg">{photographer.specialty}</p>
+                  <p className="text-gray-600 text-lg">{photographer.businessName}</p>
                 </div>
               </div>
 
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                  <span className="font-semibold text-gray-700">التقييم:</span>
-                  <div className="flex items-center gap-2">
+              <div className="space-y-4 mb-8">
+                <div className="flex justify-between items-center p-5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 shadow-lg">
+                  <span className="font-bold text-gray-700 text-lg">التقييم:</span>
+                  <div className="flex items-center gap-3">
                     {renderStars(photographer.rating)}
                   </div>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
-                  <span className="font-semibold text-gray-700">الخبرة:</span>
-                  <span className="font-bold text-green-600 text-lg">{photographer.experience} سنة</span>
+                <div className="flex justify-between items-center p-5 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border border-green-200 shadow-lg">
+                  <span className="font-bold text-gray-700 text-lg">الخبرة:</span>
+                  <span className="font-bold text-green-600 text-xl">{photographer.experience} سنة</span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                  <span className="font-semibold text-gray-700">المكان:</span>
-                  <span className="font-bold text-purple-600 text-sm text-left">{photographer.city}، {photographer.governorate}</span>
+                <div className="flex justify-between items-center p-5 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border border-purple-200 shadow-lg">
+                  <span className="font-bold text-gray-700 text-lg">المكان:</span>
+                  <span className="font-bold text-purple-600 text-lg text-right">{photographer.city}، {photographer.governorate}</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <button 
                   onClick={handleBookPhotographer}
                   disabled={!selectedPackage}
-                  className={`w-full py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 ${
+                  className={`w-full py-5 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-4 shadow-xl ${
                     selectedPackage
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white transform hover:scale-105'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
@@ -1124,7 +1377,7 @@ const PhotographerDetailsPage = () => {
 
                 <button 
                   onClick={handleConsultation}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-5 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-4 shadow-xl transform hover:scale-105"
                 >
                   <span>💬</span>
                   استشارة مجانية
@@ -1133,7 +1386,7 @@ const PhotographerDetailsPage = () => {
                 {selectedPackage && (
                   <button 
                     onClick={deselectPackage}
-                    className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105"
+                    className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-4 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105"
                   >
                     🔄 إلغاء اختيار الباقة
                   </button>
@@ -1141,43 +1394,61 @@ const PhotographerDetailsPage = () => {
               </div>
             </motion.div>
 
-            {/* Contact Info */}
+            {/* Contact Info - Updated with hidden info */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
+              className="bg-white rounded-3xl border border-gray-200 p-8 shadow-2xl"
             >
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span>📞</span>
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-2xl">📞</span>
                 معلومات التواصل
               </h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                  <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <div className="space-y-5">
+                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 shadow-lg">
+                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl">
                     📞
                   </div>
                   <div className="flex-1">
-                    <div className="text-xs text-gray-600 mb-1">التليفون</div>
-                    <div className="font-bold text-gray-800 text-lg">{photographer.contact}</div>
+                    <div className="text-sm text-gray-600 mb-2">رقم الهاتف</div>
+                    <div className="font-bold text-gray-800 text-xl">
+                      {formatContactInfo(photographer.contact)}
+                    </div>
+                    <p className="text-gray-500 text-sm mt-1">(الرقم مخفي للحماية)</p>
                   </div>
+                  <button
+                    onClick={handleConsultation}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+                  >
+                    تواصل
+                  </button>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
-                  <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border border-green-200 shadow-lg">
+                  <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl">
                     📧
                   </div>
                   <div className="flex-1">
-                    <div className="text-xs text-gray-600 mb-1">الإيميل</div>
-                    <div className="font-bold text-gray-800 text-lg">{photographer.email}</div>
+                    <div className="text-sm text-gray-600 mb-2">البريد الإلكتروني</div>
+                    <div className="font-bold text-gray-800 text-xl">
+                      {formatContactInfo(photographer.email, true)}
+                    </div>
+                    <p className="text-gray-500 text-sm mt-1">(الإيميل مخفي للحماية)</p>
                   </div>
+                  <button
+                    onClick={() => window.open(`mailto:${photographer.email}`, '_blank')}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+                  >
+                    إرسال
+                  </button>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border border-purple-200 shadow-lg">
+                  <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl">
                     📍
                   </div>
                   <div className="flex-1">
-                    <div className="text-xs text-gray-600 mb-1">العنوان</div>
-                    <div className="font-bold text-gray-800 text-sm leading-relaxed">{photographer.address}</div>
+                    <div className="text-sm text-gray-600 mb-2">العنوان</div>
+                    <div className="font-bold text-gray-800 text-lg leading-relaxed">{photographer.address}</div>
                   </div>
                 </div>
               </div>
@@ -1189,6 +1460,16 @@ const PhotographerDetailsPage = () => {
         </div>
       </div>
 
+      {/* Floating Action Button for Mobile */}
+      <div className="lg:hidden fixed bottom-6 right-6 z-30">
+        <button
+          onClick={() => setMobileSidebarOpen(true)}
+          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-300"
+        >
+          <span className="text-2xl">💬</span>
+        </button>
+      </div>
+
       {/* Lightbox for Gallery */}
       <AnimatePresence>
         {lightboxOpen && (
@@ -1196,7 +1477,7 @@ const PhotographerDetailsPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4"
             onClick={closeLightbox}
           >
             <motion.div
@@ -1208,7 +1489,7 @@ const PhotographerDetailsPage = () => {
             >
               <button
                 onClick={closeLightbox}
-                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
+                className="absolute -top-16 right-0 text-white hover:text-gray-300 transition-colors z-10 text-3xl"
               >
                 ✕
               </button>
@@ -1216,25 +1497,25 @@ const PhotographerDetailsPage = () => {
               <img 
                 src={sliderImages[lightboxImageIndex]} 
                 alt={`${photographer.name} gallery ${lightboxImageIndex + 1}`}
-                className="max-w-full max-h-[95vh] object-contain rounded-lg"
+                className="max-w-full max-h-[95vh] object-contain rounded-xl"
               />
 
               {sliderImages.length > 1 && (
                 <>
                   <button
                     onClick={prevLightboxImage}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl"
                   >
                     ←
                   </button>
                   <button
                     onClick={nextLightboxImage}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl"
                   >
                     →
                   </button>
                   
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm">
+                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-full text-lg font-bold shadow-2xl">
                     {lightboxImageIndex + 1} / {sliderImages.length}
                   </div>
                 </>
@@ -1251,14 +1532,14 @@ const PhotographerDetailsPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4"
             onClick={closeAlbumModal}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="relative bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+              className="relative bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-3xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
