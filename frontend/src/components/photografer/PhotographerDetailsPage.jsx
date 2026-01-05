@@ -1227,7 +1227,7 @@ const PhotographerDetailsPage = () => {
 
                     {/* Badge */}
                     <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-2xl text-base font-bold shadow-2xl">
-                      🎰 عرض عشوائي من الأعمال
+                      🎰 انقر علي الصورة للعرض الكامل
                     </div>
                   </>
                 ) : (

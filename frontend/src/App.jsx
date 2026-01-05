@@ -38,6 +38,169 @@ const initGuestData = () => {
   }
 };
 
+// نافذة الترحيب للزوار - مكون منفصل
+const GuestWelcomeModal = ({ show, onClose, onLogin }) => {
+  if (!show) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      zIndex: 10000,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '16px',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch' // لسلاسة التمرير على iOS
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '16px',
+        padding: '24px',
+        width: '100%',
+        maxWidth: '400px',
+        textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        margin: 'auto'
+      }}>
+        <h2 style={{
+          fontFamily: "'Tajawal', sans-serif",
+          color: '#1f2937',
+          marginBottom: '12px',
+          fontSize: '20px',
+          lineHeight: '1.4'
+        }}>
+          🎉 مرحباً بك في Bookera!
+        </h2>
+        
+        <p style={{
+          fontFamily: "'Tajawal', sans-serif",
+          color: '#6b7280',
+          lineHeight: '1.6',
+          marginBottom: '20px',
+          fontSize: '15px'
+        }}>
+          أنت الآن تتصفح المنصة كزائر. يمكنك:
+        </p>
+        
+        <div style={{
+          background: '#f0f9ff',
+          padding: '16px',
+          borderRadius: '12px',
+          marginBottom: '20px'
+        }}>
+          <ul style={{
+            listStyle: 'none',
+            padding: '0',
+            margin: '0',
+            textAlign: 'right'
+          }}>
+            <li style={{
+              padding: '8px 0',
+              fontFamily: "'Tajawal', sans-serif",
+              color: '#0369a1',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px',
+              fontSize: '14px'
+            }}>
+              <span style={{
+                minWidth: '8px',
+                minHeight: '8px',
+                background: '#0ea5e9',
+                borderRadius: '50%',
+                marginTop: '6px'
+              }}></span>
+              <span>تصفح جميع المصورين والقاعات</span>
+            </li>
+            <li style={{
+              padding: '8px 0',
+              fontFamily: "'Tajawal', sans-serif",
+              color: '#0369a1',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px',
+              fontSize: '14px'
+            }}>
+              <span style={{
+                minWidth: '8px',
+                minHeight: '8px',
+                background: '#0ea5e9',
+                borderRadius: '50%',
+                marginTop: '6px'
+              }}></span>
+              <span>مشاهدة الصور والأسعار</span>
+            </li>
+            <li style={{
+              padding: '8px 0',
+              fontFamily: "'Tajawal', sans-serif",
+              color: '#0369a1',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px',
+              fontSize: '14px'
+            }}>
+              <span style={{
+                minWidth: '8px',
+                minHeight: '8px',
+                background: '#0ea5e9',
+                borderRadius: '50%',
+                marginTop: '6px'
+              }}></span>
+              <span>البحث والتصفية</span>
+            </li>
+          </ul>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '14px',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontFamily: "'Tajawal', sans-serif",
+              fontWeight: '500',
+              fontSize: '16px',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+              width: '100%'
+            }}
+          >
+            استمر كزائر
+          </button>
+          
+          <button
+            onClick={onLogin}
+            style={{
+              padding: '14px',
+              background: 'white',
+              color: '#4f46e5',
+              border: '2px solid #4f46e5',
+              borderRadius: '8px',
+              fontFamily: "'Tajawal', sans-serif",
+              fontWeight: '500',
+              fontSize: '16px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              width: '100%'
+            }}
+          >
+            تسجيل الدخول للحصول على ميزات إضافية
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // حماية المسارات التي تتطلب تسجيل دخول فقط للميزات المتقدمة
 const ProtectedRoute = ({ children, requireVerification = true }) => {
   const { isAuthenticated, isCheckingAuth, user } = useAuthStore();
@@ -50,14 +213,16 @@ const ProtectedRoute = ({ children, requireVerification = true }) => {
       
       // إظهار رسالة ترحيب للزوار في أول مرة
       if (!guestData.hasSeenWelcome) {
-        setShowGuestWelcome(true);
-        const updatedData = { ...guestData, hasSeenWelcome: true };
-        localStorage.setItem('bookera_guest_data', JSON.stringify(updatedData));
+        setTimeout(() => {
+          setShowGuestWelcome(true);
+          const updatedData = { ...guestData, hasSeenWelcome: true };
+          localStorage.setItem('bookera_guest_data', JSON.stringify(updatedData));
+        }, 1000); // تأخير بسيط لتحميل الصفحة أولاً
       }
     }
   }, [isCheckingAuth, isAuthenticated]);
 
-  if (isCheckingAuth) return <div>جارٍ التحقق من الحساب...</div>;
+  if (isCheckingAuth) return <LoadingSpinner />;
 
   // السماح للزوار بالوصول لجميع الصفحات
   // فقط المفضلة تتطلب تسجيل دخول
@@ -73,161 +238,17 @@ const ProtectedRoute = ({ children, requireVerification = true }) => {
     return <Navigate to="/verify-email" replace />;
   }
 
-  // إظهار ترحيب للزوار
   return (
     <>
       {children}
-      {showGuestWelcome && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          zIndex: 10000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '30px',
-            maxWidth: '500px',
-            width: '100%',
-            textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }}>
-            <h2 style={{
-              fontFamily: "'Tajawal', sans-serif",
-              color: '#1f2937',
-              marginBottom: '15px',
-              fontSize: '24px'
-            }}>
-              🎉 مرحباً بك في Bookera!
-            </h2>
-            
-            <p style={{
-              fontFamily: "'Tajawal', sans-serif",
-              color: '#6b7280',
-              lineHeight: '1.6',
-              marginBottom: '25px'
-            }}>
-              أنت الآن تتصفح المنصة كزائر. يمكنك:
-            </p>
-            
-            <div style={{
-              background: '#f0f9ff',
-              padding: '20px',
-              borderRadius: '12px',
-              marginBottom: '25px',
-              textAlign: 'right'
-            }}>
-              <ul style={{
-                listStyle: 'none',
-                padding: '0',
-                margin: '0'
-              }}>
-                <li style={{
-                  padding: '8px 0',
-                  fontFamily: "'Tajawal', sans-serif",
-                  color: '#0369a1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <span style={{
-                    width: '8px',
-                    height: '8px',
-                    background: '#0ea5e9',
-                    borderRadius: '50%'
-                  }}></span>
-                  تصفح جميع المصورين والقاعات
-                </li>
-                <li style={{
-                  padding: '8px 0',
-                  fontFamily: "'Tajawal', sans-serif",
-                  color: '#0369a1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <span style={{
-                    width: '8px',
-                    height: '8px',
-                    background: '#0ea5e9',
-                    borderRadius: '50%'
-                  }}></span>
-                  مشاهدة الصور والأسعار
-                </li>
-                <li style={{
-                  padding: '8px 0',
-                  fontFamily: "'Tajawal', sans-serif",
-                  color: '#0369a1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <span style={{
-                    width: '8px',
-                    height: '8px',
-                    background: '#0ea5e9',
-                    borderRadius: '50%'
-                  }}></span>
-                  البحث والتصفية
-                </li>
-              </ul>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '15px', flexDirection: 'column' }}>
-              <button
-                onClick={() => setShowGuestWelcome(false)}
-                style={{
-                  padding: '14px',
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontFamily: "'Tajawal', sans-serif",
-                  fontWeight: '500',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s'
-                }}
-                onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-                onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
-              >
-                استمر كزائر
-              </button>
-              
-              <button
-                onClick={() => {
-                  setShowGuestWelcome(false);
-                  window.location.href = '/login';
-                }}
-                style={{
-                  padding: '14px',
-                  background: 'white',
-                  color: '#4f46e5',
-                  border: '2px solid #4f46e5',
-                  borderRadius: '8px',
-                  fontFamily: "'Tajawal', sans-serif",
-                  fontWeight: '500',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => e.target.style.background = '#f5f3ff'}
-                onMouseOut={(e) => e.target.style.background = 'white'}
-              >
-                تسجيل الدخول للحصول على ميزات إضافية
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GuestWelcomeModal 
+        show={showGuestWelcome}
+        onClose={() => setShowGuestWelcome(false)}
+        onLogin={() => {
+          setShowGuestWelcome(false);
+          window.location.href = '/login';
+        }}
+      />
     </>
   );
 };
@@ -266,26 +287,32 @@ const GuestStatusIndicator = () => {
     <div 
       style={{
         position: 'fixed',
-        bottom: '20px',
-        left: '20px',
-        zIndex: 40
-      }}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
-      <div style={{
-        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-        color: 'white',
-        padding: '10px 20px',
-        borderRadius: '25px',
+        bottom: '16px',
+        left: '16px',
+        right: '16px',
+        zIndex: 40,
         display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        cursor: 'pointer',
-        boxShadow: '0 4px 20px rgba(79, 70, 229, 0.3)',
-        transition: 'all 0.3s',
-        minWidth: '120px'
-      }}>
+        justifyContent: 'center'
+      }}
+    >
+      <div 
+        style={{
+          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '25px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(79, 70, 229, 0.3)',
+          transition: 'all 0.3s',
+          minWidth: '120px',
+          maxWidth: '200px'
+        }}
+        onClick={() => setIsHovering(!isHovering)}
+      >
         <div style={{
           width: '10px',
           height: '10px',
@@ -304,13 +331,14 @@ const GuestStatusIndicator = () => {
       {isHovering && (
         <div style={{
           position: 'absolute',
-          bottom: '100%',
-          left: '0',
-          marginBottom: '10px',
+          bottom: 'calc(100% + 10px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
           background: 'white',
           borderRadius: '12px',
-          padding: '20px',
-          width: '250px',
+          padding: '16px',
+          width: '90vw',
+          maxWidth: '300px',
           boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
           border: '1px solid #e5e7eb'
         }}>
@@ -318,7 +346,8 @@ const GuestStatusIndicator = () => {
             fontFamily: "'Tajawal', sans-serif",
             fontWeight: 'bold',
             color: '#1f2937',
-            marginBottom: '10px'
+            marginBottom: '10px',
+            fontSize: '16px'
           }}>
             أنت تتصفح كزائر
           </h4>
@@ -326,23 +355,24 @@ const GuestStatusIndicator = () => {
             fontFamily: "'Tajawal', sans-serif",
             color: '#6b7280',
             fontSize: '13px',
-            marginBottom: '15px'
+            marginBottom: '15px',
+            lineHeight: '1.5'
           }}>
             سجّل الدخول للإضافة للمفضلة والتقييم والحجز
           </p>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
             <a
               href="/login"
               style={{
-                flex: 1,
                 background: '#4f46e5',
                 color: 'white',
                 textAlign: 'center',
-                padding: '8px',
+                padding: '12px',
                 borderRadius: '8px',
-                fontSize: '13px',
+                fontSize: '14px',
                 fontFamily: "'Tajawal', sans-serif",
-                textDecoration: 'none'
+                textDecoration: 'none',
+                display: 'block'
               }}
             >
               تسجيل دخول
@@ -350,15 +380,15 @@ const GuestStatusIndicator = () => {
             <a
               href="/signup"
               style={{
-                flex: 1,
                 border: '1px solid #4f46e5',
                 color: '#4f46e5',
                 textAlign: 'center',
-                padding: '8px',
+                padding: '12px',
                 borderRadius: '8px',
-                fontSize: '13px',
+                fontSize: '14px',
                 fontFamily: "'Tajawal', sans-serif",
-                textDecoration: 'none'
+                textDecoration: 'none',
+                display: 'block'
               }}
             >
               حساب جديد
@@ -389,7 +419,11 @@ function App() {
   }, [checkAuth]);
 
   if (isInitializing || isCheckingAuth) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
