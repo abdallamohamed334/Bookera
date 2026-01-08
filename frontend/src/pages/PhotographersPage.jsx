@@ -73,7 +73,7 @@ const PhotographersPage = () => {
           console.log('🔄 جاري تحميل البيانات...');
         }, 1000);
 
-        const response = await fetch('https://bookera-production-25ec.up.railway.app/api/photographers', {
+        const response = await fetch('https://bookera-production-2d16.up.railway.app/api/photographers', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

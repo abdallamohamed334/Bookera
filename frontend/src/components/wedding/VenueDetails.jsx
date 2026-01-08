@@ -87,7 +87,7 @@ const VenueDetails = () => {
         
         // جلب بيانات القاعة
         const venueResponse = await fetch(
-          `https://bookera-production-25ec.up.railway.app/api/wedding-venues/${id}`,
+          `https://bookera-production-2d16.up.railway.app/api/wedding-venues/${id}`,
           { 
             signal: controller.signal,
             headers: {
@@ -108,7 +108,7 @@ const VenueDetails = () => {
         // جلب الباكدجات
         try {
           const packagesResponse = await fetch(
-            `https://bookera-production-25ec.up.railway.app/api/wedding-venues/${id}/packages`,
+            `https://bookera-production-2d16.up.railway.app/api/wedding-venues/${id}/packages`,
             { signal: controller.signal }
           );
           
@@ -270,7 +270,7 @@ const VenueDetails = () => {
       try {
         setLoadingReviews(true);
         const response = await fetch(
-          `bookera-production-25ec.up.railway.app/api/wedding-venues/${venueData.id}/reviews`
+          `bookera-production-2d16.up.railway.app/api/wedding-venues/${venueData.id}/reviews`
         );
         
         if (response.ok) {
@@ -329,7 +329,7 @@ const VenueDetails = () => {
         created_at: new Date().toISOString()
       };
 
-      const response = await fetch('https://bookera-production-25ec.up.railway.app/api/bookings', {
+      const response = await fetch('https://bookera-production-2d16.up.railway.app/api/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

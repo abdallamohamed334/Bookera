@@ -20,6 +20,10 @@ const PhotographerDetailsPage = () => {
   const [sliderImages, setSliderImages] = useState([]);
   const [socialMediaVisible, setSocialMediaVisible] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  
+  // الحالة الجديدة للتحكم في السلايدر العلوي
+  const [showTopSlider, setShowTopSlider] = useState(false);
+  const [activeSlide, setActiveSlide] = useState("photographers");
 
   // دالة محسنة لاختيار صور عشوائية
   const getRandomSliderImages = (portfolio, count = 4) => {
@@ -108,7 +112,7 @@ const PhotographerDetailsPage = () => {
 
         // جلب البيانات من الـ API فقط
         console.log('🔍 جاري البحث في الـ API...');
-        const response = await fetch(`https://bookera-production-25ec.up.railway.app/api/photographers/${id}`);
+        const response = await fetch(`https://bookera-production-2d16.up.railway.app/api/photographers/${id}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -1078,6 +1082,92 @@ const PhotographerDetailsPage = () => {
     );
   };
 
+  // Render Top Navigation Slider
+  const renderTopSlider = () => {
+    if (!showTopSlider) return null;
+
+    const slides = [
+      {
+        id: "home",
+        title: "🏠 الرئيسية",
+        description: "العودة للصفحة الرئيسية",
+        icon: "🏠",
+        action: () => navigate("/")
+      },
+      {
+        id: "photographers",
+        title: "📸 المصورين",
+        description: "استعراض جميع المصورين",
+        icon: "📸",
+        action: () => navigate("/photographers")
+      },
+      {
+        id: "halls",
+        title: "🎪 القاعات",
+        description: "تصفح قاعات الأفراح",
+        icon: "🎪",
+        action: () => navigate("/halls")
+      }
+    ];
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl mx-4 mt-4 mb-6 shadow-2xl overflow-hidden"
+      >
+        <div className="p-4 flex justify-between items-center">
+          <div className="flex items-center gap-2 text-white">
+            <span className="text-2xl">🔙</span>
+            <h3 className="text-xl font-bold">العودة لـ:</h3>
+          </div>
+          <button
+            onClick={() => setShowTopSlider(false)}
+            className="text-white hover:text-gray-200 text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+          {slides.map((slide) => (
+            <motion.button
+              key={slide.id}
+              onClick={() => {
+                slide.action();
+                setShowTopSlider(false);
+              }}
+              className={`bg-white/20 backdrop-blur-sm rounded-2xl p-6 border-2 transition-all duration-300 transform hover:scale-105 hover:bg-white/30 ${
+                activeSlide === slide.id 
+                  ? 'border-white border-4 shadow-2xl' 
+                  : 'border-white/50 hover:border-white'
+              }`}
+              whileHover={{ y: -5 }}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="text-4xl mb-3">{slide.icon}</div>
+                <h4 className="text-white text-xl font-bold mb-2">{slide.title}</h4>
+                <p className="text-white/80 text-sm">{slide.description}</p>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Render Photographers Button - زر جديد لاستعراض المصورين
+  const renderPhotographersButton = () => {
+    return (
+      <motion.div
+        
+      >
+        
+      </motion.div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
@@ -1128,18 +1218,34 @@ const PhotographerDetailsPage = () => {
         )}
       </AnimatePresence>
 
+      {/* Top Slider */}
+      <AnimatePresence>
+        {renderTopSlider()}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
-            >
-              <span className="text-xl">👤</span>
-            </button>
+            {/* Left: Navigation Button */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowTopSlider(!showTopSlider)}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <span className="text-2xl">{showTopSlider ? "✕" : "🔙"}</span>
+              </button>
+              
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="lg:hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+              >
+                <span className="text-xl">👤</span>
+              </button>
+            </div>
             
+            {/* Center: Title */}
             <div className="text-center flex-1">
               <h1 className="text-2xl font-bold text-gray-800">
                 {photographer.businessName}
@@ -1147,6 +1253,7 @@ const PhotographerDetailsPage = () => {
               <p className="text-gray-600 text-lg">مصور محترف متخصص في {photographer.specialty}</p>
             </div>
             
+            {/* Right: Share Button */}
             <button
               onClick={() => {
                 const shareUrl = window.location.href;
@@ -1210,20 +1317,7 @@ const PhotographerDetailsPage = () => {
                     )}
 
                     {/* Auto Slide Toggle */}
-                    {hasMultipleImages && (
-                      <div className="absolute top-4 right-4">
-                        <button
-                          onClick={() => setAutoSlide(!autoSlide)}
-                          className={`px-3 py-2 rounded-xl text-base font-bold transition-all duration-300 shadow-lg ${
-                            autoSlide 
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                              : 'bg-gray-700 hover:bg-gray-800 text-white'
-                          }`}
-                        >
-                          {autoSlide ? '⏸️ إيقاف' : '▶️ تشغيل'}
-                        </button>
-                      </div>
-                    )}
+                  
 
                     {/* Badge */}
                     <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-2xl text-base font-bold shadow-2xl">
@@ -1463,8 +1557,20 @@ const PhotographerDetailsPage = () => {
         </div>
       </div>
 
-      {/* Floating Action Button for Mobile */}
-      <div className="lg:hidden fixed bottom-6 right-6 z-30">
+      {/* Floating Action Buttons for Mobile */}
+      <div className="lg:hidden fixed bottom-6 right-6 z-30 flex flex-col gap-3">
+        {/* Photographers Button */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          onClick={() => navigate("/photographers")}
+          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-300 relative group"
+        >
+          
+        </motion.button>
+
+        {/* Contact Button */}
         <button
           onClick={() => setMobileSidebarOpen(true)}
           className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-300"
@@ -1472,6 +1578,9 @@ const PhotographerDetailsPage = () => {
           <span className="text-2xl">💬</span>
         </button>
       </div>
+
+      {/* Photographers Button for Desktop - جديد */}
+      {renderPhotographersButton()}
 
       {/* Lightbox for Gallery */}
       <AnimatePresence>

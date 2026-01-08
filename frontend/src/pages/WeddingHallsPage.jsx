@@ -186,11 +186,11 @@ const WeddingHallsPage = () => {
 
         // جلب الصفحتين معاً باستخدام Promise.all للحصول على كل القاعات
         const [page1Response, page2Response] = await Promise.all([
-          fetch('https://bookera-production-25ec.up.railway.app/api/wedding-venues/', {
+          fetch('https://bookera-production-2d16.up.railway.app/api/wedding-venues/', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           }),
-          fetch('https://bookera-production-25ec.up.railway.app/api/wedding-venues/?page=2', {
+          fetch('https://bookera-production-2d16.up.railway.app/api/wedding-venues/?page=2', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           })

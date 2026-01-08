@@ -38,7 +38,7 @@ const DecorationsPage = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('https://bookera-production-25ec.up.railway.app/api/decorations', {
+        const response = await fetch('https://bookera-production-2d16.up.railway.app/api/decorations', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
