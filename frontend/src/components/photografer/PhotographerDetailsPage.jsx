@@ -20,31 +20,31 @@ const PhotographerDetailsPage = () => {
   const [sliderImages, setSliderImages] = useState([]);
   const [socialMediaVisible, setSocialMediaVisible] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   
-  // الحالة الجديدة للتحكم في السلايدر العلوي
-  const [showTopSlider, setShowTopSlider] = useState(false);
-  const [activeSlide, setActiveSlide] = useState("photographers");
-
-  // دالة محسنة لاختيار صور عشوائية
-  const getRandomSliderImages = (portfolio, count = 4) => {
+  // دالة محسنة لاختيار صور عشوائية من Unsplash
+  const getRandomSliderImages = (portfolio, count = 6) => {
+    // صور Unsplash عالية الجودة للمصورين
+    const defaultImages = [
+      "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w-1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1554080353-a576cf803bda?w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1200&auto=format&fit=crop"
+    ];
+    
     if (!portfolio || portfolio.length === 0) {
-      return [
-        "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800",
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
-        "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800",
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800"
-      ];
+      return defaultImages;
     }
     
+    // استخراج جميع الصور من الألبومات
     const allImages = portfolio.flatMap(album => 
       album.images && album.images.length > 0 ? album.images : []
     );
     
     if (allImages.length === 0) {
-      return [
-        "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800",
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800"
-      ];
+      return defaultImages;
     }
     
     if (allImages.length <= count) return allImages;
@@ -57,13 +57,9 @@ const PhotographerDetailsPage = () => {
   const prepareWhatsAppNumber = (phoneNumber) => {
     if (!phoneNumber) return "";
     
-    // إزالة أي رموز غير رقمية
     let cleanNumber = phoneNumber.replace(/\D/g, '');
-    
-    // إزالة أي أصفار في البداية
     cleanNumber = cleanNumber.replace(/^0+/, '');
     
-    // التأكد من أن الرقم يبدأ بـ 20 (كود مصر)
     if (!cleanNumber.startsWith('20')) {
       cleanNumber = '20' + cleanNumber;
     }
@@ -76,14 +72,12 @@ const PhotographerDetailsPage = () => {
     if (!contact) return "غير متوفر";
     
     if (isEmail) {
-      // إخفاء جزء من الإيميل لحماية الخصوصية
       const [username, domain] = contact.split('@');
       if (username.length > 3) {
         return `${username.substring(0, 3)}***@${domain}`;
       }
       return `***@${domain}`;
     } else {
-      // إخفاء جزء من رقم الهاتف لحماية الخصوصية
       if (contact.length > 7) {
         return `${contact.substring(0, 4)} *** ***`;
       }
@@ -108,25 +102,28 @@ const PhotographerDetailsPage = () => {
     const fetchPhotographer = async () => {
       try {
         setLoading(true);
-        console.log('🔄 جاري البحث عن المصور بالID:', id);
-
-        // جلب البيانات من الـ API فقط
-        console.log('🔍 جاري البحث في الـ API...');
         const response = await fetch(`https://bookera-production-2d16.up.railway.app/api/photographers/${id}`);
         
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ تم جلب بيانات المصور من API:', data);
           setPhotographer(data);
           
-          const randomImages = getRandomSliderImages(data.portfolio, 4);
+          // جمع كل الصور من جميع الألبومات لعرضها في المعرض
+          const allImages = data.portfolio?.flatMap(album => 
+            album.images || []
+          ) || [];
+          
+          // استخدام الصور الحقيقية أو صور Unsplash
+          const randomImages = allImages.length > 0 
+            ? allImages.slice(0, 8) // عرض أول 8 صور
+            : getRandomSliderImages([], 8);
+            
           setSliderImages(randomImages);
           setSelectedPackage(null);
         } else {
           throw new Error('المصور غير موجود');
         }
       } catch (err) {
-        console.error('❌ خطأ:', err.message);
         setError('المصور غير موجود');
       } finally {
         setLoading(false);
@@ -159,29 +156,43 @@ const PhotographerDetailsPage = () => {
 
   const handleBookPhotographer = () => {
     if (!selectedPackage) {
-      alert('يرجى اختيار باقة أولاً');
+      setShowContactModal(true);
       return;
     }
     
-    // إصلاح رابط الواتساب - استخدام الرقم مع كود الدولة
     const phoneNumber = prepareWhatsAppNumber(photographer.contact);
-    const message = `مرحبا، أنا مهتم بالحجز للتصوير\nالاسم: ${photographer.name}\nالتخصص: ${photographer.specialty}\nالباقة: ${selectedPackage.name}\nالسعر: ${selectedPackage.price.toLocaleString()} جنيه\nممكن التفاصيل والمواعيد المتاحة؟`;
+    const message = `مرحباً،
+أنا تواصلت معك من خلال موقع بوكيرا وحابب أستفسر عن حجز جلسة تصوير.
+
+الاسم: ${photographer.name}
+التخصص: ${photographer.specialty}
+الباقة المختارة: ${selectedPackage.name}
+السعر: ${selectedPackage.price.toLocaleString()} جنيه
+
+ممكن تفاصيل أكثر عن الباقة والمواعيد المتاحة؟
+شكراً لحضرتك 🌸`;
+
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
   const handleConsultation = () => {
-    // إصلاح رابط الواتساب - استخدام الرقم مع كود الدولة
     const phoneNumber = prepareWhatsAppNumber(photographer.contact);
-    const message = `مرحبا، أنا مهتم بالاستشارة المجانية للتصوير\nالاسم: ${photographer.name}\nالتخصص: ${photographer.specialty}\nأرغب في معرفة المزيد عن الخدمات والتفاصيل`;
+    const message = `مرحباً،
+أنا تواصلت معك من خلال موقع بوكيرا وحابب أستفيد من الاستشارة المجانية للتصوير.
+
+الاسم: ${photographer.name}
+التخصص: ${photographer.specialty}
+
+أرغب في معرفة المزيد عن الخدمات والتفاصيل.
+شكراً لحضرتك 🌸`;
+
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  // إصلاح مشكلة تحديد الباقات - التحديد الفردي فقط
+  // إصلاح مشكلة تحديد الباقات
   const togglePackageSelection = (pkg) => {
-    // إذا كانت الباقة المحددة هي نفس الباقة الحالية، قم بإلغاء التحديد
-    // وإلا قم بتحديد الباقة الجديدة فقط
     if (selectedPackage && selectedPackage._id === pkg._id) {
       setSelectedPackage(null);
     } else {
@@ -248,128 +259,6 @@ const PhotographerDetailsPage = () => {
     }
   };
 
-  // دالة لعرض الألبوم في المودال
-  const renderAlbumModalContent = () => {
-    if (!selectedAlbum) return null;
-
-    const hasImages = selectedAlbum.images && selectedAlbum.images.length > 0;
-    const hasVideos = selectedAlbum.videos && selectedAlbum.videos.length > 0;
-
-    return (
-      <div className="space-y-6">
-        {/* السلايدر الرئيسي */}
-        {hasImages && (
-          <div className="relative">
-            <div className="relative h-96 lg:h-[500px] bg-black rounded-2xl overflow-hidden">
-              <img 
-                src={selectedAlbum.images[albumImageIndex]} 
-                alt={`${selectedAlbum.title} - ${albumImageIndex + 1}`}
-                className="w-full h-full object-contain transition-opacity duration-500"
-              />
-              
-              {/* أسهم التنقل */}
-              {selectedAlbum.images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevAlbumImage}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors z-10"
-                  >
-                    ←
-                  </button>
-                  <button
-                    onClick={nextAlbumImage}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-12 h-12 rounded-full flex items-center justify-center transition-colors z-10"
-                  >
-                    →
-                  </button>
-                </>
-              )}
-
-              {/* عداد الصور */}
-              {selectedAlbum.images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
-                  {albumImageIndex + 1} / {selectedAlbum.images.length}
-                </div>
-              )}
-            </div>
-
-            {/* الثمبنيلز */}
-            {selectedAlbum.images.length > 1 && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                <div className="flex space-x-2 overflow-x-auto pb-1">
-                  {selectedAlbum.images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setAlbumImageIndex(index)}
-                      className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                        albumImageIndex === index 
-                          ? 'border-blue-500 scale-105' 
-                          : 'border-gray-300 hover:border-blue-300'
-                      }`}
-                    >
-                      <img 
-                        src={image} 
-                        alt={`${selectedAlbum.title} ${index + 1}`}
-                        className="w-20 h-16 object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* معلومات الألبوم */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{selectedAlbum.title}</h2>
-          <p className="text-gray-600 text-lg leading-relaxed mb-4">{selectedAlbum.description}</p>
-          <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              {selectedAlbum.category}
-            </span>
-            <span className="text-gray-500 text-sm">
-              {selectedAlbum.images?.length || 0} صورة
-            </span>
-            {hasVideos && (
-              <span className="text-gray-500 text-sm">
-                {selectedAlbum.videos.length} فيديو
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* الفيديوهات */}
-        {hasVideos && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span>🎥</span>
-              الفيديوهات ({selectedAlbum.videos.length})
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedAlbum.videos.map((video, index) => (
-                <div key={index} className="bg-gray-100 rounded-xl overflow-hidden">
-                  <video
-                    controls
-                    poster={video.thumbnail}
-                    className="w-full h-48 object-cover"
-                  >
-                    <source src={video.url} type="video/mp4" />
-                    متصفحك لا يدعم تشغيل الفيديو
-                  </video>
-                  <div className="p-3">
-                    <p className="font-medium text-gray-800">{video.title}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const renderStars = (rating) => {
     return (
       <div className="flex items-center gap-1">
@@ -389,7 +278,6 @@ const PhotographerDetailsPage = () => {
   };
 
   const renderWorkingHours = () => {
-    // مواعيد العمل الافتراضية للمصورين
     const defaultWorkingHours = {
       "saturday": "10:00 ص - 10:00 م",
       "sunday": "10:00 ص - 10:00 م",
@@ -400,9 +288,7 @@ const PhotographerDetailsPage = () => {
       "friday": "11:00 ص - 6:00 م"
     };
 
-    // استخدام المواعيد من البيانات إذا كانت موجودة، وإلا استخدام الافتراضية
     const workingHours = photographer?.workingHours || defaultWorkingHours;
-
     const days = {
       "saturday": "السبت",
       "sunday": "الأحد",
@@ -416,12 +302,12 @@ const PhotographerDetailsPage = () => {
     return (
       <div className="space-y-4">
         {Object.entries(workingHours).map(([day, hours]) => (
-          <div key={day} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors">
-            <span className="text-gray-700 font-medium text-lg flex items-center gap-2">
+          <div key={day} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200">
+            <span className="text-gray-700 font-medium text-base flex items-center gap-2">
               {day === "friday" ? "🎉" : "📅"}
               {days[day]}:
             </span>
-            <span className={`font-bold text-lg ${
+            <span className={`font-semibold text-base ${
               hours.includes("مغلق") || hours.includes("إجازة") 
                 ? "text-red-600" 
                 : "text-blue-600"
@@ -430,13 +316,6 @@ const PhotographerDetailsPage = () => {
             </span>
           </div>
         ))}
-        
-        {/* ملاحظة */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-          <p className="text-yellow-800 text-sm text-center">
-            ⚠️ المواعيد قابلة للتعديل حسب طلب العميل وتوافر المصور
-          </p>
-        </div>
       </div>
     );
   };
@@ -453,11 +332,10 @@ const PhotographerDetailsPage = () => {
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3 }}
         className="bg-white rounded-2xl border border-gray-200 p-6"
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-800">🌐 وسائل التواصل الاجتماعي</h3>
+          <h3 className="text-base font-bold text-gray-800">🌐 وسائل التواصل الاجتماعي</h3>
           <button
             onClick={() => setSocialMediaVisible(!socialMediaVisible)}
             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
@@ -470,7 +348,6 @@ const PhotographerDetailsPage = () => {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
             className="space-y-3"
           >
             {socialMedia.instagram && (
@@ -478,12 +355,12 @@ const PhotographerDetailsPage = () => {
                 onClick={() => window.open(socialMedia.instagram.startsWith('http') ? socialMedia.instagram : `https://${socialMedia.instagram}`, '_blank')}
                 className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 rounded-lg border border-pink-200 transition-all duration-300 group"
               >
-                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white">
                   <span>📷</span>
                 </div>
                 <div className="text-right flex-1">
-                  <div className="font-bold text-gray-800">انستجرام</div>
-                  <div className="text-gray-600 text-sm truncate">
+                  <div className="font-bold text-gray-800 text-sm">انستجرام</div>
+                  <div className="text-gray-600 text-xs truncate">
                     اضغط للزيارة
                   </div>
                 </div>
@@ -495,12 +372,12 @@ const PhotographerDetailsPage = () => {
                 onClick={() => window.open(socialMedia.facebook.startsWith('http') ? socialMedia.facebook : `https://${socialMedia.facebook}`, '_blank')}
                 className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-50 hover:from-blue-100 hover:to-blue-100 rounded-lg border border-blue-200 transition-all duration-300 group"
               >
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                   <span>📘</span>
                 </div>
                 <div className="text-right flex-1">
-                  <div className="font-bold text-gray-800">فيسبوك</div>
-                  <div className="text-gray-600 text-sm truncate">
+                  <div className="font-bold text-gray-800 text-sm">فيسبوك</div>
+                  <div className="text-gray-600 text-xs truncate">
                     اضغط للزيارة
                   </div>
                 </div>
@@ -512,12 +389,12 @@ const PhotographerDetailsPage = () => {
                 onClick={() => window.open(socialMedia.website.startsWith('http') ? socialMedia.website : `https://${socialMedia.website}`, '_blank')}
                 className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg border border-green-200 transition-all duration-300 group"
               >
-                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white">
                   <span>🌐</span>
                 </div>
                 <div className="text-right flex-1">
-                  <div className="font-bold text-gray-800">الموقع الإلكتروني</div>
-                  <div className="text-gray-600 text-sm truncate">
+                  <div className="font-bold text-gray-800 text-sm">الموقع الإلكتروني</div>
+                  <div className="text-gray-600 text-xs truncate">
                     اضغط للزيارة
                   </div>
                 </div>
@@ -529,42 +406,41 @@ const PhotographerDetailsPage = () => {
     );
   };
 
-  // Render details section (combines about, services, reviews, schedule)
+  // Render details section
   const renderDetailsSection = () => {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* About Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-3xl border border-blue-200 shadow-lg"
+          className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-3xl border border-blue-200"
         >
-          <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-            <span className="bg-blue-500 text-white p-3 rounded-2xl">👤</span>
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="bg-blue-500 text-white p-2 rounded-2xl">👤</span>
             معلومات عن المصور
           </h3>
-          <div className="space-y-6">
-            <p className="text-gray-700 leading-relaxed text-xl bg-white p-6 rounded-2xl shadow-sm border border-blue-100">
+          <div className="space-y-4">
+            <p className="text-gray-700 leading-relaxed text-base bg-white p-4 rounded-2xl border border-blue-100">
               {photographer.description}
             </p>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
-                <div className="text-3xl font-bold mb-2">{photographer.experience}+</div>
-                <div className="text-blue-100 text-lg">سنوات خبرة</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-2xl text-center">
+                <div className="text-xl font-bold mb-1">{photographer.experience}+</div>
+                <div className="text-blue-100 text-sm">سنوات خبرة</div>
               </div>
-              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
-                <div className="text-3xl font-bold mb-2">100+</div>
-                <div className="text-green-100 text-lg">عميل سعيد</div>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-2xl text-center">
+                <div className="text-xl font-bold mb-1">100+</div>
+                <div className="text-green-100 text-sm">عميل سعيد</div>
               </div>
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
-                <div className="text-3xl font-bold mb-2">500+</div>
-                <div className="text-purple-100 text-lg">جلسة تصوير</div>
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-2xl text-center">
+                <div className="text-xl font-bold mb-1">500+</div>
+                <div className="text-purple-100 text-sm">جلسة تصوير</div>
               </div>
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-2xl text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
-                <div className="text-3xl font-bold mb-2">50+</div>
-                <div className="text-orange-100 text-lg">جائزة وتكريم</div>
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-2xl text-center">
+                <div className="text-xl font-bold mb-1">50+</div>
+                <div className="text-orange-100 text-sm">جائزة وتكريم</div>
               </div>
             </div>
           </div>
@@ -574,30 +450,26 @@ const PhotographerDetailsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-r from-green-50 to-emerald-50 p-8 rounded-3xl border border-green-200 shadow-lg"
+          className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-3xl border border-green-200"
         >
-          <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-            <span className="bg-green-500 text-white p-3 rounded-2xl">⚡</span>
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="bg-green-500 text-white p-2 rounded-2xl">⚡</span>
             الخدمات المقدمة
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {photographer.services?.map((service, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                className="bg-white rounded-2xl p-4 border border-gray-200"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-base">
                     {index + 1}
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-gray-800 mb-2">{service}</h4>
-                    <p className="text-gray-600 text-lg">خدمة احترافية متكاملة</p>
+                    <h4 className="text-base font-bold text-gray-800 mb-1">{service}</h4>
+                    <p className="text-gray-600 text-sm">خدمة احترافية متكاملة</p>
                   </div>
                 </div>
               </motion.div>
@@ -605,14 +477,14 @@ const PhotographerDetailsPage = () => {
           </div>
 
           {/* Equipment Section */}
-          <div className="mt-8 bg-white rounded-2xl p-6 border border-blue-200">
-            <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+          <div className="mt-6 bg-white rounded-2xl p-4 border border-blue-200">
+            <h4 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
               <span className="text-blue-500">🔧</span>
               المعدات المستخدمة
             </h4>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-2">
               {photographer.equipment?.map((item, index) => (
-                <span key={index} className="bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 px-6 py-3 rounded-xl text-lg border border-blue-300 shadow-sm hover:shadow-md transition-shadow font-medium">
+                <span key={index} className="bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 px-3 py-2 rounded-xl text-sm border border-blue-300">
                   {item}
                 </span>
               ))}
@@ -624,65 +496,61 @@ const PhotographerDetailsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-gradient-to-r from-yellow-50 to-orange-50 p-8 rounded-3xl border border-yellow-200 shadow-lg"
+          className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-3xl border border-yellow-200"
         >
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                <span className="bg-yellow-500 text-white p-3 rounded-2xl">⭐</span>
+              <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
+                <span className="bg-yellow-500 text-white p-2 rounded-2xl">⭐</span>
                 تقييمات العملاء
               </h3>
-              <p className="text-gray-600 text-lg">آراء العملاء السابقين عن جودة العمل</p>
+              <p className="text-gray-600 text-sm">آراء العملاء السابقين عن جودة العمل</p>
             </div>
-            <div className="text-center bg-white p-6 rounded-2xl shadow-lg">
-              <div className="text-5xl font-bold text-yellow-600 mb-2">{photographer.rating}</div>
+            <div className="text-center bg-white p-4 rounded-2xl">
+              <div className="text-3xl font-bold text-yellow-600 mb-1">{photographer.rating}</div>
               {renderStars(photographer.rating)}
-              <p className="text-gray-600 mt-2">بناءً على {photographer.reviews?.length || 0} تقييم</p>
+              <p className="text-gray-600 text-xs mt-1">بناءً على {photographer.reviews?.length || 0} تقييم</p>
             </div>
           </div>
 
           {/* Reviews List */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {photographer.reviews?.slice(0, 3).map((review, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-shadow shadow-lg"
+                className="bg-white border border-gray-200 rounded-2xl p-4"
               >
-                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-base font-bold">
                       {review.user.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-800 text-xl">{review.user}</h4>
-                      <div className="flex items-center gap-2 mt-2">
+                      <h4 className="font-bold text-gray-800 text-sm">{review.user}</h4>
+                      <div className="flex items-center gap-1 mt-1">
                         {review.verified && (
-                          <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full flex items-center gap-2 w-fit">
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                             ✓ موثق
                           </span>
                         )}
-                        <span className="text-gray-500 text-sm">{review.date}</span>
+                        <span className="text-gray-500 text-xs">{review.date}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
                     {renderStars(review.rating)}
                   </div>
                 </div>
-                <p className="text-gray-700 text-xl leading-relaxed bg-gray-50 p-6 rounded-xl">
+                <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-3 rounded-xl">
                   "{review.comment}"
                 </p>
               </motion.div>
             ))}
             
             {photographer.reviews?.length > 3 && (
-              <div className="text-center mt-8">
-                <button className="text-blue-600 hover:text-blue-700 font-bold text-lg">
+              <div className="text-center mt-6">
+                <button className="text-blue-600 hover:text-blue-700 font-bold text-sm">
                   عرض المزيد من التقييمات ({photographer.reviews.length - 3}+) →
                 </button>
               </div>
@@ -694,11 +562,10 @@ const PhotographerDetailsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-gradient-to-r from-purple-50 to-pink-50 p-8 rounded-3xl border border-purple-200 shadow-lg"
+          className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-3xl border border-purple-200"
         >
-          <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-            <span className="bg-purple-500 text-white p-3 rounded-2xl">📅</span>
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="bg-purple-500 text-white p-2 rounded-2xl">📅</span>
             مواعيد العمل
           </h3>
           {renderWorkingHours()}
@@ -707,66 +574,61 @@ const PhotographerDetailsPage = () => {
     );
   };
 
-  // Render packages section - مع إصلاح مشكلة التحديد
+  // Render packages section
   const renderPackagesSection = () => {
     const hasPackages = photographer.packages && photographer.packages.length > 0;
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-purple-50 to-pink-50 p-8 rounded-3xl border border-purple-200 shadow-lg"
+          className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-3xl border border-purple-200"
         >
-          <h3 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-            <span className="bg-purple-500 text-white p-3 rounded-2xl">💰</span>
+          <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
+            <span className="bg-purple-500 text-white p-2 rounded-2xl">💰</span>
             اختر الباقة المناسبة لك
           </h3>
-          <p className="text-gray-600 text-xl">اختر الباقة التي تناسب احتياجاتك وميزانيتك</p>
+          <p className="text-gray-600 text-base">اختر الباقة التي تناسب احتياجاتك وميزانيتك</p>
         </motion.div>
         
         {!hasPackages ? (
-          <div className="text-center p-12 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
-            <div className="text-8xl mb-6">💼</div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">لا توجد باقات متاحة حالياً</h3>
-            <p className="text-gray-600 text-xl mb-6">يمكنك التواصل مع المصور للاستفسار عن الأسعار</p>
+          <div className="text-center p-8 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
+            <div className="text-6xl mb-4">💼</div>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">لا توجد باقات متاحة حالياً</h3>
+            <p className="text-gray-600 text-base mb-4">يمكنك التواصل مع المصور للاستفسار عن الأسعار</p>
             <button 
-              onClick={handleConsultation}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              onClick={() => setShowContactModal(true)}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-2xl font-bold text-base transition-all duration-300"
             >
               التواصل للاستفسار
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {photographer.packages?.map((pkg, index) => {
-              // استخدام معرف فريد لكل باقة
               const pkgId = pkg._id || pkg.id || `pkg-${index}`;
               const isSelected = selectedPackage ? selectedPackage._id === pkgId : false;
               
               return (
                 <motion.div
                   key={pkgId}
-                  className={`relative rounded-3xl p-8 transition-all duration-300 cursor-pointer ${
+                  className={`relative rounded-3xl p-6 transition-all duration-300 cursor-pointer ${
                     isSelected
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-2xl scale-105'
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white scale-105'
                       : pkg.popular
-                      ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 shadow-xl hover:shadow-2xl'
-                      : 'bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl'
+                      ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300'
+                      : 'bg-white border-2 border-gray-200'
                   }`}
                   onClick={() => togglePackageSelection({...pkg, _id: pkgId})}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
                 >
-                  {/* Badge for popular package */}
                   {pkg.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-2 rounded-full text-base font-bold shadow-2xl z-10">
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-1 rounded-full text-sm font-bold z-10">
                       ⭐ الأكثر طلباً
                     </div>
                   )}
                   
-                  {/* Selection indicator */}
-                  <div className={`absolute top-8 right-8 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                  <div className={`absolute top-6 right-6 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                     isSelected 
                       ? 'bg-white border-white' 
                       : pkg.popular
@@ -774,41 +636,41 @@ const PhotographerDetailsPage = () => {
                       : 'border-gray-300'
                   }`}>
                     {isSelected ? (
-                      <span className="text-blue-600 text-xl font-bold">✓</span>
+                      <span className="text-blue-600 text-base font-bold">✓</span>
                     ) : pkg.popular ? (
-                      <span className="text-yellow-400 text-lg">★</span>
+                      <span className="text-yellow-400 text-sm">★</span>
                     ) : null}
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <div>
-                      <h4 className={`text-3xl font-bold mb-3 ${isSelected ? 'text-white' : 'text-gray-800'}`}>{pkg.name}</h4>
-                      <p className={`text-lg leading-relaxed ${isSelected ? 'text-blue-100' : 'text-gray-600'}`}>{pkg.description}</p>
+                      <h4 className={`text-xl font-bold mb-2 ${isSelected ? 'text-white' : 'text-gray-800'}`}>{pkg.name}</h4>
+                      <p className={`text-sm leading-relaxed ${isSelected ? 'text-blue-100' : 'text-gray-600'}`}>{pkg.description}</p>
                     </div>
                     
                     <div className="text-center">
-                      <div className={`text-4xl font-bold mb-2 ${isSelected ? 'text-white' : 'text-blue-600'}`}>
+                      <div className={`text-2xl font-bold mb-1 ${isSelected ? 'text-white' : 'text-blue-600'}`}>
                         {pkg.price.toLocaleString()} جنيه
                       </div>
                       {pkg.originalPrice && (
-                        <div className={`text-lg line-through ${isSelected ? 'text-blue-200' : 'text-gray-400'}`}>
+                        <div className={`text-sm line-through ${isSelected ? 'text-blue-200' : 'text-gray-400'}`}>
                           {pkg.originalPrice.toLocaleString()} جنيه
                         </div>
                       )}
                     </div>
                     
-                    <div className="space-y-4">
-                      <h5 className={`text-xl font-bold ${isSelected ? 'text-white' : 'text-gray-700'}`}>المميزات:</h5>
+                    <div className="space-y-2">
+                      <h5 className={`text-base font-bold ${isSelected ? 'text-white' : 'text-gray-700'}`}>المميزات:</h5>
                       {pkg.features?.map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
-                          <span className={`${isSelected ? 'text-green-300' : 'text-green-500'} text-xl`}>✓</span>
-                          <span className={`text-lg ${isSelected ? 'text-white' : 'text-gray-700'}`}>{feature}</span>
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className={`${isSelected ? 'text-green-300' : 'text-green-500'} text-base`}>✓</span>
+                          <span className={`text-sm ${isSelected ? 'text-white' : 'text-gray-700'}`}>{feature}</span>
                         </div>
                       ))}
                     </div>
                     
                     <button 
-                      className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
+                      className={`w-full py-3 rounded-xl font-bold text-base transition-all duration-300 ${
                         isSelected
                           ? 'bg-white text-blue-600 hover:bg-gray-100'
                           : pkg.popular
@@ -828,139 +690,87 @@ const PhotographerDetailsPage = () => {
     );
   };
 
-  // Render portfolio section
+  // Render portfolio section - عرض جميع الصور في معرض واحد
   const renderPortfolioSection = () => {
+    // جمع جميع الصور من الألبومات
+    const allImages = photographer.portfolio?.flatMap(album => 
+      album.images || []
+    ) || [];
+
     return (
-      <div className="space-y-8">
-        {/* Albums Grid - تصميم جديد */}
-        {photographer.portfolio && photographer.portfolio.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {photographer.portfolio.map((album, index) => (
+      <div className="space-y-6">
+        {/* Gallery Grid */}
+        {allImages.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {allImages.map((image, index) => (
               <motion.div
-                key={album._id || index}
-                className="group relative bg-white rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500 border border-gray-200 hover:border-blue-300"
+                key={index}
+                className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-blue-300"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
-                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ y: -4 }}
               >
-                {/* Album Cover */}
                 <div 
-                  className="relative h-72 cursor-pointer overflow-hidden"
-                  onClick={() => openAlbumModal(album)}
+                  className="relative h-48 cursor-pointer overflow-hidden"
+                  onClick={() => openLightbox(index)}
                 >
                   <img
-                    src={album.coverImage || "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800"}
-                    alt={album.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    src={image}
+                    alt={`معرض الصور ${index + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   
                   {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <div className="absolute bottom-6 left-6 right-6">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-3 left-3 right-3">
                       <div className="text-white text-center">
-                        <div className="text-4xl mb-3">👁️</div>
-                        <p className="font-bold text-lg">عرض الألبوم</p>
+                        <p className="font-bold text-xs">👁️ عرض الصورة</p>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Quick Info Badge */}
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-xl">
-                    <span className="text-blue-600 font-bold text-sm">
-                      {album.images?.length || 0} صورة
-                    </span>
-                  </div>
-                  
-                  {/* Category Badge */}
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-2xl text-sm font-bold shadow-xl">
-                      {album.category}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Album Info */}
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3 truncate">
-                    {album.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 text-lg leading-relaxed mb-6 line-clamp-2 min-h-[56px]">
-                    {album.description}
-                  </p>
-                  
-                  {/* Stats */}
-                  <div className="flex items-center justify-between border-t border-gray-100 pt-6">
-                    <div className="flex items-center gap-4">
-                      {album.videos && album.videos.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-500 text-xl">🎥</span>
-                          <span className="text-gray-600 text-sm">{album.videos.length}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-blue-500 text-xl">🖼️</span>
-                        <span className="text-gray-600 text-sm">{album.images?.length || 0}</span>
-                      </div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => openAlbumModal(album)}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-2xl text-base font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-                    >
-                      استعراض الألبوم
-                    </button>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
-            <div className="text-9xl mb-8">📷</div>
-            <h3 className="text-3xl font-bold text-gray-800 mb-4">لا توجد ألبومات متاحة</h3>
-            <p className="text-gray-600 text-xl">لم يقم المصور برفع أي ألبومات حتى الآن</p>
+          <div className="text-center py-12 bg-gradient-to-r from-gray-50 to-blue-50 rounded-3xl border-2 border-dashed border-gray-300">
+            <div className="text-7xl mb-4">📷</div>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">لا توجد صور متاحة</h3>
+            <p className="text-gray-600 text-base">لم يقم المصور برفع أي صور حتى الآن</p>
           </div>
         )}
         
-        {/* Albums Summary */}
-        {photographer.portfolio && photographer.portfolio.length > 0 && (
+        {/* Gallery Summary */}
+        {allImages.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-8 border border-blue-200 shadow-lg"
+            className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-6 border border-blue-200"
           >
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="text-center md:text-right mb-6 md:mb-0">
-                <h4 className="text-2xl font-bold text-gray-800 mb-3">📊 ملخص الألبومات</h4>
-                <p className="text-gray-600 text-xl">إجمالي {photographer.portfolio.length} ألبوم</p>
+              <div className="text-center md:text-right mb-4 md:mb-0">
+                <h4 className="text-lg font-bold text-gray-800 mb-2">📊 ملخص المعرض</h4>
+                <p className="text-gray-600 text-base">إجمالي {allImages.length} صورة</p>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {photographer.portfolio.reduce((total, album) => total + (album.images?.length || 0), 0)}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-2xl p-4 text-center">
+                  <div className="text-xl font-bold text-blue-600">
+                    {allImages.length}
                   </div>
-                  <div className="text-gray-600 text-lg">صورة</div>
+                  <div className="text-gray-600 text-sm">صورة</div>
                 </div>
-                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
-                  <div className="text-3xl font-bold text-red-600">
-                    {photographer.portfolio.reduce((total, album) => total + (album.videos?.length || 0), 0)}
+                <div className="bg-white rounded-2xl p-4 text-center">
+                  <div className="text-xl font-bold text-green-600">
+                    {photographer.portfolio?.length || 0}
                   </div>
-                  <div className="text-gray-600 text-lg">فيديو</div>
+                  <div className="text-gray-600 text-sm">ألبوم</div>
                 </div>
-                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
-                  <div className="text-3xl font-bold text-green-600">
-                    {new Set(photographer.portfolio.map(album => album.category)).size}
+                <div className="bg-white rounded-2xl p-4 text-center">
+                  <div className="text-xl font-bold text-purple-600">
+                    {new Set(photographer.portfolio?.map(album => album.category) || []).size}
                   </div>
-                  <div className="text-gray-600 text-lg">فئة</div>
-                </div>
-                <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
-                  <div className="text-3xl font-bold text-purple-600">
-                    {photographer.portfolio.length}
-                  </div>
-                  <div className="text-gray-600 text-lg">ألبوم</div>
+                  <div className="text-gray-600 text-sm">فئة</div>
                 </div>
               </div>
             </div>
@@ -981,83 +791,83 @@ const PhotographerDetailsPage = () => {
       >
         <div className="p-6">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-2xl font-bold text-gray-800">معلومات التواصل</h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-800">معلومات التواصل</h3>
             <button
               onClick={() => setMobileSidebarOpen(false)}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
+              className="text-gray-500 hover:text-gray-700 text-xl"
             >
               ✕
             </button>
           </div>
 
           {/* Profile Info */}
-          <div className="flex items-center gap-4 mb-8 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
+          <div className="flex items-center gap-3 mb-6 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
             <div className="relative">
               <img 
                 src={photographer.profileImage} 
                 alt={photographer.name}
-                className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg"
+                className="w-16 h-16 rounded-2xl object-cover border-2 border-white"
               />
-              <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-green-400 rounded-full border-2 border-white shadow-lg"></div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-800">{photographer.name}</h2>
-              <p className="text-blue-600 font-semibold">{photographer.specialty}</p>
+              <h2 className="text-base font-bold text-gray-800">{photographer.name}</h2>
+              <p className="text-blue-600 font-semibold text-sm">{photographer.specialty}</p>
             </div>
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-4 mb-8">
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white text-xl">
+          <div className="space-y-3 mb-6">
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-blue-500 rounded-2xl flex items-center justify-center text-white">
                   📞
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">رقم الهاتف</div>
-                  <div className="font-bold text-gray-800 text-lg">
+                  <div className="text-xs text-gray-600 mb-1">رقم الهاتف</div>
+                  <div className="font-bold text-gray-800 text-sm">
                     {formatContactInfo(photographer.contact)}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white text-xl">
+            <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-green-500 rounded-2xl flex items-center justify-center text-white">
                   📧
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">البريد الإلكتروني</div>
-                  <div className="font-bold text-gray-800 text-lg">
+                  <div className="text-xs text-gray-600 mb-1">البريد الإلكتروني</div>
+                  <div className="font-bold text-gray-800 text-sm">
                     {formatContactInfo(photographer.email, true)}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center text-white text-xl">
+            <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-purple-500 rounded-2xl flex items-center justify-center text-white">
                   📍
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">العنوان</div>
-                  <div className="font-bold text-gray-800">{photographer.address}</div>
+                  <div className="text-xs text-gray-600 mb-1">العنوان</div>
+                  <div className="font-bold text-gray-800 text-sm">{photographer.address}</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-3 mb-8">
+          <div className="space-y-2 mb-6">
             <button 
               onClick={() => {
                 handleConsultation();
                 setMobileSidebarOpen(false);
               }}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-2xl font-bold text-base"
             >
               💬 تواصل للاستشارة
             </button>
@@ -1068,102 +878,117 @@ const PhotographerDetailsPage = () => {
                   handleBookPhotographer();
                   setMobileSidebarOpen(false);
                 }}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-2xl font-bold text-base"
               >
                 💎 احجز الآن
               </button>
             )}
           </div>
-
-          {/* Social Media */}
-          {renderSocialMedia()}
         </div>
       </motion.div>
     );
   };
 
-  // Render Top Navigation Slider
-  const renderTopSlider = () => {
-    if (!showTopSlider) return null;
-
-    const slides = [
-      {
-        id: "home",
-        title: "🏠 الرئيسية",
-        description: "العودة للصفحة الرئيسية",
-        icon: "🏠",
-        action: () => navigate("/")
-      },
-      {
-        id: "photographers",
-        title: "📸 المصورين",
-        description: "استعراض جميع المصورين",
-        icon: "📸",
-        action: () => navigate("/photographers")
-      },
-      {
-        id: "halls",
-        title: "🎪 القاعات",
-        description: "تصفح قاعات الأفراح",
-        icon: "🎪",
-        action: () => navigate("/halls")
-      }
-    ];
-
+  // Render Contact Modal
+  const renderContactModal = () => {
     return (
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl mx-4 mt-4 mb-6 shadow-2xl overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        onClick={() => setShowContactModal(false)}
       >
-        <div className="p-4 flex justify-between items-center">
-          <div className="flex items-center gap-2 text-white">
-            <span className="text-2xl">🔙</span>
-            <h3 className="text-xl font-bold">العودة لـ:</h3>
-          </div>
-          <button
-            onClick={() => setShowTopSlider(false)}
-            className="text-white hover:text-gray-200 text-2xl"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-          {slides.map((slide) => (
-            <motion.button
-              key={slide.id}
-              onClick={() => {
-                slide.action();
-                setShowTopSlider(false);
-              }}
-              className={`bg-white/20 backdrop-blur-sm rounded-2xl p-6 border-2 transition-all duration-300 transform hover:scale-105 hover:bg-white/30 ${
-                activeSlide === slide.id 
-                  ? 'border-white border-4 shadow-2xl' 
-                  : 'border-white/50 hover:border-white'
-              }`}
-              whileHover={{ y: -5 }}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.8, opacity: 0 }}
+          className="relative bg-white rounded-3xl max-w-md w-full shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+            <h2 className="text-xl font-bold text-gray-800">تواصل مع المصور</h2>
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="text-gray-500 hover:text-gray-700 text-xl"
             >
-              <div className="flex flex-col items-center text-center">
-                <div className="text-4xl mb-3">{slide.icon}</div>
-                <h4 className="text-white text-xl font-bold mb-2">{slide.title}</h4>
-                <p className="text-white/80 text-sm">{slide.description}</p>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
-    );
-  };
+              ✕
+            </button>
+          </div>
 
-  // Render Photographers Button - زر جديد لاستعراض المصورين
-  const renderPhotographersButton = () => {
-    return (
-      <motion.div
-        
-      >
-        
+          {/* Content */}
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">📞</div>
+              <h3 className="text-lg font-bold text-gray-800 mb-2">اختر طريقة التواصل</h3>
+              <p className="text-gray-600 text-sm">تواصل مباشرة مع {photographer.name}</p>
+            </div>
+
+            <div className="space-y-3">
+              <button 
+                onClick={() => {
+                  handleConsultation();
+                  setShowContactModal(false);
+                }}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">💬</div>
+                  <div className="text-right">
+                    <div className="font-bold">استشارة مجانية</div>
+                    <div className="text-sm opacity-90">عبر واتساب</div>
+                  </div>
+                </div>
+                <div className="text-xl">→</div>
+              </button>
+
+              <button 
+                onClick={() => {
+                  if (selectedPackage) {
+                    handleBookPhotographer();
+                  }
+                  setShowContactModal(false);
+                }}
+                disabled={!selectedPackage}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all duration-300 ${
+                  selectedPackage
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">💎</div>
+                  <div className="text-right">
+                    <div className="font-bold">حجز الباقة</div>
+                    <div className="text-sm opacity-90">عبر واتساب</div>
+                  </div>
+                </div>
+                <div className="text-xl">→</div>
+              </button>
+
+              <button 
+                onClick={() => window.open(`mailto:${photographer.email}`, '_blank')}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-2xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">📧</div>
+                  <div className="text-right">
+                    <div className="font-bold">البريد الإلكتروني</div>
+                    <div className="text-sm opacity-90">إرسال رسالة</div>
+                  </div>
+                </div>
+                <div className="text-xl">→</div>
+              </button>
+            </div>
+
+            <div className="mt-6 p-4 bg-gray-50 rounded-2xl">
+              <p className="text-gray-600 text-sm text-center">
+                ⚡ سيتم فتح نافذة جديدة للتواصل
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
     );
   };
@@ -1172,9 +997,8 @@ const PhotographerDetailsPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600 mx-auto mb-6"></div>
-          <p className="text-gray-700 text-xl font-bold">جاري تحميل بيانات المصور...</p>
-          <p className="text-gray-500 text-lg mt-2">يرجى الانتظار قليلاً</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 text-base font-bold">جاري تحميل بيانات المصور...</p>
         </div>
       </div>
     );
@@ -1183,13 +1007,13 @@ const PhotographerDetailsPage = () => {
   if (error || !photographer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="text-center bg-white p-12 rounded-3xl border border-gray-200 shadow-2xl max-w-md">
-          <div className="text-8xl mb-6">😕</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">المصور غير موجود</h1>
-          <p className="text-gray-600 text-xl mb-8">{error}</p>
+        <div className="text-center bg-white p-8 rounded-3xl border border-gray-200 shadow-xl max-w-md">
+          <div className="text-6xl mb-4">😕</div>
+          <h1 className="text-xl font-bold text-gray-800 mb-3">المصور غير موجود</h1>
+          <p className="text-gray-600 text-base mb-6">{error}</p>
           <button 
             onClick={() => navigate('/photographers')}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-2xl font-bold text-base"
           >
             العودة للقائمة
           </button>
@@ -1218,70 +1042,24 @@ const PhotographerDetailsPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Top Slider */}
+      {/* Contact Modal */}
       <AnimatePresence>
-        {renderTopSlider()}
+        {showContactModal && renderContactModal()}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Left: Navigation Button */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowTopSlider(!showTopSlider)}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <span className="text-2xl">{showTopSlider ? "✕" : "🔙"}</span>
-              </button>
-              
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setMobileSidebarOpen(true)}
-                className="lg:hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
-              >
-                <span className="text-xl">👤</span>
-              </button>
-            </div>
-            
-            {/* Center: Title */}
-            <div className="text-center flex-1">
-              <h1 className="text-2xl font-bold text-gray-800">
-                {photographer.businessName}
-              </h1>
-              <p className="text-gray-600 text-lg">مصور محترف متخصص في {photographer.specialty}</p>
-            </div>
-            
-            {/* Right: Share Button */}
-            <button
-              onClick={() => {
-                const shareUrl = window.location.href;
-                navigator.clipboard.writeText(shareUrl);
-                alert('✅ تم نسخ رابط المصور!');
-              }}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hidden lg:flex items-center gap-2"
-            >
-              <span>📤</span>
-              مشاركة
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             {/* Portfolio Gallery */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-2xl"
+              className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xl"
             >
               {/* Main Image Slider */}
-              <div className="relative h-96 lg:h-[500px] bg-gray-100">
+              <div className="relative h-80 lg:h-96 bg-gray-100">
                 {sliderImages.length > 0 ? (
                   <>
                     <img 
@@ -1296,13 +1074,13 @@ const PhotographerDetailsPage = () => {
                       <>
                         <button
                           onClick={prevImage}
-                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
                         >
                           ←
                         </button>
                         <button
                           onClick={nextImage}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
                         >
                           →
                         </button>
@@ -1311,18 +1089,10 @@ const PhotographerDetailsPage = () => {
 
                     {/* Image Counter */}
                     {hasMultipleImages && (
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-lg font-bold shadow-lg">
+                      <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm font-bold">
                         {selectedImage + 1} / {sliderImages.length}
                       </div>
                     )}
-
-                    {/* Auto Slide Toggle */}
-                  
-
-                    {/* Badge */}
-                    <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-2xl text-base font-bold shadow-2xl">
-                      🎰 انقر علي الصورة للعرض الكامل
-                    </div>
                   </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-500">
@@ -1333,22 +1103,22 @@ const PhotographerDetailsPage = () => {
 
               {/* Thumbnails */}
               {hasMultipleImages && (
-                <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50">
-                  <div className="flex space-x-4 overflow-x-auto pb-2">
+                <div className="p-3 bg-gradient-to-r from-gray-50 to-blue-50">
+                  <div className="flex space-x-3 overflow-x-auto pb-1">
                     {sliderImages.map((image, index) => (
                       <button
                         key={index}
                         onClick={() => setSelectedImage(index)}
-                        className={`flex-shrink-0 rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-lg ${
+                        className={`flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
                           selectedImage === index 
-                            ? 'border-blue-500 scale-110 shadow-xl' 
-                            : 'border-gray-300 hover:border-blue-300 hover:scale-105'
+                            ? 'border-blue-500 scale-105' 
+                            : 'border-gray-300 hover:border-blue-300'
                         }`}
                       >
                         <img 
                           src={image} 
                           alt={`${photographer.name} ${index + 1}`}
-                          className="w-24 h-20 object-cover"
+                          className="w-20 h-16 object-cover"
                         />
                       </button>
                     ))}
@@ -1361,32 +1131,30 @@ const PhotographerDetailsPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white rounded-3xl p-8 text-center shadow-2xl"
+              className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white rounded-3xl p-6 text-center"
             >
-              <div className="text-5xl font-bold mb-3">
+              <div className="text-3xl font-bold mb-2">
                 {selectedPackage ? selectedPackage.price.toLocaleString() : parseInt(photographer.price || 0).toLocaleString()} جنيه
               </div>
-              <div className="text-gray-300 text-xl">
+              <div className="text-gray-300 text-base">
                 {selectedPackage ? `سعر ${selectedPackage.name}` : 'يبدأ السعر من'}
               </div>
               {selectedPackage && selectedPackage.originalPrice && (
-                <div className="text-gray-400 text-lg line-through mt-3">
+                <div className="text-gray-400 text-sm line-through mt-2">
                   {selectedPackage.originalPrice.toLocaleString()} جنيه
                 </div>
               )}
             </motion.div>
 
-            {/* Tabs Section - Updated */}
+            {/* Tabs Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-3xl border border-gray-200 shadow-2xl"
+              className="bg-white rounded-3xl border border-gray-200 shadow-xl"
             >
-              {/* Tabs Header - Only Portfolio and Packages */}
+              {/* Tabs Header */}
               <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
-                <nav className="flex space-x-2 p-2 overflow-x-auto">
+                <nav className="flex space-x-1 p-1 overflow-x-auto">
                   {[
                     { id: "portfolio", name: "المعرض", icon: "🖼️" },
                     { id: "packages", name: "الباقات", icon: "💰" },
@@ -1395,13 +1163,13 @@ const PhotographerDetailsPage = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`py-4 px-6 border-b-4 font-bold text-lg transition-all duration-300 whitespace-nowrap rounded-xl ${
+                      className={`py-3 px-4 border-b-2 font-bold text-base transition-all duration-300 whitespace-nowrap rounded-lg ${
                         activeTab === tab.id
-                          ? 'border-blue-500 text-blue-600 bg-white shadow-xl'
+                          ? 'border-blue-500 text-blue-600 bg-white'
                           : 'border-transparent text-gray-600 hover:text-blue-500 hover:bg-white/70'
                       }`}
                     >
-                      <span className="ml-3 text-2xl">{tab.icon}</span>
+                      <span className="ml-2">{tab.icon}</span>
                       {tab.name}
                     </button>
                   ))}
@@ -1409,7 +1177,7 @@ const PhotographerDetailsPage = () => {
               </div>
 
               {/* Tabs Content */}
-              <div className="p-6 lg:p-8">
+              <div className="p-4 lg:p-6">
                 {activeTab === "portfolio" && renderPortfolioSection()}
                 {activeTab === "packages" && renderPackagesSection()}
                 {activeTab === "details" && renderDetailsSection()}
@@ -1423,67 +1191,54 @@ const PhotographerDetailsPage = () => {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-3xl border border-gray-200 p-8 self-start shadow-2xl"
+              className="bg-white rounded-3xl border border-gray-200 p-6 self-start shadow-xl"
             >
-              <div className="flex items-center gap-6 mb-8">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="relative">
                   <img 
                     src={photographer.profileImage} 
                     alt={photographer.name}
-                    className="w-28 h-28 rounded-3xl object-cover border-4 border-blue-100 shadow-2xl"
+                    className="w-24 h-24 rounded-3xl object-cover border-2 border-blue-100"
                   />
-                  <div className="absolute -bottom-3 -right-3 w-7 h-7 bg-green-400 rounded-full border-3 border-white shadow-2xl"></div>
+                  <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-2 border-white"></div>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-800">{photographer.name}</h2>
-                  <p className="text-blue-600 font-bold text-lg">{photographer.specialty}</p>
-                  <p className="text-gray-600 text-lg">{photographer.businessName}</p>
+                  <h2 className="text-xl font-bold text-gray-800">{photographer.name}</h2>
+                  <p className="text-blue-600 font-bold text-base">{photographer.specialty}</p>
+                  <p className="text-gray-600 text-sm">{photographer.businessName}</p>
                 </div>
               </div>
 
-              <div className="space-y-4 mb-8">
-                <div className="flex justify-between items-center p-5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 shadow-lg">
-                  <span className="font-bold text-gray-700 text-lg">التقييم:</span>
-                  <div className="flex items-center gap-3">
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
+                  <span className="font-semibold text-gray-700 text-sm">التقييم:</span>
+                  <div className="flex items-center gap-2">
                     {renderStars(photographer.rating)}
                   </div>
                 </div>
-                <div className="flex justify-between items-center p-5 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border border-green-200 shadow-lg">
-                  <span className="font-bold text-gray-700 text-lg">الخبرة:</span>
-                  <span className="font-bold text-green-600 text-xl">{photographer.experience} سنة</span>
+                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl">
+                  <span className="font-semibold text-gray-700 text-sm">الخبرة:</span>
+                  <span className="font-bold text-green-600 text-base">{photographer.experience} سنة</span>
                 </div>
-                <div className="flex justify-between items-center p-5 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border border-purple-200 shadow-lg">
-                  <span className="font-bold text-gray-700 text-lg">المكان:</span>
-                  <span className="font-bold text-purple-600 text-lg text-right">{photographer.city}، {photographer.governorate}</span>
+                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl">
+                  <span className="font-semibold text-gray-700 text-sm">المكان:</span>
+                  <span className="font-bold text-purple-600 text-sm text-right">{photographer.city}، {photographer.governorate}</span>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <button 
-                  onClick={handleBookPhotographer}
-                  disabled={!selectedPackage}
-                  className={`w-full py-5 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-4 shadow-xl ${
-                    selectedPackage
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white transform hover:scale-105'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  <span>💎</span>
-                  {selectedPackage ? 'احجز الآن' : 'اختر باقة أولاً'}
-                </button>
-
-                <button 
-                  onClick={handleConsultation}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-5 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-4 shadow-xl transform hover:scale-105"
+                  onClick={() => setShowContactModal(true)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-3"
                 >
                   <span>💬</span>
-                  استشارة مجانية
+                  تواصل مع المصور
                 </button>
 
                 {selectedPackage && (
                   <button 
                     onClick={deselectPackage}
-                    className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-4 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105"
+                    className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-2 rounded-2xl font-bold text-sm transition-all duration-300"
                   >
                     🔄 إلغاء اختيار الباقة
                   </button>
@@ -1491,61 +1246,46 @@ const PhotographerDetailsPage = () => {
               </div>
             </motion.div>
 
-            {/* Contact Info - Updated with hidden info */}
+            {/* Contact Info */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-3xl border border-gray-200 p-8 shadow-2xl"
+              className="bg-white rounded-3xl border border-gray-200 p-6 shadow-xl"
             >
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-                <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-2xl">📞</span>
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-2 rounded-2xl">📞</span>
                 معلومات التواصل
               </h3>
-              <div className="space-y-5">
-                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 shadow-lg">
-                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white">
                     📞
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm text-gray-600 mb-2">رقم الهاتف</div>
-                    <div className="font-bold text-gray-800 text-xl">
+                    <div className="text-xs text-gray-600 mb-1">رقم الهاتف</div>
+                    <div className="font-bold text-gray-800 text-base">
                       {formatContactInfo(photographer.contact)}
                     </div>
-                    <p className="text-gray-500 text-sm mt-1">(الرقم مخفي للحماية)</p>
                   </div>
-                  <button
-                    onClick={handleConsultation}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors"
-                  >
-                    تواصل
-                  </button>
                 </div>
-                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border border-green-200 shadow-lg">
-                  <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl">
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white">
                     📧
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm text-gray-600 mb-2">البريد الإلكتروني</div>
-                    <div className="font-bold text-gray-800 text-xl">
+                    <div className="text-xs text-gray-600 mb-1">البريد الإلكتروني</div>
+                    <div className="font-bold text-gray-800 text-base">
                       {formatContactInfo(photographer.email, true)}
                     </div>
-                    <p className="text-gray-500 text-sm mt-1">(الإيميل مخفي للحماية)</p>
                   </div>
-                  <button
-                    onClick={() => window.open(`mailto:${photographer.email}`, '_blank')}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors"
-                  >
-                    إرسال
-                  </button>
                 </div>
-                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border border-purple-200 shadow-lg">
-                  <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl">
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white">
                     📍
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm text-gray-600 mb-2">العنوان</div>
-                    <div className="font-bold text-gray-800 text-lg leading-relaxed">{photographer.address}</div>
+                    <div className="text-xs text-gray-600 mb-1">العنوان</div>
+                    <div className="font-bold text-gray-800 text-sm">{photographer.address}</div>
                   </div>
                 </div>
               </div>
@@ -1559,28 +1299,40 @@ const PhotographerDetailsPage = () => {
 
       {/* Floating Action Buttons for Mobile */}
       <div className="lg:hidden fixed bottom-6 right-6 z-30 flex flex-col gap-3">
-        {/* Photographers Button */}
-        <motion.button
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          onClick={() => navigate("/photographers")}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-300 relative group"
-        >
-          
-        </motion.button>
-
         {/* Contact Button */}
         <button
           onClick={() => setMobileSidebarOpen(true)}
-          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-300"
+          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl"
         >
-          <span className="text-2xl">💬</span>
+          <span className="text-xl">💬</span>
         </button>
       </div>
 
-      {/* Photographers Button for Desktop - جديد */}
-      {renderPhotographersButton()}
+      {/* Contact Button at Bottom */}
+      <div className="lg:hidden fixed bottom-6 left-6 z-30">
+        <button
+          onClick={() => setShowContactModal(true)}
+          className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-2xl font-bold text-base shadow-xl flex items-center gap-2"
+        >
+          <span>📞</span>
+          تواصل
+        </button>
+      </div>
+
+      {/* Photographers Navigation Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed bottom-24 right-6 z-30 lg:hidden"
+      >
+        <button
+          onClick={() => navigate("/photographers")}
+          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-2xl font-bold text-sm shadow-xl flex items-center gap-2"
+        >
+          <span>📸</span>
+          المصورين
+        </button>
+      </motion.div>
 
       {/* Lightbox for Gallery */}
       <AnimatePresence>
@@ -1601,7 +1353,7 @@ const PhotographerDetailsPage = () => {
             >
               <button
                 onClick={closeLightbox}
-                className="absolute -top-16 right-0 text-white hover:text-gray-300 transition-colors z-10 text-3xl"
+                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10 text-2xl"
               >
                 ✕
               </button>
@@ -1616,18 +1368,18 @@ const PhotographerDetailsPage = () => {
                 <>
                   <button
                     onClick={prevLightboxImage}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300"
                   >
                     ←
                   </button>
                   <button
                     onClick={nextLightboxImage}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300"
                   >
                     →
                   </button>
                   
-                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-full text-lg font-bold shadow-2xl">
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-bold">
                     {lightboxImageIndex + 1} / {sliderImages.length}
                   </div>
                 </>
@@ -1655,19 +1407,68 @@ const PhotographerDetailsPage = () => {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
-                <h2 className="text-2xl font-bold text-gray-800">{selectedAlbum.title}</h2>
+              <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+                <h2 className="text-lg font-bold text-gray-800">{selectedAlbum.title}</h2>
                 <button
                   onClick={closeAlbumModal}
-                  className="text-gray-500 hover:text-gray-700 text-2xl transition-colors"
+                  className="text-gray-500 hover:text-gray-700 text-xl"
                 >
                   ✕
                 </button>
               </div>
 
               {/* Content */}
-              <div className="p-6 max-h-[70vh] overflow-y-auto">
-                {renderAlbumModalContent()}
+              <div className="p-4 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-4">
+                  {selectedAlbum.images && selectedAlbum.images.length > 0 && (
+                    <div className="relative">
+                      <div className="relative h-64 bg-black rounded-xl overflow-hidden">
+                        <img 
+                          src={selectedAlbum.images[albumImageIndex]} 
+                          alt={`${selectedAlbum.title} - ${albumImageIndex + 1}`}
+                          className="w-full h-full object-contain"
+                        />
+                        
+                        {selectedAlbum.images.length > 1 && (
+                          <>
+                            <button
+                              onClick={prevAlbumImage}
+                              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center"
+                            >
+                              ←
+                            </button>
+                            <button
+                              onClick={nextAlbumImage}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center"
+                            >
+                              →
+                            </button>
+                          </>
+                        )}
+
+                        {selectedAlbum.images.length > 1 && (
+                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-medium">
+                            {albumImageIndex + 1} / {selectedAlbum.images.length}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 className="text-base font-bold text-gray-800 mb-2">{selectedAlbum.title}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-3">{selectedAlbum.description}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                        {selectedAlbum.category}
+                      </span>
+                      <span className="text-gray-500 text-xs">
+                        {selectedAlbum.images?.length || 0} صورة
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
