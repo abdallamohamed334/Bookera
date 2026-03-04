@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "auth-tutorial": "file:..",
+    "bootstrap-icons": "^1.13.1",
     "axios": "^1.7.3",
     "firebase": "^12.6.0",
     "framer-motion": "^11.3.21",
