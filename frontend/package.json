@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "auth-tutorial": "file:..",
     "axios": "^1.7.3",
+    "bootstrap-icons": "^1.11.3",
     "firebase": "^12.6.0",
     "framer-motion": "^11.3.21",
     "leaflet": "^1.9.4",
