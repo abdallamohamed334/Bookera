@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const VenueCard = ({ 
   venue, 
@@ -10,12 +11,14 @@ const VenueCard = ({
   // States
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState([]);
   const [touchStart, setTouchStart] = useState(0);
+  const [showControls, setShowControls] = useState(false);
   
   // Refs
   const autoPlayRef = useRef(null);
   const cardRef = useRef(null);
+  const slideIntervalRef = useRef(null);
   
   // تنظيف الصور - أخذ 8 صور فقط
   const images = venue.images?.slice(0, 8) || 
@@ -27,14 +30,27 @@ const VenueCard = ({
                 `${(venue.price || venue.starting_price).toLocaleString()} ج.م` : 
                 "تواصل للسعر";
   
+  // تهيئة حالة تحميل الصور
+  useEffect(() => {
+    setImagesLoaded(new Array(images.length).fill(false));
+  }, [images.length]);
+
   // Handlers
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
-    onToggleFavorite?.(venue.id);
+    onToggleFavorite?.(venue.id || venue._id);
   };
 
   const handleImageError = (e) => {
     e.target.src = "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80";
+  };
+
+  const handleImageLoad = (index) => {
+    setImagesLoaded(prev => {
+      const newState = [...prev];
+      newState[index] = true;
+      return newState;
+    });
   };
 
   const handleTouchStart = (e) => {
@@ -48,160 +64,196 @@ const VenueCard = ({
     if (Math.abs(diff) > 50 && images.length > 1) {
       if (diff > 0) {
         // Swipe right
-        setCurrentImageIndex(prev => prev > 0 ? prev - 1 : images.length - 1);
+        goToPrevImage();
       } else {
         // Swipe left
-        setCurrentImageIndex(prev => prev < images.length - 1 ? prev + 1 : 0);
+        goToNextImage();
       }
     }
   };
 
-  const handleNextImage = (e) => {
+  const goToNextImage = (e) => {
     e?.stopPropagation();
     if (images.length > 1) {
       setCurrentImageIndex(prev => prev < images.length - 1 ? prev + 1 : 0);
     }
   };
 
-  const handlePrevImage = (e) => {
+  const goToPrevImage = (e) => {
     e?.stopPropagation();
     if (images.length > 1) {
       setCurrentImageIndex(prev => prev > 0 ? prev - 1 : images.length - 1);
     }
   };
 
-  // Effects
+  const goToImage = (index, e) => {
+    e?.stopPropagation();
+    setCurrentImageIndex(index);
+  };
+
+  // Auto-play effect
   useEffect(() => {
-    if (isHovering && images.length > 1) {
-      autoPlayRef.current = setInterval(() => {
+    if (isHovering || showControls) {
+      // Start autoplay when hovering
+      slideIntervalRef.current = setInterval(() => {
         setCurrentImageIndex(prev => (prev + 1) % images.length);
-      }, 4000);
+      }, 3000);
     }
     
     return () => {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
+      if (slideIntervalRef.current) {
+        clearInterval(slideIntervalRef.current);
       }
     };
-  }, [isHovering, images.length]);
+  }, [isHovering, showControls, images.length]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (slideIntervalRef.current) {
+        clearInterval(slideIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Get venue type display name
+  const getVenueTypeDisplay = () => {
+    const types = {
+      'قاعة_أفراح': 'قاعة أفراح',
+      'قصر': 'قصر',
+      'فندق': 'فندق',
+      'منتجع': 'منتجع',
+      'نادي': 'نادي'
+    };
+    return types[venue.type] || venue.type || 'قاعة';
+  };
 
   return (
     <div 
       ref={cardRef}
-      className="relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200 group"
+      className="relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-amber-100 group"
       onClick={() => onVenueClick?.(venue)}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseEnter={() => {
+        setIsHovering(true);
+        setShowControls(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovering(false);
+        setShowControls(false);
+      }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 🔮 الصور */}
-      <div className="relative h-64 overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
-        {/* الصورة الحالية */}
-        <img
-          src={images[currentImageIndex]}
-          alt={venue.name}
-          className={`w-full h-full object-cover transition-transform duration-700 ${
-            isHovering ? 'scale-110' : 'scale-100'
-          } ${!imageLoaded ? 'opacity-0' : 'opacity-100'}`}
-          onLoad={() => setImageLoaded(true)}
-          onError={handleImageError}
-          loading="lazy"
-        />
+      {/* 📸 صالة عرض الصور (السلايدر) */}
+      <div className="relative h-72 overflow-hidden bg-gradient-to-br from-amber-900 to-amber-800">
+        {/* حاوية الصور المتحركة */}
+        <div 
+          className="flex transition-transform duration-700 ease-out h-full"
+          style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+        >
+          {images.map((image, index) => (
+            <div key={index} className="w-full h-full flex-shrink-0 relative">
+              <img
+                src={image}
+                alt={`${venue.name} - صورة ${index + 1}`}
+                className={`w-full h-full object-cover transition-all duration-700 ${
+                  isHovering ? 'scale-110' : 'scale-100'
+                }`}
+                onLoad={() => handleImageLoad(index)}
+                onError={handleImageError}
+                loading="lazy"
+              />
+              
+              {/* حالة التحميل */}
+              {!imagesLoaded[index] && (
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-900 to-amber-800 animate-pulse flex items-center justify-center">
+                  <i className="bi bi-image text-amber-500/50 text-4xl"></i>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* طبقة تدرجية سفلية */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
-        {/* حالة التحميل */}
-        {!imageLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 animate-pulse" />
-        )}
-        
-        {/* طبقة تدرجية */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        
-        {/* ❤️ زر المفضلة */}
+        {/* ❤️ زر المفضلة - Bootstrap Icons */}
         <button
           onClick={handleFavoriteClick}
-          className="absolute top-3 right-3 z-10 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 border border-gray-200"
+          className="absolute top-4 right-4 z-20 w-12 h-12 bg-white/95 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl hover:scale-110 transition-all duration-300 border border-amber-200 group"
         >
-          <svg
-            className={`w-5 h-5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
-            fill={isFavorite ? "currentColor" : "none"}
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
+          <i className={`bi bi-heart${isFavorite ? '-fill' : ''} text-2xl ${
+            isFavorite ? 'text-amber-600' : 'text-gray-600 group-hover:text-amber-600'
+          }`}></i>
         </button>
+        
+        {/* 🏷️ بادج نوع القاعة */}
+        <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-sm text-amber-700 px-4 py-2 rounded-xl shadow-lg border border-amber-200">
+          <div className="flex items-center gap-2">
+            <i className="bi bi-building text-lg"></i>
+            <span className="text-sm font-bold">{getVenueTypeDisplay()}</span>
+          </div>
+        </div>
         
         {/* ✨ بادج الخصم */}
         {venue.discount > 0 && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-amber-600 to-amber-500 text-white px-3 py-1.5 rounded-lg shadow-lg">
-            <div className="flex items-center gap-1 text-sm font-bold">
-              <span>🎯</span>
-              <span>{venue.discount}% خصم</span>
+          <div className="absolute top-20 left-4 z-20 bg-gradient-to-r from-amber-600 to-amber-500 text-white px-4 py-2 rounded-xl shadow-lg">
+            <div className="flex items-center gap-2">
+              <i className="bi bi-tag-fill text-sm"></i>
+              <span className="text-sm font-bold">خصم {venue.discount}%</span>
             </div>
           </div>
         )}
         
         {/* 💰 سعر القاعة */}
-        <div className="absolute bottom-3 right-3 bg-gradient-to-r from-gray-700 to-gray-800 text-white px-4 py-2.5 rounded-xl shadow-lg border border-gray-600">
+        <div className="absolute bottom-4 right-4 z-20 bg-white/95 backdrop-blur-sm text-amber-700 px-4 py-2.5 rounded-xl shadow-lg border border-amber-200">
           <div className="text-center">
-            <div className="text-xs font-semibold text-gray-300">بداية السعر</div>
-            <div className="text-lg font-bold">{price}</div>
+            <div className="text-xs font-semibold text-gray-500 flex items-center justify-center gap-1">
+              <i className="bi bi-currency-exchange"></i>
+              <span>بداية السعر</span>
+            </div>
+            <div className="text-xl font-bold">{price}</div>
           </div>
         </div>
         
         {/* ⭐ التقييم */}
-        <div className="absolute bottom-3 left-3 bg-gradient-to-r from-gray-700 to-gray-800 text-white px-3 py-1.5 rounded-xl shadow-lg border border-gray-600">
-          <div className="flex items-center gap-1">
-            <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            <span className="font-bold text-sm">{venue.rating || 4.5}</span>
-            <span className="text-xs text-gray-300">/5</span>
+        <div className="absolute bottom-4 left-4 z-20 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-amber-200">
+          <div className="flex items-center gap-2">
+            <i className="bi bi-star-fill text-amber-400 text-lg"></i>
+            <span className="font-bold text-gray-800">{venue.rating || 4.5}</span>
+            <span className="text-sm text-gray-500">({venue.reviewCount || 128}+)</span>
           </div>
         </div>
         
-        {/* 🖼️ أسهم التنقل */}
-        {images.length > 1 && isHovering && (
+        {/* ⬅️➡️ أسهم التنقل في السلايدر */}
+        {images.length > 1 && showControls && (
           <>
             <button
-              onClick={handlePrevImage}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors duration-200 z-10 border border-gray-300"
+              onClick={goToPrevImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-xl hover:bg-white hover:scale-110 transition-all duration-300 border border-amber-200"
             >
-              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <i className="bi bi-chevron-right text-2xl text-amber-700"></i>
             </button>
             <button
-              onClick={handleNextImage}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors duration-200 z-10 border border-gray-300"
+              onClick={goToNextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-xl hover:bg-white hover:scale-110 transition-all duration-300 border border-amber-200"
             >
-              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <i className="bi bi-chevron-left text-2xl text-amber-700"></i>
             </button>
           </>
         )}
         
-        {/* نقاط الصور */}
+        {/* 🎯 نقاط مؤشرات الصور */}
         {images.length > 1 && (
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 flex gap-2">
             {images.map((_, idx) => (
               <button
                 key={idx}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentImageIndex(idx);
-                }}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                onClick={(e) => goToImage(idx, e)}
+                className={`transition-all duration-300 ${
                   idx === currentImageIndex 
-                    ? 'bg-white w-6' 
-                    : 'bg-white/60 hover:bg-white'
+                    ? 'w-8 h-2.5 bg-amber-500 rounded-full' 
+                    : 'w-2.5 h-2.5 bg-white/70 hover:bg-white rounded-full'
                 }`}
               />
             ))}
@@ -209,12 +261,12 @@ const VenueCard = ({
         )}
       </div>
 
-      {/* 📝 معلومات القاعة */}
-      <div className="p-5">
-        {/* الصورة الشخصية للقاعة + الاسم */}
-        <div className="flex items-start gap-4 mb-4">
+      {/* 📝 محتوى الكارد */}
+      <div className="p-6">
+        {/* الصورة الشخصية + الاسم + الموقع */}
+        <div className="flex items-start gap-4 mb-6">
           {/* الصورة الشخصية */}
-          <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm">
+          <div className="w-20 h-20 rounded-xl overflow-hidden border-3 border-amber-200 shadow-lg flex-shrink-0">
             <img 
               src={venue.profile_image || images[0]} 
               alt={venue.name}
@@ -223,87 +275,85 @@ const VenueCard = ({
             />
           </div>
           
-          {/* الاسم والمكان */}
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-800 mb-1 line-clamp-1">
+          {/* الاسم والموقع */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
               {venue.name}
             </h3>
             <div className="flex items-center gap-2 text-gray-600">
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <i className="bi bi-geo-alt-fill text-amber-500"></i>
               <span className="text-sm truncate">{venue.city || venue.location || "غير محدد"}</span>
             </div>
           </div>
         </div>
 
         {/* 📊 الإحصائيات الأساسية */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           {/* السعة */}
-          <div className="text-center p-3 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="text-2xl font-bold text-gray-800">{venue.capacity || 0}</div>
-            <div className="text-xs text-gray-600 mt-1 font-medium">سعة الأشخاص</div>
+          <div className="text-center p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <i className="bi bi-people-fill text-2xl text-amber-600 mb-1 block"></i>
+            <div className="text-xl font-bold text-gray-800">{venue.capacity || 0}</div>
+            <div className="text-xs text-gray-600">أقصى سعة</div>
           </div>
           
+          {/* الغرف */}
+          <div className="text-center p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <i className="bi bi-door-open-fill text-2xl text-amber-600 mb-1 block"></i>
+            <div className="text-xl font-bold text-gray-800">
+              {venue.weddingSpecific?.brideRoom ? '2' : '1'}+
+            </div>
+            <div className="text-xs text-gray-600">غرف عروس</div>
+          </div>
           
-          
-        
+          {/* موقف السيارات */}
+          <div className="text-center p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <i className="bi bi-car-front-fill text-2xl text-amber-600 mb-1 block"></i>
+            <div className="text-xl font-bold text-gray-800">{venue.parkingCapacity || 50}</div>
+            <div className="text-xs text-gray-600">موقف سيارات</div>
+          </div>
         </div>
 
-        {/* 🏷️ المميزات الأساسية */}
-        <div className="mb-5">
-          <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-            <span>✨</span>
-            المميزات الأساسية
+        {/* ✨ المميزات والخدمات */}
+        <div className="mb-6">
+          <h4 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+            <i className="bi bi-stars text-amber-500"></i>
+            <span>المميزات والخدمات</span>
           </h4>
-          <div className="flex flex-wrap gap-2">
-            {/* كافيه */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-lg">☕</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">كافيه</span>
-            </div>
-            
-            {/* حمامات */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-lg">🚿</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">حمامات</span>
-            </div>
-            
-            {/* تكييفات */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-lg">❄️</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">تكييفات</span>
-            </div>
-            
+          <div className="grid grid-cols-3 gap-3">
             {/* واي فاي */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-lg">📶</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">واي فاي</span>
+            <div className="flex flex-col items-center gap-1 p-2 bg-gray-50 rounded-xl border border-gray-200">
+              <i className={`bi bi-wifi text-xl ${venue.hasWifi ? 'text-amber-600' : 'text-gray-400'}`}></i>
+              <span className="text-xs font-medium text-gray-700">واي فاي</span>
             </div>
             
-            {/* موقف سيارات */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-lg">🚗</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">موقف سيارات</span>
+            {/* مسبح */}
+            <div className="flex flex-col items-center gap-1 p-2 bg-gray-50 rounded-xl border border-gray-200">
+              <i className={`bi bi-water text-xl ${venue.hasPool ? 'text-amber-600' : 'text-gray-400'}`}></i>
+              <span className="text-xs font-medium text-gray-700">مسبح</span>
             </div>
             
-            {/* أماكن تصوير */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-lg">📸</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">أماكن تصوير</span>
+            {/* كاترينج */}
+            <div className="flex flex-col items-center gap-1 p-2 bg-gray-50 rounded-xl border border-gray-200">
+              <i className={`bi bi-cup-hot-fill text-xl ${venue.cateringService ? 'text-amber-600' : 'text-gray-400'}`}></i>
+              <span className="text-xs font-medium text-gray-700">كاترينج</span>
+            </div>
+            
+            {/* منصة */}
+            <div className="flex flex-col items-center gap-1 p-2 bg-gray-50 rounded-xl border border-gray-200">
+              <i className={`bi bi-easel2-fill text-xl ${venue.hasStage ? 'text-amber-600' : 'text-gray-400'}`}></i>
+              <span className="text-xs font-medium text-gray-700">منصة</span>
+            </div>
+            
+            {/* حديقة */}
+            <div className="flex flex-col items-center gap-1 p-2 bg-gray-50 rounded-xl border border-gray-200">
+              <i className={`bi bi-tree-fill text-xl ${venue.hasGarden ? 'text-amber-600' : 'text-gray-400'}`}></i>
+              <span className="text-xs font-medium text-gray-700">حديقة</span>
+            </div>
+            
+            {/* تكييف */}
+            <div className="flex flex-col items-center gap-1 p-2 bg-gray-50 rounded-xl border border-gray-200">
+              <i className="bi bi-snow2 text-xl text-amber-600"></i>
+              <span className="text-xs font-medium text-gray-700">تكييف</span>
             </div>
           </div>
         </div>
@@ -315,25 +365,27 @@ const VenueCard = ({
               e.stopPropagation();
               onVenueClick?.(venue);
             }}
-            className="flex-1 py-3 bg-gray-800 text-white rounded-xl font-semibold text-sm hover:bg-gray-900 active:scale-95 transition-all duration-200 border border-gray-700"
+            className="flex-1 py-3.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 active:scale-95 transition-all duration-200 shadow-lg shadow-amber-200 flex items-center justify-center gap-2"
           >
-            تفاصيل القاعة
+            <i className="bi bi-info-circle-fill"></i>
+            <span>تفاصيل القاعة</span>
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onBookNow?.(venue);
             }}
-            className="flex-1 py-3 bg-white text-gray-800 rounded-xl font-semibold text-sm hover:bg-gray-50 active:scale-95 transition-all duration-200 border border-gray-300 shadow-sm"
+            className="flex-1 py-3.5 bg-white text-amber-700 rounded-xl font-bold text-sm hover:bg-amber-50 active:scale-95 transition-all duration-200 border-2 border-amber-200 shadow-lg flex items-center justify-center gap-2"
           >
-            حجز فوري
+            <i className="bi bi-calendar-check-fill"></i>
+            <span>حجز فوري</span>
           </button>
         </div>
       </div>
 
-      {/* ✨ لمسات جمالية */}
-      <div className="absolute -top-3 -right-3 w-12 h-12 bg-gradient-to-r from-gray-300 to-gray-400 rounded-full blur-xl opacity-20" />
-      <div className="absolute -bottom-3 -left-3 w-16 h-16 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full blur-xl opacity-20" />
+      {/* ✨ تأثيرات زخرفية */}
+      <div className="absolute -top-3 -right-3 w-16 h-16 bg-gradient-to-r from-amber-300 to-amber-400 rounded-full blur-xl opacity-30" />
+      <div className="absolute -bottom-3 -left-3 w-20 h-20 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full blur-xl opacity-30" />
     </div>
   );
 };

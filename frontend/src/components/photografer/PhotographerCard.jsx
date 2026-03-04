@@ -220,28 +220,29 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* صورة كاملة في الأعلى */}
-      <div className="relative h-80 w-full flex-shrink-0">
+      {/* صورة مصغرة في الأعلى - مع تعديل لعرض الصور كاملة بالطول والعرض */}
+      <div className="relative h-56 w-full flex-shrink-0 bg-gray-900">
         <div className="relative w-full h-full overflow-hidden">
           <img
             src={images[currentImageIndex]}
             alt={`${safePhotographer.name} work ${currentImageIndex + 1}`}
-            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
             onError={(e) => {
               e.target.src = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop&q=80";
             }}
           />
           
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          {/* تعديل التدرج ليكون أغمق قليلاً */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         </div>
 
         {/* العنوانات - أعلى الصورة */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-20">
-          <div className="flex flex-col gap-2">
+        <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-20">
+          <div className="flex flex-col gap-1.5">
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white/95 backdrop-blur-md text-gray-800 px-4 py-2 rounded-xl text-sm font-bold shadow-xl border border-white/20"
+              className="bg-white/95 backdrop-blur-md text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg border border-white/20"
             >
               📍 {safePhotographer.city || "المدينة"}
             </motion.div>
@@ -249,17 +250,17 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-xl"
+              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-lg"
             >
               احجز الآن 🎯
             </motion.div>
           </div>
 
-          <div className="flex flex-col gap-2 items-end">
+          <div className="flex flex-col gap-1.5 items-end">
             <motion.div 
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-xl shadow-xl border border-white/20"
+              className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-lg border border-white/20"
             >
               {safeRenderStars(safePhotographer.rating)}
             </motion.div>
@@ -267,7 +268,7 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-gradient-to-r from-red-500 to-red-400 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-xl"
+                className="bg-gradient-to-r from-red-500 to-red-400 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg"
               >
                 خصم {maxDiscount}% 🎁
               </motion.div>
@@ -275,19 +276,37 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           </div>
         </div>
 
-        {/* اسم المصور فوق الصورة */}
-        <div className="absolute bottom-20 left-4 right-4 z-20">
-          <h3 className="text-2xl font-bold text-white drop-shadow-lg">
-            {safePhotographer.name}
-          </h3>
-          <p className="text-blue-100 font-medium text-sm mt-1">
-            {safePhotographer.specialty}
-          </p>
-        </div>
+        {/* صورة البروفايل المصغرة في الزاوية */}
+        {safePhotographer.profileImage && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="absolute -bottom-8 right-4 z-30"
+          >
+            <div className="relative">
+              <img
+                src={safePhotographer.profileImage}
+                alt={`صورة ${safePhotographer.name}`}
+                className="w-16 h-16 rounded-full border-3 border-white shadow-xl object-cover"
+                onError={(e) => {
+                  e.target.src = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&auto=format&fit=crop&q=80";
+                }}
+              />
+              {safePhotographer.isCertified && (
+                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-white">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* نقاط التنقل للصور */}
         {images.length > 1 && (
-          <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+          <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1.5 z-20">
             {images.map((_, index) => (
               <button
                 key={index}
@@ -295,8 +314,8 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
                   e.stopPropagation();
                   setCurrentImageIndex(index);
                 }}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentImageIndex ? 'bg-white w-6' : 'bg-white/60'
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex ? 'bg-white w-4' : 'bg-white/60'
                 }`}
                 aria-label={`صورة ${index + 1}`}
               />
@@ -305,13 +324,13 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
         )}
 
         {/* زر المشاركة */}
-        <div className="absolute bottom-4 left-4 z-20">
+        <div className="absolute bottom-3 left-3 z-20">
           <button
             onClick={handleShare}
-            className="bg-white/95 backdrop-blur-md hover:bg-white text-gray-700 hover:text-blue-600 transition-all p-3 shadow-xl rounded-xl hover:scale-110 active:scale-95"
+            className="bg-white/95 backdrop-blur-md hover:bg-white text-gray-700 hover:text-blue-600 transition-all p-2 shadow-lg rounded-lg hover:scale-110 active:scale-95"
             aria-label="مشاركة"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
           </button>
@@ -322,19 +341,19 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           <>
             <button
               onClick={prevImage}
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all z-20"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-20"
               aria-label="الصورة السابقة"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all z-20"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-20"
               aria-label="الصورة التالية"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -342,8 +361,18 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
         )}
       </div>
 
-      {/* المحتوى أسفل الصورة */}
-      <div className="p-5 flex-grow flex flex-col">
+      {/* المحتوى أسفل الصورة - مع اسم المصور هنا */}
+      <div className="p-5 pt-8 flex-grow flex flex-col">
+        {/* اسم المصور والتخصص */}
+        <div className="mb-3">
+          <h3 className="text-xl font-bold text-gray-800">
+            {safePhotographer.name}
+          </h3>
+          <p className="text-blue-600 font-medium text-sm">
+            {safePhotographer.specialty}
+          </p>
+        </div>
+
         {/* المعلومات الأساسية */}
         <div className="flex justify-between items-start mb-4">
           <div>
