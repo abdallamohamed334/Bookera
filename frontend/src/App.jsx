@@ -19,6 +19,7 @@ import PhotographerDetailsPage from './components/photografer/PhotographerDetail
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect, useState } from "react";
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 // تهيئة بيانات الزائر
 const initGuestData = () => {
