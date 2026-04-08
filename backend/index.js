@@ -13,7 +13,7 @@ import photographersRoutes from "./routes/photographers.route.js";
 import bookingsRoutes from "./routes/bookings.route.js";
 import whatsappRoutes from "./routes/whatsapp.js"; // ✅ تم التصحيح
 import reviewsRoutes from './routes/reviews.route.js';
-import { connectDB } from "./db/connectDB.js";
+// import { connectDB } from "./db/connectDB.js";
 import telegramRoutes from "./routes/telegram.route.js";
 import partnersRoutes from "./routes/partners.js";
 
@@ -95,7 +95,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 app.listen(PORT, () => {
-  connectDB();
+  // connectDB();
   console.log("🚀 Server is running on port:", PORT);
   console.log("📞 WhatsApp Routes: /api/whatsapp/send-whatsapp");
   console.log("🔧 Twilio Check: /api/check-twilio");

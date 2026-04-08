@@ -1,31 +1,29 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 
-// إنشاء connection pool لـ PostgreSQL
+// pool ثابت
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString: process.env.DATABASE_URL_WHEN,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 20,          // عدد الاتصالات القصوى
+  idleTimeoutMillis: 30000,  // يقفل الاتصالات الغير نشطة بعد 30 ثانية
+  connectionTimeoutMillis: 2000 // timeout للاتصال
 });
 
-// اختبار الاتصال
-pool.on('connect', () => {
-  console.log('✅ Connected to PostgreSQL database (Neon)');
-});
-
-pool.on('error', (err) => {
-  console.error('❌ PostgreSQL pool error:', err);
-});
-
-export const connectDB = async () => {
+// اختبار اتصال عند start
+const connectWithRetry = async () => {
   try {
-    console.log("postgres_uri:", process.env.POSTGRES_URL);
-    const client = await pool.connect();
-    console.log("✅ PostgreSQL Connected Successfully!");
-    client.release();
-  } catch (error) {
-    console.error("❌ Error connecting to PostgreSQL:", error.message);
-    process.exit(1);
+    await pool.query('SELECT 1');
+    console.log('✅ PostgreSQL Connected Successfully!');
+  } catch (err) {
+    console.log('⚠ DB connection failed, retrying in 5s...');
+    setTimeout(connectWithRetry, 5000);
   }
 };
+connectWithRetry();
+
+// event handlers
+pool.on('connect', () => console.log('✅ Connected to PostgreSQL database (Neon)'));
+pool.on('error', (err) => console.error('❌ PostgreSQL pool error:', err));
 
 export default pool;
