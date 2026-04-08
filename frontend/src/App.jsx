@@ -1,4 +1,3 @@
-// App.jsx
 import { Navigate, Route, Routes } from "react-router-dom";
 import DecorationsPage from './pages/DecorationsPage';
 import VenueDetails from "./components/wedding/VenueDetails";
@@ -39,7 +38,7 @@ const initGuestData = () => {
   }
 };
 
-// نافذة الترحيب للزوار - مكون منفصل
+// نافذة الترحيب للزوار
 const GuestWelcomeModal = ({ show, onClose, onLogin }) => {
   if (!show) return null;
 
@@ -57,7 +56,7 @@ const GuestWelcomeModal = ({ show, onClose, onLogin }) => {
       justifyContent: 'center',
       padding: '16px',
       overflowY: 'auto',
-      WebkitOverflowScrolling: 'touch' // لسلاسة التمرير على iOS
+      WebkitOverflowScrolling: 'touch'
     }}>
       <div style={{
         background: 'white',
@@ -202,43 +201,45 @@ const GuestWelcomeModal = ({ show, onClose, onLogin }) => {
   );
 };
 
-// حماية المسارات التي تتطلب تسجيل دخول فقط للميزات المتقدمة
+// ✅ حماية المسارات المعدلة - من غير إعادة توجيه تلقائي للمسارات العامة
 const ProtectedRoute = ({ children, requireVerification = true }) => {
   const { isAuthenticated, isCheckingAuth, user } = useAuthStore();
   const [showGuestWelcome, setShowGuestWelcome] = useState(false);
+  const [shouldRender, setShouldRender] = useState(true);
 
   useEffect(() => {
-    // تهيئة بيانات الزائر إذا لزم
     if (!isCheckingAuth && !isAuthenticated) {
       const guestData = JSON.parse(localStorage.getItem('bookera_guest_data') || '{}');
       
-      // إظهار رسالة ترحيب للزوار في أول مرة
       if (!guestData.hasSeenWelcome) {
         setTimeout(() => {
           setShowGuestWelcome(true);
           const updatedData = { ...guestData, hasSeenWelcome: true };
           localStorage.setItem('bookera_guest_data', JSON.stringify(updatedData));
-        }, 1000); // تأخير بسيط لتحميل الصفحة أولاً
+        }, 1000);
       }
     }
   }, [isCheckingAuth, isAuthenticated]);
 
   if (isCheckingAuth) return <LoadingSpinner />;
 
-  // السماح للزوار بالوصول لجميع الصفحات
-  // فقط المفضلة تتطلب تسجيل دخول
   const path = window.location.pathname;
-  const requiresAuth = ['/favorites', '/admin/dashboard'].includes(path);
   
-  if (!isAuthenticated && requiresAuth) {
+  // ✅ المسارات اللي محتاجة مصادقة إجبارية
+  const requiresAuthPaths = ['/favorites', '/admin/dashboard'];
+  const requiresAuth = requiresAuthPaths.includes(path);
+  
+  // ✅ للمسارات اللي محتاجة مصادقة واليوزر مش مسجل
+  if (requiresAuth && !isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // إذا كان المستخدم مسجلاً ولكن لم يتحقق من البريد وكانت الصفحة تتطلب تحقق
+  // ✅ للتحقق من البريد الإلكتروني
   if (requireVerification && isAuthenticated && !user?.emailVerified && path !== '/verify-email') {
     return <Navigate to="/verify-email" replace />;
   }
 
+  // ✅ باقي المسارات تعرض عادي من غير أي مشاكل
   return (
     <>
       {children}
@@ -265,11 +266,10 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-// مسار عام للجميع
+// مسار عام
 const PublicRoute = ({ children, restrictAuthenticated = true }) => {
   const { isAuthenticated, user } = useAuthStore();
 
-  // إذا كان المستخدم مسجلاً ومحققاً وإعدادات المسار تحد من المسجلين
   if (restrictAuthenticated && isAuthenticated && user?.emailVerified) {
     return <Navigate to='/' replace />;
   }
@@ -407,12 +407,8 @@ function App() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // تهيئة بيانات الزائر
       initGuestData();
-      
-      // التحقق من حالة المصادقة
       await checkAuth();
-      
       setIsInitializing(false);
     };
 
@@ -437,65 +433,32 @@ function App() {
       />
       
       <Routes>
-        {/* الصفحة الرئيسية - للجميع */}
+        {/* الصفحة الرئيسية */}
         <Route path='/' element={<HomePage />} />
 
-        {/* تفاصيل القاعة - للجميع */}
-        <Route path="/venue/:id" element={
-          <ProtectedRoute requireVerification={false}>
-            <VenueDetails />
-          </ProtectedRoute>
-        } />
+        {/* تفاصيل القاعة */}
+        <Route path="/venue/:id" element={<VenueDetails />} />
 
-        {/* الأدمن - محمي */}
+        {/* الأدمن */}
         <Route 
           path='/admin/dashboard' 
           element={<AdminRoute><AdminDashboard /></AdminRoute>} 
         />
 
-        {/* المصورين - للجميع */}
-        <Route 
-          path='/photographers' 
-          element={
-            <ProtectedRoute requireVerification={false}>
-              <PhotographersPage />
-            </ProtectedRoute>
-          } 
-        />
+        {/* المصورين - قائمة المصورين */}
+        <Route path='/photographers' element={<PhotographersPage />} />
         
-        {/* صفحة تفاصيل المصور - للجميع */}
-        <Route 
-          path='/photographer/:id' 
-          element={
-            <ProtectedRoute requireVerification={false}>
-              <PhotographerDetailsPage />
-            </ProtectedRoute>
-          } 
-        />
+        {/* ⭐ صفحة تفاصيل المصور - من غير ProtectedRoute خالص */}
+        <Route path='/photographers/:id' element={<PhotographerDetailsPage />} />
 
-        {/* القاعات - للجميع */}
-        <Route 
-          path='/wedding-halls' 
-          element={
-            <ProtectedRoute requireVerification={false}>
-              <WeddingHallsPage />
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path='/conference-halls' 
-          element={
-            <ProtectedRoute requireVerification={false}>
-              <ConferenceHallsPage />
-            </ProtectedRoute>
-          } 
-        />
+        {/* القاعات */}
+        <Route path='/wedding-halls' element={<WeddingHallsPage />} />
+        <Route path='/conference-halls' element={<ConferenceHallsPage />} />
 
-        {/* انضم إلينا - للجميع */}
+        {/* انضم إلينا */}
         <Route path='/join-us' element={<JoinUsPage />} />
         
-        {/* المفضلة - تتطلب تسجيل */}
+        {/* المفضلة */}
         <Route 
           path='/favorites' 
           element={
@@ -505,17 +468,10 @@ function App() {
           } 
         />
 
-        {/* الديكور - للجميع */}
-        <Route 
-          path='/decorations' 
-          element={
-            <ProtectedRoute requireVerification={false}>
-              <DecorationsPage />
-            </ProtectedRoute>
-          } 
-        />
+        {/* الديكور */}
+        <Route path='/decorations' element={<DecorationsPage />} />
 
-        {/* تسجيل ودخول - للزوار فقط */}
+        {/* تسجيل ودخول */}
         <Route 
           path='/signup' 
           element={
@@ -534,7 +490,7 @@ function App() {
           } 
         />
 
-        {/* التحقق من البريد - للمسجلين فقط */}
+        {/* التحقق من البريد */}
         <Route 
           path='/verify-email' 
           element={
@@ -544,7 +500,7 @@ function App() {
           } 
         />
 
-        {/* نسيان كلمة المرور - للزوار فقط */}
+        {/* نسيان كلمة المرور */}
         <Route 
           path='/forgot-password' 
           element={
@@ -567,9 +523,7 @@ function App() {
         <Route path='*' element={<Navigate to='/' replace />} />
       </Routes>
 
-      {/* إضافة مؤشر حالة الزائر */}
       <GuestStatusIndicator />
-      
       <Toaster />
     </div>
   );

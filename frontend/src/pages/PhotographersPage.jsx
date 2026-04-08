@@ -62,17 +62,12 @@ const PhotographersPage = () => {
     }
   }, [loading]);
 
-  // جلب البيانات من الـ API
+  // جلب البيانات من الـ API (متوافق مع هيكل PostgreSQL)
   useEffect(() => {
     const fetchPhotographers = async () => {
       try {
         setLoading(true);
         
-        // مؤشر تحميل متحرك
-        const loadingInterval = setInterval(() => {
-          console.log('🔄 جاري تحميل البيانات...');
-        }, 1000);
-
         const response = await fetch('http://localhost:5000/api/photographers', {
           method: 'GET',
           headers: {
@@ -80,27 +75,40 @@ const PhotographersPage = () => {
           }
         });
 
-        clearInterval(loadingInterval);
-
         if (response.ok) {
           const data = await response.json();
           
           if (data.photographers && data.photographers.length > 0) {
-            // إضافة تأثير ظهور تدريجي
+            // تحويل البيانات من snake_case (قاعدة البيانات) إلى camelCase (الواجهة)
             const enhancedPhotographers = data.photographers.map((photographer, index) => ({
-              ...photographer,
-              animationDelay: index * 0.1,
-              id: photographer._id || `photographer-${index}`
+              id: photographer.id,
+              _id: photographer.id, // للتوافق مع الكود الحالي
+              name: photographer.name,
+              business_name: photographer.business_name,
+              type: photographer.type,
+              specialty: photographer.specialty,
+              experience: photographer.experience,
+              governorate: photographer.governorate,
+              city: photographer.city,
+              price: photographer.price,
+              profile_image: photographer.profile_image,
+              profileImage: photographer.profile_image, // للتوافق
+              description: photographer.description,
+              available: photographer.available,
+              rating: photographer.rating || 0,
+              total_reviews: photographer.total_reviews || 0,
+              total_views: photographer.total_views || 0,
+              total_bookings: photographer.total_bookings || 0,
+              contact: photographer.contact,
+              email: photographer.email,
+              address: photographer.address,
+              created_at: photographer.created_at,
+              animationDelay: index * 0.1
             }));
             
             setPhotographers(enhancedPhotographers);
-            
-            // تأثير ظهور سحري للبيانات
-            setTimeout(() => {
-              document.querySelectorAll('.photographer-card').forEach((card, idx) => {
-                card.style.animationDelay = `${idx * 0.1}s`;
-              });
-            }, 100);
+          } else {
+            setPhotographers([]);
           }
         } else {
           throw new Error('فشل في جلب البيانات');
@@ -108,77 +116,82 @@ const PhotographersPage = () => {
       } catch (err) {
         console.error('❌ خطأ في جلب البيانات:', err);
         
-        // بيانات تجريبية بتأثيرات إضافية
+        // بيانات تجريبية متوافقة مع هيكل قاعدة البيانات
         const mockPhotographers = [
           {
-            _id: "1",
+            id: 1,
             name: "أحمد محمد",
+            business_name: "أحمد محمد للتصوير",
+            type: "freelancer",
             specialty: "تصوير أفراح",
-            price: 5000,
-            rating: 4.8,
             experience: 5,
-            city: "المعادي",
             governorate: "القاهرة",
-            profileImage: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&q=80",
+            city: "المعادي",
+            price: "5000",
+            profile_image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&q=80",
             description: "مصور محترف متخصص في تصوير الأفراح والمناسبات",
-            services: ["تصوير كامل للفرح", "ألبوم صور فاخر", "فيديو احترافي"],
-            portfolio: [
-              "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80",
-              "https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=800&q=80"
-            ],
-            packages: [
-              { name: "الباقة الأساسية", price: 3000 },
-              { name: "الباقة المتكاملة", price: 5000 }
-            ],
+            available: true,
+            rating: 4.8,
+            total_reviews: 24,
+            total_views: 150,
+            total_bookings: 45,
+            contact: "+20123456789",
+            email: "ahmed@example.com",
+            address: "المعادي، القاهرة",
+            created_at: new Date().toISOString(),
             tags: ["محترف", "سريع", "جودة عالية"],
             featured: true
           },
           {
-            _id: "2",
+            id: 2,
             name: "مريم أحمد",
+            business_name: "Mariam Photography",
+            type: "freelancer",
             specialty: "تصوير شخصي",
-            price: 2000,
-            rating: 4.9,
             experience: 3,
-            city: "الدقي",
             governorate: "الجيزة",
-            profileImage: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&q=80",
+            city: "الدقي",
+            price: "2000",
+            profile_image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&q=80",
             description: "مصورة مبدعة متخصصة في التصوير الشخصي",
-            services: ["جلسات تصوير شخصية", "تصوير فوتوشوت", "تعديل احترافي"],
-            portfolio: [
-              "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=80",
-              "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=800&q=80"
-            ],
-            packages: [
-              { name: "جلسة شخصية", price: 1500 }
-            ],
+            available: true,
+            rating: 4.9,
+            total_reviews: 18,
+            total_views: 200,
+            total_bookings: 32,
+            contact: "+20198765432",
+            email: "mariam@example.com",
+            address: "الدقي، الجيزة",
+            created_at: new Date().toISOString(),
             tags: ["مبدعة", "أنثوي", "احترافي"],
             featured: true
           },
           {
-            _id: "3",
+            id: 3,
             name: "خالد علي",
+            business_name: "خالد علي للتصوير",
+            type: "agency",
             specialty: "تصوير طبيعة",
-            price: 3500,
-            rating: 4.7,
             experience: 8,
-            city: "الهرم",
             governorate: "الجيزة",
-            profileImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
+            city: "الهرم",
+            price: "3500",
+            profile_image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
             description: "مصور محترف للطبيعة والمناظر الخلابة",
-            services: ["تصوير طبيعة", "تصوير حياة برية", "فيديو وثائقي"],
-            portfolio: [
-              "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80"
-            ],
-            packages: [
-              { name: "رحلة تصوير", price: 3500 }
-            ],
+            available: true,
+            rating: 4.7,
+            total_reviews: 12,
+            total_views: 98,
+            total_bookings: 23,
+            contact: "+20111223344",
+            email: "khaled@example.com",
+            address: "الهرم، الجيزة",
+            created_at: new Date().toISOString(),
             tags: ["طبيعة", "إبداعي", "مغامرة"]
           }
         ].map((photographer, index) => ({
           ...photographer,
-          animationDelay: index * 0.1,
-          id: photographer._id
+          animationDelay: index * 0.1
         }));
         
         setPhotographers(mockPhotographers);
@@ -197,21 +210,33 @@ const PhotographersPage = () => {
     // فلترة حسب البحث
     if (searchQuery) {
       filtered = filtered.filter(photographer => 
-        photographer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        photographer.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        photographer.city.toLowerCase().includes(searchQuery.toLowerCase())
+        photographer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        photographer.specialty?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        photographer.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        photographer.business_name?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // فلترات أخرى
+    // فلتر حسب التخصص
+    if (activeFilter !== "all") {
+      filtered = filtered.filter(photographer => photographer.specialty === activeFilter);
+    }
+
+    // فلتر حسب السعر (مع تحويل price من string إلى number)
     filtered = filtered.filter(photographer => {
-      const matchesSpecialty = activeFilter === "all" || photographer.specialty === activeFilter;
-      const matchesPrice = parseInt(photographer.price) <= priceRange;
-      const matchesGovernorate = selectedGovernorate === "all" || photographer.governorate === selectedGovernorate;
-      const matchesCity = selectedCity === "all" || selectedCity === "كل المدن" || photographer.city === selectedCity;
-      
-      return matchesSpecialty && matchesPrice && matchesGovernorate && matchesCity;
+      const photographerPrice = parseInt(photographer.price) || 0;
+      return photographerPrice <= priceRange;
     });
+
+    // فلتر حسب المحافظة
+    if (selectedGovernorate !== "all") {
+      filtered = filtered.filter(photographer => photographer.governorate === selectedGovernorate);
+    }
+
+    // فلتر حسب المدينة
+    if (selectedCity !== "all" && selectedCity !== "كل المدن") {
+      filtered = filtered.filter(photographer => photographer.city === selectedCity);
+    }
 
     setFilteredPhotographers(filtered);
   }, [activeFilter, priceRange, selectedGovernorate, selectedCity, searchQuery, photographers]);
@@ -229,7 +254,7 @@ const PhotographersPage = () => {
     setSelectedCity("all");
   };
 
-  const handlePhotographerClick = (photographer) => {
+  const handlePhotographerClick = async (photographer) => {
     // تأثير انفجار عند النقر
     const button = document.createElement('div');
     button.className = 'click-effect';
@@ -261,13 +286,38 @@ const PhotographersPage = () => {
     `;
     document.head.appendChild(style);
     
+    // تسجيل المشاهدة في قاعدة البيانات
+    try {
+      await fetch(`http://localhost:5000/api/photographers/${photographer.id}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          viewer_ip: await getClientIP()
+        })
+      });
+    } catch (err) {
+      console.error('خطأ في تسجيل المشاهدة:', err);
+    }
+    
     // فتح الصفحة بعد التأثير
     setTimeout(() => {
       document.body.removeChild(button);
       document.head.removeChild(style);
-      const photographerUrl = `/photographer/${photographer._id}`;
-      window.open(photographerUrl, '_blank');
+      navigate(`/photographer/${photographer.id}`);
     }, 500);
+  };
+
+  // دالة مساعدة للحصول على IP العميل (قد تحتاج لتعديل حسب الخادم)
+  const getClientIP = async () => {
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      return data.ip;
+    } catch {
+      return 'unknown';
+    }
   };
 
   const scrollToTop = () => {
@@ -338,6 +388,20 @@ const PhotographersPage = () => {
       console.error('خطأ في المشاركة:', err);
     }
   };
+
+  // حساب الإحصائيات من البيانات الحقيقية
+  const getStats = () => {
+    const totalRatings = photographers.reduce((sum, p) => sum + (p.rating || 0), 0);
+    const avgRating = photographers.length > 0 ? (totalRatings / photographers.length).toFixed(1) : "4.8";
+    
+    return {
+      photographersCount: photographers.length,
+      avgRating: avgRating,
+      totalBookings: photographers.reduce((sum, p) => sum + (p.total_bookings || 0), 0)
+    };
+  };
+
+  const stats = getStats();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 overflow-hidden">
@@ -477,7 +541,7 @@ const PhotographersPage = () => {
         </div>
       </section>
 
-      {/* إحصائيات */}
+      {/* إحصائيات - تعرض بيانات حقيقية من قاعدة البيانات */}
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -488,10 +552,10 @@ const PhotographersPage = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { number: photographers.length, label: "مصور محترف", color: "from-purple-600 to-purple-400" },
+              { number: stats.photographersCount, label: "مصور محترف", color: "from-purple-600 to-purple-400" },
               { number: 27, label: "محافظة", color: "from-indigo-600 to-indigo-400" },
-              { number: 1500, label: "مناسبة ملتقطة", color: "from-blue-600 to-blue-400" },
-              { number: "4.8", label: "متوسط التقييم", color: "from-green-600 to-green-400" }
+              { number: stats.totalBookings, label: "حجز ناجح", color: "from-blue-600 to-blue-400" },
+              { number: stats.avgRating, label: "متوسط التقييم", color: "from-green-600 to-green-400" }
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -511,7 +575,7 @@ const PhotographersPage = () => {
       </motion.section>
 
       {/* قسم الفلاتر والمصورين */}
-      <section className="py-12 w-full">
+      <section className="py-12 w-full" id="photographers-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FiltersSection
             activeFilter={activeFilter}
