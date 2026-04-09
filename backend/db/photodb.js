@@ -1,42 +1,52 @@
-import pkg from 'pg';
+import pkg from "pg";
 const { Pool } = pkg;
 
-// Pool للمصورين
-export const photograferDb = new Pool({
-  connectionString: process.env.DATABASE_URL_PHOTO,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
-});
+// function لإنشاء pool بشكل آمن
+const createPool = (connectionString, name) => {
+  const pool = new Pool({
+    connectionString,
+    
+    // ✅ مهم جدا في Railway
+    ssl: connectionString?.includes("localhost")
+      ? false
+      : {
+          rejectUnauthorized: false,
+        },
 
-// Pool للقاعدة العامة
-export const neondbDb = new Pool({
-  connectionString: process.env.DATABASE_URL_WHEN,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
-});
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
 
-// دالة retry عند startup
-const connectWithRetry = async (pool, name) => {
-  try {
-    await pool.query('SELECT 1');
-    console.log(`✅ ${name} Connected Successfully!`);
-  } catch (err) {
-    console.warn(`⚠ ${name} connection failed, retrying in 5s...`);
-    setTimeout(() => connectWithRetry(pool, name), 5000);
-  }
+  // ✅ log عند الاتصال
+  pool
+    .connect()
+    .then((client) => {
+      console.log(`✅ ${name} connected`);
+      client.release();
+    })
+    .catch((err) => {
+      console.error(`❌ ${name} connection error:`, err.message);
+    });
+
+  // ✅ error handler
+  pool.on("error", (err) => {
+    console.error(`❌ ${name} pool error:`, err.message);
+  });
+
+  return pool;
 };
 
-// اختبار الاتصال عند startup
-connectWithRetry(photograferDb, 'Photographers DB');
-connectWithRetry(neondbDb, 'NeonDB');
+// ✅ Pools
+export const photograferDb = createPool(
+  process.env.DATABASE_URL_PHOTO,
+  "Photographers DB"
+);
 
-// event handlers
-photograferDb.on('error', (err) => console.error('❌ Photographers PostgreSQL pool error:', err));
-neondbDb.on('error', (err) => console.error('❌ NeonDB PostgreSQL pool error:', err));
+export const neondbDb = createPool(
+  process.env.DATABASE_URL_WHEN,
+  "Neon DB"
+);
 
-// التصدير الافتراضي
+// default export
 export default photograferDb;
