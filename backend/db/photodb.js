@@ -1,18 +1,12 @@
 import pkg from "pg";
 const { Pool } = pkg;
 
+// function لإنشاء pool بشكل آمن
 const createPool = (connectionString, name) => {
-  if (!connectionString) {
-    console.error(`❌ ${name} has NO connection string`);
-    return null;
-  }
-
-  console.log(`🔗 ${name} URL:`, connectionString.replace(/:.+@/, ":****@"));
-
   const pool = new Pool({
     connectionString,
 
-    ssl: connectionString.includes("localhost")
+    ssl: connectionString?.includes("localhost")
       ? false
       : {
           rejectUnauthorized: false,
@@ -40,14 +34,15 @@ const createPool = (connectionString, name) => {
   return pool;
 };
 
-// ✅ أهم تعديل هنا
+// ===============================
+// 🔥 TEST CONNECTION STRING (HARD CODED)
+// ===============================
 const photoDbUrl =
-  process.env.DATABASE_URL_PHOTO || process.env.DATABASE_URL;
+  "postgresql://neondb_owner:npg_aX6CdsESTO2U@ep-wandering-dust-aetw28nj-pooler.c-2.us-east-2.aws.neon.tech/photografer?sslmode=require&channel_binding=require";
 
-const neonDbUrl =
-  process.env.DATABASE_URL_WHEN || process.env.DATABASE_URL;
+const neonDbUrl = process.env.DATABASE_URL_WHEN;
 
-// ✅ Pools
+// Pools
 export const photograferDb = createPool(photoDbUrl, "Photographers DB");
 export const neondbDb = createPool(neonDbUrl, "Neon DB");
 
