@@ -15,7 +15,15 @@ const JoinUsPage = () => {
     description: "",
     experience: "",
     portfolio: "",
-    status: "pending"
+    status: "pending",
+    // الحقول الجديدة
+    specialty: "",
+    governorate: "",
+    city: "",
+    price: "",
+    services: "",
+    contact: "",
+    address: ""
   });
 
   const [attempts, setAttempts] = useState(0);
@@ -28,10 +36,29 @@ const JoinUsPage = () => {
     { value: "photographer", label: "مصور محترف", icon: "📸" }
   ];
 
+  // قائمة المحافظات
+  const governorates = [
+    "القاهرة", "الإسكندرية", "الجيزة", "القليوبية", "الإسماعيلية",
+    "السويس", "بورسعيد", "الشرقية", "الغربية", "الدقهلية",
+    "البحيرة", "المنوفية", "الفيوم", "بني سويف", "المنيا",
+    "أسوان", "الأقصر", "قنا", "سوهاج", "أسيوط", "دمياط", "كفر الشيخ", "مطروح"
+  ];
+
+  // قائمة التخصصات
+  const specialties = [
+    "تصوير افراح",
+    "تصوير مناسبات",
+    "تصوير شخصي",
+    "تصوير عائلي",
+    "تصوير منتجات",
+    "تصوير أزياء",
+    "تصوير معماري",
+    "تصوير طبي"
+  ];
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // إذا كان الحقل هو البريد الإلكتروني، مسح رسالة الخطأ
     if (name === "email") {
       setEmailError("");
     }
@@ -42,7 +69,6 @@ const JoinUsPage = () => {
     }));
   };
 
-  // التحقق من صحة البريد الإلكتروني
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -51,13 +77,11 @@ const JoinUsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // التحقق من عدد المحاولات
     if (attempts >= 3) {
       toast.error("لقد تجاوزت الحد الأقصى للمحاولات. يرجى المحاولة مرة أخرى لاحقاً.");
       return;
     }
 
-    // التحقق من صحة البريد الإلكتروني
     if (!validateEmail(formData.email)) {
       setEmailError("صيغة البريد الإلكتروني غير صحيحة");
       toast.error("صيغة البريد الإلكتروني غير صحيحة");
@@ -67,7 +91,6 @@ const JoinUsPage = () => {
     setIsSubmitting(true);
 
     try {
-      // إرسال البيانات إلى API
       const response = await fetch('https://bookera-production-2d16.up.railway.app/api/partners/register', {
         method: 'POST',
         headers: {
@@ -75,26 +98,23 @@ const JoinUsPage = () => {
         },
         body: JSON.stringify({
           ...formData,
-          registrationDate: new Date().toISOString()
+          registrationDate: new Date().toISOString(),
+          // تحويل services من نص إلى مصفوفة
+          services: formData.services ? formData.services.split(',').map(s => s.trim()) : []
         })
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        // نجاح التسجيل
         toast.success(
           <div className="text-right">
             <div className="font-bold text-lg">🎉 تم تقديم طلب الانضمام بنجاح!</div>
             <div className="text-sm mt-1">سنقوم بالتواصل معك خلال 24 ساعة</div>
           </div>,
-          {
-            duration: 5000,
-            icon: '✅'
-          }
+          { duration: 5000, icon: '✅' }
         );
         
-        // إعادة تعيين النموذج والمحاولات
         setFormData({
           fullName: "",
           email: "",
@@ -105,79 +125,38 @@ const JoinUsPage = () => {
           description: "",
           experience: "",
           portfolio: "",
-          status: "pending"
+          status: "pending",
+          specialty: "",
+          governorate: "",
+          city: "",
+          price: "",
+          services: "",
+          contact: "",
+          address: ""
         });
         setAttempts(0);
         setEmailError("");
         
-        // الانتقال للصفحة الرئيسية بعد تأخير
         setTimeout(() => {
           navigate('/');
         }, 3000);
         
       } else {
-        // زيادة عدد المحاولات
         setAttempts(prev => prev + 1);
         
-        // معالجة الأخطاء المختلفة
         if (response.status === 409) {
-          // البريد الإلكتروني مسجل مسبقاً
           setEmailError("هذا البريد الإلكتروني مسجل مسبقاً");
-          toast.error(
-            <div className="text-right">
-              <div className="font-bold">⚠️ البريد الإلكتروني مسجل مسبقاً</div>
-              <div className="text-sm mt-1">يرجى استخدام بريد إلكتروني آخر</div>
-            </div>,
-            {
-              duration: 4000,
-              icon: '📧'
-            }
-          );
+          toast.error("⚠️ البريد الإلكتروني مسجل مسبقاً");
         } else if (response.status === 400) {
-          // بيانات غير صالحة
-          toast.error(
-            <div className="text-right">
-              <div className="font-bold">❌ بيانات غير صالحة</div>
-              <div className="text-sm mt-1">يرجى مراجعة البيانات المدخلة</div>
-            </div>
-          );
+          toast.error("❌ بيانات غير صالحة");
         } else {
-          // خطأ عام
-          toast.error(
-            <div className="text-right">
-              <div className="font-bold">😔 حدث خطأ غير متوقع</div>
-              <div className="text-sm mt-1">يرجى المحاولة مرة أخرى</div>
-            </div>
-          );
-        }
-
-        // تحذير بعد محاولتين
-        if (attempts >= 1) {
-          const remainingAttempts = 3 - (attempts + 1);
-          if (remainingAttempts > 0) {
-            toast(
-              <div className="text-right">
-                <div className="font-bold">⚠️ انتبه!</div>
-                <div className="text-sm mt-1">متبقي لديك {remainingAttempts} محاولة فقط</div>
-              </div>,
-              {
-                duration: 3000,
-                icon: '🚨'
-              }
-            );
-          }
+          toast.error("😔 حدث خطأ غير متوقع");
         }
       }
     } catch (error) {
       console.error('Error submitting form:', error);
       setAttempts(prev => prev + 1);
-      
-      toast.error(
-        <div className="text-right">
-          <div className="font-bold">🌐 خطأ في الشبكة</div>
-          <div className="text-sm mt-1">يرجى التحقق من اتصال الإنترنت</div>
-        </div>
-      );
+      toast.error("🌐 خطأ في الشبكة");
     } finally {
       setIsSubmitting(false);
     }
@@ -347,10 +326,28 @@ const JoinUsPage = () => {
                     required
                     disabled={attempts >= 3 || isSubmitting}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="+966 5XX XXX XXX"
+                    placeholder="01XXXXXXXXX"
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    رقم هاتف بديل للتواصل *
+                  </label>
+                  <input
+                    type="tel"
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleInputChange}
+                    required
+                    disabled={attempts >= 3 || isSubmitting}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="01XXXXXXXXX"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {formData.partnerType === "hall_owner" ? "اسم القاعة *" : "اسم الاستوديو *"}
@@ -364,6 +361,22 @@ const JoinUsPage = () => {
                     disabled={attempts >= 3 || isSubmitting}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder={formData.partnerType === "hall_owner" ? "اسم القاعة" : "اسم الاستوديو"}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    العنوان التفصيلي *
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    required
+                    disabled={attempts >= 3 || isSubmitting}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="العنوان بالتفصيل"
                   />
                 </div>
               </div>
@@ -404,65 +417,219 @@ const JoinUsPage = () => {
                 </div>
               </div>
 
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  الموقع *
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  required
-                  disabled={attempts >= 3 || isSubmitting}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="المدينة والمنطقة"
-                />
-              </div>
-
-              {/* Experience */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  سنوات الخبرة *
-                </label>
-                <select
-                  name="experience"
-                  value={formData.experience}
-                  onChange={handleInputChange}
-                  required
-                  disabled={attempts >= 3 || isSubmitting}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              {/* Photographer Specific Fields */}
+              {formData.partnerType === "photographer" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6"
                 >
-                  <option value="">اختر سنوات الخبرة</option>
-                  <option value="less_than_1">أقل من سنة</option>
-                  <option value="1_3">1-3 سنوات</option>
-                  <option value="3_5">3-5 سنوات</option>
-                  <option value="5_10">5-10 سنوات</option>
-                  <option value="more_than_10">أكثر من 10 سنوات</option>
-                </select>
-              </div>
+                  <h4 className="text-lg font-bold text-gray-800 dark:text-white">
+                    بيانات المصور المحترف
+                  </h4>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {formData.partnerType === "hall_owner" ? "وصف القاعة والخدمات المقدمة *" : "وصف الخدمات التصويرية المقدمة *"}
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                  rows="4"
-                  disabled={attempts >= 3 || isSubmitting}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder={formData.partnerType === "hall_owner" 
-                    ? "صف القاعة والخدمات التي تقدمها وتجربتك في هذا المجال..." 
-                    : "صف الخدمات التصويرية التي تقدمها وتجربتك في هذا المجال..."}
-                />
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        التخصص *
+                      </label>
+                      <select
+                        name="specialty"
+                        value={formData.specialty}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">اختر التخصص</option>
+                        {specialties.map(spec => (
+                          <option key={spec} value={spec}>{spec}</option>
+                        ))}
+                      </select>
+                    </div>
 
-              {/* Portfolio */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        سنوات الخبرة *
+                      </label>
+                      <select
+                        name="experience"
+                        value={formData.experience}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">اختر سنوات الخبرة</option>
+                        <option value="1">أقل من سنة</option>
+                        <option value="2">1-3 سنوات</option>
+                        <option value="3">3-5 سنوات</option>
+                        <option value="4">5-10 سنوات</option>
+                        <option value="5">أكثر من 10 سنوات</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        المحافظة *
+                      </label>
+                      <select
+                        name="governorate"
+                        value={formData.governorate}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">اختر المحافظة</option>
+                        {governorates.map(gov => (
+                          <option key={gov} value={gov}>{gov}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        المدينة *
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="اسم المدينة"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        السعر اليومي (ج.م) *
+                      </label>
+                      <input
+                        type="number"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="مثال: 2000"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        الخدمات المقدمة (افصل بينها بفواصل) *
+                      </label>
+                      <input
+                        type="text"
+                        name="services"
+                        value={formData.services}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="مثال: تصوير أفراح, تصوير مناسبات, تصوير شخصي"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      الوصف *
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      required
+                      rows="3"
+                      disabled={attempts >= 3 || isSubmitting}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="صف خبراتك ومهاراتك في التصوير..."
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Hall Owner Fields */}
+              {formData.partnerType === "hall_owner" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6"
+                >
+                  <h4 className="text-lg font-bold text-gray-800 dark:text-white">
+                    بيانات صاحب القاعة
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        الموقع *
+                      </label>
+                      <input
+                        type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="المدينة والمنطقة"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        سنوات الخبرة *
+                      </label>
+                      <select
+                        name="experience"
+                        value={formData.experience}
+                        onChange={handleInputChange}
+                        required
+                        disabled={attempts >= 3 || isSubmitting}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">اختر سنوات الخبرة</option>
+                        <option value="less_than_1">أقل من سنة</option>
+                        <option value="1_3">1-3 سنوات</option>
+                        <option value="3_5">3-5 سنوات</option>
+                        <option value="5_10">5-10 سنوات</option>
+                        <option value="more_than_10">أكثر من 10 سنوات</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      وصف القاعة والخدمات المقدمة *
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      required
+                      rows="4"
+                      disabled={attempts >= 3 || isSubmitting}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="صف القاعة والخدمات التي تقدمها وتجربتك في هذا المجال..."
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Portfolio Link */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   رابط محفظة الأعمال (اختياري)

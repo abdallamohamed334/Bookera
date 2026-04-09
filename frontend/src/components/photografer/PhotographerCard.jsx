@@ -8,8 +8,9 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
   const [isHovering, setIsHovering] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const intervalRef = useRef(null);
+  const clickHandledRef = useRef(false);
 
-  // الكشف عن حجم الشاشة مع معالجة الأخطاء
+  // الكشف عن حجم الشاشة
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -63,23 +64,36 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
         ? allImages 
         : ["https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop&q=80"];
     } catch (error) {
-      console.error("Error getting images:", error);
       return ["https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop&q=80"];
     }
   };
 
-  // ✅ تصحيح: استخدام window.location.href بدلاً من navigate (حل مؤقت)
+  // ✅ فتح المصور في صفحة جديدة (New Tab)
   const handleCardClick = (e) => {
     // منع انتشار الحدث
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // منع النقر المزدوج
+    if (clickHandledRef.current) return;
     
     const photographerId = photographer?.id || photographer?._id;
+    
     if (photographerId) {
-      console.log('🖱️ Navigating to photographer:', photographerId);
-      // ✅ استخدام window.location.href بدلاً من navigate
-      window.location.href = `/photographers/${photographerId}`;
+      clickHandledRef.current = true;
+      
+      // ✅ فتح في صفحة جديدة باستخدام window.open
+      const url = `/photographers/${photographerId}`;
+      window.open(url, '_blank');
+      
+      // إعادة تعيين منع النقر المزدوج بعد ثانية
+      setTimeout(() => {
+        clickHandledRef.current = false;
+      }, 1000);
     }
+    
     if (onPhotographerClick) {
       onPhotographerClick(photographer);
     }
@@ -117,7 +131,6 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
         alert('✅ تم نسخ رابط المصور إلى الحافظة!');
       }
     } catch (err) {
-      console.error("Share error:", err);
       if (err.name !== 'AbortError') {
         alert('✅ تم نسخ رابط المصور إلى الحافظة!');
       }
@@ -140,7 +153,6 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           newPrice: pkg.price
         }));
     } catch (error) {
-      console.error("Error calculating discounts:", error);
       return [];
     }
   };
@@ -159,7 +171,6 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
       const minPrice = Math.min(...validPackages.map(pkg => pkg.price));
       return minPrice;
     } catch (error) {
-      console.error("Error calculating starting price:", error);
       return photographer?.price || null;
     }
   };
@@ -213,7 +224,11 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
   ));
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02, y: -5 }}
+      transition={{ duration: 0.3 }}
       className="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden cursor-pointer transition-all h-full flex flex-col hover:border-blue-400 hover:shadow-2xl group"
       onClick={handleCardClick}
       onMouseEnter={() => setIsHovering(true)}
@@ -237,36 +252,54 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
         {/* العنوانات - أعلى الصورة */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-20">
           <div className="flex flex-col gap-1.5">
-            <div 
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
               className="bg-white/95 backdrop-blur-md text-gray-800 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold shadow-lg border border-white/20"
             >
               <span className="inline sm:hidden">📍</span>
               <span className="hidden sm:inline">📍 {safePhotographer.city || "المدينة"}</span>
-            </div>
-            <div 
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
               className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-xs shadow-lg"
             >
               <span className="inline sm:hidden">🎯</span>
               <span className="hidden sm:inline">احجز الآن 🎯</span>
-            </div>
+            </motion.div>
           </div>
 
           <div className="flex flex-col gap-1.5 items-end">
-            <div className="bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-lg border border-white/20">
+            <motion.div 
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-lg border border-white/20"
+            >
               {safeRenderStars(safePhotographer.rating)}
-            </div>
+            </motion.div>
             {hasDiscount && (
-              <div className="bg-gradient-to-r from-red-500 to-red-400 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold shadow-lg">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-gradient-to-r from-red-500 to-red-400 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold shadow-lg"
+              >
                 <span className="inline sm:hidden">{maxDiscount}%</span>
                 <span className="hidden sm:inline">خصم {maxDiscount}% 🎁</span>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
 
         {/* صورة البروفايل المصغرة في الزاوية */}
         {safePhotographer.profile_image && (
-          <div className="absolute -bottom-8 right-3 sm:right-4 z-30">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="absolute -bottom-8 right-3 sm:right-4 z-30"
+          >
             <div className="relative">
               <img
                 src={safePhotographer.profile_image}
@@ -284,7 +317,7 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* نقاط التنقل للصور */}
@@ -458,7 +491,7 @@ const PhotographerCard = ({ photographer, onPhotographerClick, renderStars }) =>
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

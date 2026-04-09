@@ -62,7 +62,7 @@ const PhotographersPage = () => {
     }
   }, [loading]);
 
-  // جلب البيانات من الـ API (متوافق مع هيكل PostgreSQL)
+  // جلب البيانات من الـ API
   useEffect(() => {
     const fetchPhotographers = async () => {
       try {
@@ -79,10 +79,9 @@ const PhotographersPage = () => {
           const data = await response.json();
           
           if (data.photographers && data.photographers.length > 0) {
-            // تحويل البيانات من snake_case (قاعدة البيانات) إلى camelCase (الواجهة)
             const enhancedPhotographers = data.photographers.map((photographer, index) => ({
               id: photographer.id,
-              _id: photographer.id, // للتوافق مع الكود الحالي
+              _id: photographer.id,
               name: photographer.name,
               business_name: photographer.business_name,
               type: photographer.type,
@@ -92,7 +91,7 @@ const PhotographersPage = () => {
               city: photographer.city,
               price: photographer.price,
               profile_image: photographer.profile_image,
-              profileImage: photographer.profile_image, // للتوافق
+              profileImage: photographer.profile_image,
               description: photographer.description,
               available: photographer.available,
               rating: photographer.rating || 0,
@@ -114,9 +113,6 @@ const PhotographersPage = () => {
           throw new Error('فشل في جلب البيانات');
         }
       } catch (err) {
-        console.error('❌ خطأ في جلب البيانات:', err);
-        
-        // بيانات تجريبية متوافقة مع هيكل قاعدة البيانات
         const mockPhotographers = [
           {
             id: 1,
@@ -207,7 +203,6 @@ const PhotographersPage = () => {
   useEffect(() => {
     let filtered = [...photographers];
 
-    // فلترة حسب البحث
     if (searchQuery) {
       filtered = filtered.filter(photographer => 
         photographer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -217,23 +212,19 @@ const PhotographersPage = () => {
       );
     }
 
-    // فلتر حسب التخصص
     if (activeFilter !== "all") {
       filtered = filtered.filter(photographer => photographer.specialty === activeFilter);
     }
 
-    // فلتر حسب السعر (مع تحويل price من string إلى number)
     filtered = filtered.filter(photographer => {
       const photographerPrice = parseInt(photographer.price) || 0;
       return photographerPrice <= priceRange;
     });
 
-    // فلتر حسب المحافظة
     if (selectedGovernorate !== "all") {
       filtered = filtered.filter(photographer => photographer.governorate === selectedGovernorate);
     }
 
-    // فلتر حسب المدينة
     if (selectedCity !== "all" && selectedCity !== "كل المدن") {
       filtered = filtered.filter(photographer => photographer.city === selectedCity);
     }
@@ -255,7 +246,6 @@ const PhotographersPage = () => {
   };
 
   const handlePhotographerClick = async (photographer) => {
-    // تأثير انفجار عند النقر
     const button = document.createElement('div');
     button.className = 'click-effect';
     button.style.cssText = `
@@ -271,12 +261,10 @@ const PhotographersPage = () => {
     
     document.body.appendChild(button);
     
-    // تحديد موقع النقر
     const rect = event.target.getBoundingClientRect();
     button.style.left = `${event.clientX - 25}px`;
     button.style.top = `${event.clientY - 25}px`;
     
-    // إضافة animation CSS
     const style = document.createElement('style');
     style.innerHTML = `
       @keyframes explode {
@@ -286,7 +274,6 @@ const PhotographersPage = () => {
     `;
     document.head.appendChild(style);
     
-    // تسجيل المشاهدة في قاعدة البيانات
     try {
       await fetch(`http://localhost:5000/api/photographers/${photographer.id}/view`, {
         method: 'POST',
@@ -298,10 +285,9 @@ const PhotographersPage = () => {
         })
       });
     } catch (err) {
-      console.error('خطأ في تسجيل المشاهدة:', err);
+      // تم إزالة console.error
     }
     
-    // فتح الصفحة بعد التأثير
     setTimeout(() => {
       document.body.removeChild(button);
       document.head.removeChild(style);
@@ -309,7 +295,6 @@ const PhotographersPage = () => {
     }, 500);
   };
 
-  // دالة مساعدة للحصول على IP العميل (قد تحتاج لتعديل حسب الخادم)
   const getClientIP = async () => {
     try {
       const res = await fetch('https://api.ipify.org?format=json');
@@ -341,7 +326,6 @@ const PhotographersPage = () => {
       } else {
         await navigator.clipboard.writeText(shareUrl);
         
-        // إشعار أنيق
         const notification = document.createElement('div');
         notification.className = 'share-notification';
         notification.innerHTML = `
@@ -368,7 +352,6 @@ const PhotographersPage = () => {
           setTimeout(() => document.body.removeChild(notification), 300);
         }, 2000);
         
-        // إضافة animation CSS
         const style = document.createElement('style');
         style.innerHTML = `
           @keyframes slideIn {
@@ -385,11 +368,10 @@ const PhotographersPage = () => {
         setTimeout(() => document.head.removeChild(style), 2300);
       }
     } catch (err) {
-      console.error('خطأ في المشاركة:', err);
+      // تم إزالة console.error
     }
   };
 
-  // حساب الإحصائيات من البيانات الحقيقية
   const getStats = () => {
     const totalRatings = photographers.reduce((sum, p) => sum + (p.rating || 0), 0);
     const avgRating = photographers.length > 0 ? (totalRatings / photographers.length).toFixed(1) : "4.8";
@@ -411,7 +393,6 @@ const PhotographersPage = () => {
         <div className="absolute top-1/4 -right-40 w-80 h-80 bg-blue-200/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute -bottom-40 left-1/4 w-96 h-96 bg-indigo-200/10 rounded-full blur-3xl animate-pulse delay-500"></div>
         
-        {/* جسيمات متحركة */}
         {[...Array(15)].map((_, i) => (
           <div
             key={i}
@@ -445,34 +426,52 @@ const PhotographersPage = () => {
         )}
       </AnimatePresence>
 
-      {/* الهيدر */}
-      <motion.header 
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, type: "spring" }}
-        className="relative bg-white/80 backdrop-blur-lg border-b border-gray-100 py-4 px-6 shadow-lg"
-      >
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent"
-          >
-            📸 Bookera
-          </motion.div>
+      {/* ✅ الهيدر المعدل - بشكل أنظف وأبسط */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* الشعار */}
+            <div className="flex items-center gap-2">
+              <div className="text-2xl">📸</div>
+              <div className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Bookera
+              </div>
+            </div>
 
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={sharePage}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 group"
-          >
-            <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            مشاركة الصفحة
-          </motion.button>
+            {/* روابط التنقل */}
+            <div className="hidden md:flex items-center gap-6">
+              <a href="/" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">الرئيسية</a>
+              <a href="/photographers" className="text-purple-600 font-medium border-b-2 border-purple-600 pb-0.5">المصورين</a>
+              <a href="/wedding-halls" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">القاعات</a>
+              <a href="/join-us" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">انضم إلينا</a>
+            </div>
+
+            {/* زر مشاركة + تسجيل دخول */}
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={sharePage}
+                className="p-2 text-gray-600 hover:text-purple-600 transition-colors rounded-lg hover:bg-purple-50"
+                aria-label="مشاركة"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </button>
+              
+              <button className="hidden sm:flex px-4 py-2 text-purple-600 border border-purple-600 rounded-xl font-medium hover:bg-purple-600 hover:text-white transition-all duration-300">
+                تسجيل دخول
+              </button>
+              
+              <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300">
+                حساب جديد
+              </button>
+            </div>
+          </div>
         </div>
-      </motion.header>
+      </header>
+
+      {/* مسافة عشان المحتوى ما يختفي تحت الهيدر الثابت */}
+      <div className="h-16"></div>
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative py-20 lg:py-28 overflow-hidden">
@@ -491,10 +490,10 @@ const PhotographersPage = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-5xl lg:text-7xl font-bold mb-6 leading-tight"
+              className="text-4xl lg:text-6xl font-bold mb-5 leading-tight"
             >
               <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
-                اكتشف فناني الصورة
+                اكتشف أفضل المصورين
               </span>
             </motion.h1>
             
@@ -502,9 +501,9 @@ const PhotographersPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+              className="text-lg lg:text-xl text-gray-600 mb-8 max-w-2xl mx-auto"
             >
-              أفضل المصورين المحترفين الذين يلتقطون لحظاتك بأعلى مستويات الجودة والإبداع
+              اختر من بين نخبة المصورين المحترفين في مصر
             </motion.p>
 
             {/* شريط البحث */}
@@ -512,7 +511,7 @@ const PhotographersPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="max-w-2xl mx-auto mb-16"
+              className="max-w-xl mx-auto"
             >
               <div className="relative">
                 <input
@@ -520,13 +519,11 @@ const PhotographersPage = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="ابحث عن مصور، تخصص، أو مدينة..."
-                  className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 outline-none transition-all shadow-lg"
+                  className="w-full px-5 py-3.5 text-base rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 outline-none transition-all shadow-md"
                 />
-                <button className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </button>
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery("")}
@@ -541,16 +538,16 @@ const PhotographersPage = () => {
         </div>
       </section>
 
-      {/* إحصائيات - تعرض بيانات حقيقية من قاعدة البيانات */}
+      {/* إحصائيات */}
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.8 }}
         ref={statsRef}
-        className="relative py-12 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 rounded-3xl mx-4 lg:mx-8 mb-16 shadow-xl"
+        className="relative py-10 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 rounded-2xl mx-4 lg:mx-8 mb-12 shadow-md"
       >
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { number: stats.photographersCount, label: "مصور محترف", color: "from-purple-600 to-purple-400" },
               { number: 27, label: "محافظة", color: "from-indigo-600 to-indigo-400" },
@@ -564,10 +561,10 @@ const PhotographersPage = () => {
                 transition={{ duration: 0.5, delay: 1 + index * 0.1 }}
                 className="text-center"
               >
-                <div className={`text-4xl md:text-5xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-2 counter`} data-target={stat.number}>
+                <div className={`text-3xl md:text-4xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-1 counter`} data-target={stat.number}>
                   {loading ? "0" : stat.number}
                 </div>
-                <div className="text-gray-600 font-medium">{stat.label}</div>
+                <div className="text-gray-600 text-sm">{stat.label}</div>
               </motion.div>
             ))}
           </div>
@@ -575,7 +572,7 @@ const PhotographersPage = () => {
       </motion.section>
 
       {/* قسم الفلاتر والمصورين */}
-      <section className="py-12 w-full" id="photographers-section">
+      <section className="py-8 w-full" id="photographers-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FiltersSection
             activeFilter={activeFilter}
@@ -601,35 +598,27 @@ const PhotographersPage = () => {
       </section>
 
       {/* Footer */}
-      <motion.footer 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 1.5 }}
-        className="relative bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16 mt-20"
-      >
+      <footer className="relative bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12 mt-12">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
-            <h3 className="text-3xl font-bold mb-6">ابدأ رحلتك البصرية اليوم</h3>
-            <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-              تواصل مع أفضل المصورين المحترفين لتوثيق لحظاتك بأسلوب إبداعي لا يُنسى
+            <h3 className="text-2xl font-bold mb-4">ابدأ رحلتك اليوم</h3>
+            <p className="text-gray-300 mb-6 max-w-md mx-auto">
+              تواصل مع أفضل المصورين المحترفين لتوثيق لحظاتك
             </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               onClick={() => document.getElementById('photographers-section').scrollIntoView({ behavior: 'smooth' })}
-              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-lg shadow-2xl hover:shadow-3xl transition-all"
+              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
             >
-              استعرض المصورين الآن 🚀
-            </motion.button>
+              استعرض المصورين
+            </button>
           </div>
           
-          <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
+          <div className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400 text-sm">
             <p>© 2024 Bookera. جميع الحقوق محفوظة</p>
           </div>
         </div>
-      </motion.footer>
+      </footer>
 
-      {/* إضافة أنماط CSS */}
       <style jsx>{`
         @keyframes float {
           0%, 100% { transform: translateY(0) rotate(0deg); }

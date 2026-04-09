@@ -12,7 +12,6 @@ const PhotographerDetailsPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState("details");
   const [sliderImages, setSliderImages] = useState([]);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingPackage, setBookingPackage] = useState(null);
@@ -31,16 +30,22 @@ const PhotographerDetailsPage = () => {
   const [reviews, setReviews] = useState([]);
   const [availability, setAvailability] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [reels, setReels] = useState([]);
-  const [selectedReel, setSelectedReel] = useState(null);
-  const [showReelModal, setShowReelModal] = useState(false);
-  const [currentReelIndex, setCurrentReelIndex] = useState(0);
   const [showFullBio, setShowFullBio] = useState(false);
   
   const fetchedRef = useRef(false);
   const mountedRef = useRef(true);
 
   const API_URL = 'http://localhost:5000/api';
+
+  // ✅ دالة لتحويل التاريخ من UTC إلى YYYY-MM-DD فقط
+  const formatDateOnly = (dateString) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // جلب البيانات
   useEffect(() => {
@@ -80,28 +85,46 @@ const PhotographerDetailsPage = () => {
           if (data.success && data.photographer) {
             const photographerData = data.photographer;
             console.log("✅ Photographer found:", photographerData.name);
+            
+            // ✅ معالجة التوفر - تحويل التواريخ إلى صيغة YYYY-MM-DD فقط
+            const processedAvailability = (photographerData.availability || []).map(item => ({
+              ...item,
+              date: formatDateOnly(item.date) // تحويل "2026-04-09T22:00:00.000Z" إلى "2026-04-09"
+            }));
+            
+            console.log("📅 Processed availability:", processedAvailability);
+            
             setPhotographer(photographerData);
             setReviews(photographerData.recent_reviews || []);
-            setAvailability(photographerData.availability || []);
-            
-            // تجهيز الريلز
-            if (photographerData.reels && photographerData.reels.length > 0) {
-              setReels(photographerData.reels);
-            }
+            setAvailability(processedAvailability);
             
             fetchedRef.current = true;
             
-            // تجهيز الصور من portfolio
-            const portfolioImages = photographerData.portfolio?.[0]?.images || [];
-            if (portfolioImages.length > 0) {
-              setSliderImages(portfolioImages);
-            } else {
-              setSliderImages([
+            // ✅ تجهيز الصور من portfolio
+            let imagesArray = [];
+            
+            if (photographerData.portfolio) {
+              if (Array.isArray(photographerData.portfolio)) {
+                imagesArray = photographerData.portfolio;
+                console.log("📸 Portfolio is array with", imagesArray.length, "images");
+              } 
+              else if (typeof photographerData.portfolio === 'string' && photographerData.portfolio !== "null") {
+                imagesArray = [photographerData.portfolio];
+                console.log("📸 Portfolio is single image URL");
+              }
+            }
+            
+            // إذا مفيش صور، استخدم صور افتراضية
+            if (imagesArray.length === 0) {
+              imagesArray = [
                 "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800&auto=format",
                 "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&auto=format",
                 "https://images.unsplash.com/photo-1554080353-a576cf803bda?w=800&auto=format"
-              ]);
+              ];
+              console.log("📸 Using default images");
             }
+            
+            setSliderImages(imagesArray);
           } else {
             throw new Error('بيانات المصور غير مكتملة');
           }
@@ -141,7 +164,7 @@ const PhotographerDetailsPage = () => {
     if (availabilityRecord) {
       return availabilityRecord.is_available;
     }
-    return true;
+    return true; // إذا لم يوجد سجل، فهو متاح افتراضياً
   };
 
   // ✅ الحصول على ملاحظة اليوم
@@ -150,14 +173,19 @@ const PhotographerDetailsPage = () => {
     if (availabilityRecord && !availabilityRecord.is_available) {
       return availabilityRecord.note || "محجوز";
     }
+    if (availabilityRecord && availabilityRecord.is_available && availabilityRecord.note && availabilityRecord.note !== "متاح") {
+      return availabilityRecord.note;
+    }
     return "";
   };
 
   // ✅ الحصول على وقت العمل لليوم
   const getWorkingTimeForDate = (date) => {
     const availabilityRecord = availability.find(a => a.date === date);
-    if (availabilityRecord && availabilityRecord.start_time && availabilityRecord.end_time) {
-      return `${availabilityRecord.start_time.slice(0,5)} - ${availabilityRecord.end_time.slice(0,5)}`;
+    if (availabilityRecord && availabilityRecord.is_available && availabilityRecord.start_time && availabilityRecord.end_time) {
+      const start = availabilityRecord.start_time.slice(0,5);
+      const end = availabilityRecord.end_time.slice(0,5);
+      return `${start} - ${end}`;
     }
     return null;
   };
@@ -176,9 +204,20 @@ const PhotographerDetailsPage = () => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
 
-  // تنسيق التاريخ
+  // تنسيق التاريخ YYYY-MM-DD
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // ✅ التحقق من أن التاريخ المحدد في الحجز متاح
+  const isSelectedDateAvailable = (dateStr) => {
+    if (!dateStr) return false;
+    const isPast = new Date(dateStr) < new Date(new Date().toDateString());
+    if (isPast) return false;
+    return !isDateBooked(dateStr) && isDateAvailable(dateStr);
   };
 
   // إضافة تقييم جديد
@@ -246,13 +285,6 @@ const PhotographerDetailsPage = () => {
     }
   };
 
-  // فتح الريلز
-  const openReelModal = (reel, index) => {
-    setSelectedReel(reel);
-    setCurrentReelIndex(index);
-    setShowReelModal(true);
-  };
-
   const prepareWhatsAppNumber = (phoneNumber) => {
     if (!phoneNumber) return "";
     let cleanNumber = phoneNumber.replace(/\D/g, '');
@@ -283,6 +315,11 @@ const PhotographerDetailsPage = () => {
       alert("الرجاء إدخال الاسم ورقم الهاتف");
       return;
     }
+    
+    if (bookingDate && !isSelectedDateAvailable(bookingDate)) {
+      alert("❌ التاريخ المحدد غير متاح للحجز. الرجاء اختيار تاريخ آخر.");
+      return;
+    }
 
     const phoneNumber = prepareWhatsAppNumber(photographer?.contact);
     let message = `مرحباً ${photographer?.name}،\nأنا ${bookingName} تواصلت معك وأرغب في حجز جلسة تصوير.\n\n📞 رقم هاتفي: ${bookingPhone}`;
@@ -306,16 +343,14 @@ const PhotographerDetailsPage = () => {
   };
 
   const nextImage = () => {
-    const totalItems = sliderImages.length + reels.length;
-    if (totalItems > 0) {
-      setSelectedImage((prev) => (prev + 1) % totalItems);
+    if (sliderImages.length > 0) {
+      setSelectedImage((prev) => (prev + 1) % sliderImages.length);
     }
   };
 
   const prevImage = () => {
-    const totalItems = sliderImages.length + reels.length;
-    if (totalItems > 0) {
-      setSelectedImage((prev) => (prev - 1 + totalItems) % totalItems);
+    if (sliderImages.length > 0) {
+      setSelectedImage((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
     }
   };
 
@@ -323,9 +358,6 @@ const PhotographerDetailsPage = () => {
     if (index < sliderImages.length) {
       setLightboxImageIndex(index);
       setLightboxOpen(true);
-    } else {
-      const reelIndex = index - sliderImages.length;
-      openReelModal(reels[reelIndex], reelIndex);
     }
   };
 
@@ -346,7 +378,7 @@ const PhotographerDetailsPage = () => {
     );
   };
 
-  // ✅ عرض التقويم - نسخة مصححة
+  // ✅ عرض التقويم - نسخة مصححة بالكامل
   const renderCalendar = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -426,9 +458,9 @@ const PhotographerDetailsPage = () => {
                 🕐 {workingTime}
               </span>
             )}
-            {note && !isPast && isBooked && (
-              <span className="text-xs mt-1 text-red-600 truncate font-medium">
-                📝 {note}
+            {note && !isPast && (
+              <span className={`text-xs mt-1 truncate font-medium ${isBooked ? 'text-red-600' : 'text-blue-600'}`}>
+                📝 {note.length > 15 ? note.slice(0, 12) + '...' : note}
               </span>
             )}
             <span className={`text-xs mt-auto font-medium ${statusColor}`}>
@@ -494,6 +526,14 @@ const PhotographerDetailsPage = () => {
         </div>
       </div>
     );
+  };
+
+  // ✅ صورة البروفايل الافتراضية
+  const getProfileImage = () => {
+    if (photographer?.profile_image && photographer.profile_image !== "null" && photographer.profile_image !== null) {
+      return photographer.profile_image;
+    }
+    return "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&auto=format";
   };
 
   // حالة التحميل
@@ -562,54 +602,32 @@ const PhotographerDetailsPage = () => {
         <span className="text-sm">مشاركة</span>
       </button>
 
-      {/* إعلان الريلز */}
-      <AnimatePresence>
-        {reels.length > 0 && !showReelModal && (
-          <motion.div
-            initial={{ opacity: 0, y: -100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -100 }}
-            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full shadow-2xl cursor-pointer flex items-center gap-3 hover:scale-105 transition-transform"
-            onClick={() => openReelModal(reels[0], 0)}
-          >
-            <i className="bi bi-play-circle-fill text-2xl"></i>
-            <span className="font-bold">شاهد الريلز</span>
-            <span className="bg-white/20 px-2 py-1 rounded-full text-xs">{reels.length} فيديو</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* العمود الأيسر */}
           <div className="lg:col-span-2 space-y-6">
-            {/* معرض الصور والفيديوهات */}
+            {/* معرض الصور */}
             <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xl">
               <div className="relative h-80 lg:h-96 bg-gray-900">
-                {selectedImage < sliderImages.length ? (
+                {sliderImages.length > 0 && sliderImages[selectedImage] ? (
                   <img 
                     src={sliderImages[selectedImage]} 
                     alt={photographer.name}
                     className="w-full h-full object-cover cursor-pointer"
                     onClick={() => openLightbox(selectedImage)}
                     onError={(e) => {
+                      console.error("Image failed to load:", sliderImages[selectedImage]);
                       e.target.src = "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800&auto=format";
                     }}
                   />
                 ) : (
-                  <video 
-                    src={reels[selectedImage - sliderImages.length]?.video_url || reels[selectedImage - sliderImages.length]?.url}
-                    className="w-full h-full object-cover"
-                    controls
-                    autoPlay
-                    poster={reels[selectedImage - sliderImages.length]?.thumbnail}
-                  >
-                    <source src={reels[selectedImage - sliderImages.length]?.video_url || reels[selectedImage - sliderImages.length]?.url} type="video/mp4" />
-                  </video>
+                  <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                    <i className="bi bi-camera text-white text-6xl opacity-50"></i>
+                  </div>
                 )}
                 
-                {(sliderImages.length + reels.length) > 1 && (
+                {sliderImages.length > 1 && (
                   <>
                     <button
                       onClick={prevImage}
@@ -624,14 +642,14 @@ const PhotographerDetailsPage = () => {
                       <i className="bi bi-chevron-left text-xl"></i>
                     </button>
                     <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs z-10">
-                      {selectedImage + 1} / {sliderImages.length + reels.length}
+                      {selectedImage + 1} / {sliderImages.length}
                     </div>
                   </>
                 )}
               </div>
 
-              {/* صور مصغرة + ريلز */}
-              {(sliderImages.length + reels.length) > 1 && (
+              {/* صور مصغرة */}
+              {sliderImages.length > 1 && (
                 <div className="p-3 bg-gray-50 overflow-x-auto">
                   <div className="flex gap-2">
                     {sliderImages.map((img, idx) => (
@@ -644,27 +662,12 @@ const PhotographerDetailsPage = () => {
                       >
                         <img 
                           src={img} 
-                          alt="" 
+                          alt=""
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=100&auto=format";
+                          }}
                         />
-                      </button>
-                    ))}
-                    {reels.map((reel, idx) => (
-                      <button
-                        key={`reel-${idx}`}
-                        onClick={() => setSelectedImage(sliderImages.length + idx)}
-                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all relative ${
-                          selectedImage === sliderImages.length + idx ? 'border-blue-500' : 'border-gray-300'
-                        }`}
-                      >
-                        <img 
-                          src={reel.thumbnail || "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800&auto=format"} 
-                          alt="Reel thumbnail"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <i className="bi bi-play-circle-fill text-white text-xl"></i>
-                        </div>
                       </button>
                     ))}
                   </div>
@@ -680,7 +683,6 @@ const PhotographerDetailsPage = () => {
                     { id: "details", label: "التفاصيل", icon: "bi-info-circle" },
                     { id: "packages", label: "الباقات", icon: "bi-cash-stack" },
                     { id: "portfolio", label: "المعرض", icon: "bi-images" },
-                    { id: "reels", label: "الريلز", icon: "bi-camera-reels" },
                     { id: "reviews", label: "التقييمات", icon: "bi-star" }
                   ].map((tab) => (
                     <button
@@ -863,7 +865,7 @@ const PhotographerDetailsPage = () => {
                   </div>
                 )}
 
-                {/* تبويب المعرض - صور فقط */}
+                {/* تبويب المعرض */}
                 {activeTab === "portfolio" && (
                   <div>
                     {sliderImages.length === 0 ? (
@@ -887,74 +889,11 @@ const PhotographerDetailsPage = () => {
                               alt={`صورة ${idx + 1}`} 
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                e.target.src = "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800&auto=format";
+                                e.target.src = "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=500&auto=format";
                               }}
                             />
                             <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                               <i className="bi bi-zoom-in text-white text-2xl"></i>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* تبويب الريلز - فيديوهات فقط */}
-                {activeTab === "reels" && (
-                  <div>
-                    {reels.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <i className="bi bi-camera-reels text-5xl mb-4"></i>
-                        <p>لا توجد ريلز متاحة</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {reels.map((reel, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className="bg-gray-900 rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-                            onClick={() => openReelModal(reel, idx)}
-                          >
-                            <div className="relative aspect-video">
-                              <img 
-                                src={reel.thumbnail || "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800&auto=format"}
-                                alt={reel.title || "Reel"}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <i className="bi bi-play-circle-fill text-white text-5xl hover:scale-110 transition-transform"></i>
-                              </div>
-                              <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded-lg text-xs flex items-center gap-1">
-                                <i className="bi bi-camera-reels"></i>
-                                <span>ريلز</span>
-                              </div>
-                              {reel.duration && (
-                                <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded-lg text-xs">
-                                  {reel.duration}
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-3 bg-white">
-                              <h4 className="font-bold text-gray-800">{reel.title || `ريلز ${idx + 1}`}</h4>
-                              <p className="text-gray-500 text-sm mt-1">{reel.description || "فيديو قصير من أعمال المصور"}</p>
-                              <div className="flex gap-3 mt-2 text-xs text-gray-500">
-                                {reel.views && (
-                                  <span className="flex items-center gap-1">
-                                    <i className="bi bi-eye"></i>
-                                    {reel.views}
-                                  </span>
-                                )}
-                                {reel.likes && (
-                                  <span className="flex items-center gap-1">
-                                    <i className="bi bi-heart"></i>
-                                    {reel.likes}
-                                  </span>
-                                )}
-                              </div>
                             </div>
                           </motion.div>
                         ))}
@@ -1020,9 +959,7 @@ const PhotographerDetailsPage = () => {
               <div className="text-center">
                 <div className="relative inline-block">
                   <img 
-                    src={photographer.profile_image && photographer.profile_image !== "null" 
-                      ? photographer.profile_image 
-                      : "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&auto=format"}
+                    src={getProfileImage()}
                     alt={photographer.name}
                     className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-blue-100"
                     onError={(e) => {
@@ -1118,69 +1055,7 @@ const PhotographerDetailsPage = () => {
         </div>
       </div>
 
-      {/* مودال الريلز */}
-      <AnimatePresence>
-        {showReelModal && selectedReel && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowReelModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="relative w-full max-w-4xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowReelModal(false)}
-                className="absolute -top-12 right-0 text-white hover:text-gray-300 text-3xl z-10"
-              >
-                <i className="bi bi-x-lg"></i>
-              </button>
-              
-              <video 
-                src={selectedReel.video_url || selectedReel.url}
-                className="w-full rounded-xl shadow-2xl"
-                controls
-                autoPlay
-                poster={selectedReel.thumbnail}
-              >
-                <source src={selectedReel.video_url || selectedReel.url} type="video/mp4" />
-              </video>
-              
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm flex gap-4">
-                <button
-                  onClick={() => {
-                    const newIndex = (currentReelIndex - 1 + reels.length) % reels.length;
-                    setSelectedReel(reels[newIndex]);
-                    setCurrentReelIndex(newIndex);
-                  }}
-                  className="hover:text-gray-300"
-                >
-                  <i className="bi bi-chevron-right text-xl"></i>
-                </button>
-                <span>{currentReelIndex + 1} / {reels.length}</span>
-                <button
-                  onClick={() => {
-                    const newIndex = (currentReelIndex + 1) % reels.length;
-                    setSelectedReel(reels[newIndex]);
-                    setCurrentReelIndex(newIndex);
-                  }}
-                  className="hover:text-gray-300"
-                >
-                  <i className="bi bi-chevron-left text-xl"></i>
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* مودال التواصل */}
+      {/* باقي المودالات كما هي */}
       <AnimatePresence>
         {showContactModal && (
           <motion.div
@@ -1214,7 +1089,6 @@ const PhotographerDetailsPage = () => {
         )}
       </AnimatePresence>
 
-      {/* مودال إضافة تقييم */}
       <AnimatePresence>
         {showReviewModal && (
           <motion.div
@@ -1294,7 +1168,6 @@ const PhotographerDetailsPage = () => {
         )}
       </AnimatePresence>
 
-      {/* مودال الحجز */}
       <AnimatePresence>
         {bookingModalOpen && (
           <motion.div
@@ -1357,7 +1230,6 @@ const PhotographerDetailsPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Lightbox للصور */}
       <AnimatePresence>
         {lightboxOpen && (
           <motion.div

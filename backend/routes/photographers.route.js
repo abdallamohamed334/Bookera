@@ -145,8 +145,9 @@ router.get('/', [
     const countResult = await photograferDb.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
 
+    // جلب البيانات الإضافية لكل مصور من الجداول المرتبطة
     const photographers = await Promise.all(photographersResult.rows.map(async (photographer) => {
-      // جلب الصور
+      // جلب الصور من جدول photographer_images
       const imagesResult = await photograferDb.query(
         `SELECT images FROM photographer_images WHERE photographer_id = $1 ORDER BY created_at DESC`,
         [photographer.id]
@@ -154,33 +155,18 @@ router.get('/', [
       
       let portfolio = [];
       if (imagesResult.rows.length > 0 && imagesResult.rows[0].images) {
-        portfolio = [{
-          id: 1,
-          title: "أعمال المصور",
-          category: photographer.specialty || "تصوير",
-          description: `أعمال ${photographer.name} في التصوير`,
-          images: Array.isArray(imagesResult.rows[0].images) ? imagesResult.rows[0].images : []
-        }];
+        portfolio = imagesResult.rows[0].images;
       }
       
-      // جلب الباقات
+      // جلب الباقات من جدول packages
       const packagesResult = await photograferDb.query(
         `SELECT id, name, price, description FROM packages WHERE photographer_id = $1 ORDER BY price ASC`,
         [photographer.id]
       );
       
-      let packages = [];
-      if (packagesResult.rows.length > 0) {
-        packages = packagesResult.rows.map(pkg => ({
-          id: pkg.id,
-          name: pkg.name,
-          price: parseFloat(pkg.price),
-          description: pkg.description || "باقة مميزة",
-          features: ["4 ساعات تصوير", "50 صورة معدلة", "ألبوم إلكتروني"]
-        }));
-      }
+      let packages = packagesResult.rows;
       
-      // جلب التقييمات
+      // جلب التقييمات من جدول reviews
       const reviewsResult = await photograferDb.query(
         `SELECT id, user_name, rating, comment, created_at FROM reviews WHERE photographer_id = $1 ORDER BY created_at DESC LIMIT 5`,
         [photographer.id]
@@ -188,9 +174,9 @@ router.get('/', [
       
       let recent_reviews = reviewsResult.rows;
       
-      // ✅ جلب التوفر (availability) من جدول photographer_availability
+      // جلب التوفر من جدول photographer_availability
       const availabilityResult = await photograferDb.query(
-        `SELECT date, is_available, start_time, end_time, note 
+        `SELECT id, date, is_available, start_time, end_time, note, created_at
          FROM photographer_availability 
          WHERE photographer_id = $1 
          ORDER BY date ASC 
@@ -198,20 +184,20 @@ router.get('/', [
         [photographer.id]
       );
       
-      const services = [
-        "تصوير أفراح",
-        "تصوير مناسبات",
-        "تصوير شخصي",
-        "تصوير عائلي"
-      ];
+      // جلب الخدمات (يمكن جلبها من جدول منفصل أو استخدام specialty)
+      let services = [];
+      if (photographer.specialty) {
+        services = [photographer.specialty];
+      }
       
       return {
         ...photographer,
+        price: photographer.price ? parseFloat(photographer.price) : null,
         services: services,
         packages: packages,
         portfolio: portfolio,
         recent_reviews: recent_reviews,
-        availability: availabilityResult.rows // ✅ إضافة جدول التوفر
+        availability: availabilityResult.rows
       };
     }));
 
@@ -235,7 +221,7 @@ router.get('/', [
 });
 
 // =============================================
-// GET مصور محدد بالـ ID مع جميع البيانات
+// GET مصور محدد بالـ ID مع جميع البيانات من الداتابيز
 // =============================================
 router.get('/:id', [
   param('id').isInt({ min: 1 }).withMessage('ID غير صالح')
@@ -284,7 +270,7 @@ router.get('/:id', [
     
     const photographer = photographerResult.rows[0];
     
-    // جلب الصور
+    // جلب الصور من جدول photographer_images
     const imagesResult = await photograferDb.query(
       `SELECT images FROM photographer_images WHERE photographer_id = $1 ORDER BY created_at DESC`,
       [id]
@@ -292,33 +278,18 @@ router.get('/:id', [
     
     let portfolio = [];
     if (imagesResult.rows.length > 0 && imagesResult.rows[0].images) {
-      portfolio = [{
-        id: 1,
-        title: "أعمال المصور",
-        category: photographer.specialty || "تصوير احترافي",
-        description: `معرض أعمال ${photographer.name}`,
-        images: Array.isArray(imagesResult.rows[0].images) ? imagesResult.rows[0].images : []
-      }];
+      portfolio = imagesResult.rows[0].images;
     }
     
-    // جلب الباقات
+    // جلب الباقات من جدول packages
     const packagesResult = await photograferDb.query(
       `SELECT id, name, price, description FROM packages WHERE photographer_id = $1 ORDER BY price ASC`,
       [id]
     );
     
-    let packages = [];
-    if (packagesResult.rows.length > 0) {
-      packages = packagesResult.rows.map(pkg => ({
-        id: pkg.id,
-        name: pkg.name,
-        price: parseFloat(pkg.price),
-        description: pkg.description || "باقة مميزة",
-        features: ["4 ساعات تصوير", "50 صورة معدلة", "ألبوم إلكتروني", "تسليم خلال 7 أيام"]
-      }));
-    }
+    let packages = packagesResult.rows;
     
-    // جلب التقييمات
+    // جلب التقييمات من جدول reviews
     const reviewsResult = await photograferDb.query(
       `SELECT id, user_name, rating, comment, created_at FROM reviews WHERE photographer_id = $1 ORDER BY created_at DESC LIMIT 10`,
       [id]
@@ -326,7 +297,7 @@ router.get('/:id', [
     
     let recent_reviews = reviewsResult.rows;
     
-    // ✅ جلب التوفر (availability) من جدول photographer_availability
+    // جلب التوفر من جدول photographer_availability
     const availabilityResult = await photograferDb.query(
       `SELECT id, date, is_available, start_time, end_time, note, created_at
        FROM photographer_availability 
@@ -335,30 +306,29 @@ router.get('/:id', [
       [id]
     );
     
-    const services = [
-      "تصوير أفراح",
-      "تصوير مناسبات",
-      "تصوير شخصي",
-      "تصوير عائلي",
-      "تصوير خطوبة",
-      "تصوير منتجات"
-    ];
+    // جلب الخدمات
+    let services = [];
+    if (photographer.specialty) {
+      services = [photographer.specialty];
+    }
     
     const fullPhotographerData = {
       ...photographer,
+      price: photographer.price ? parseFloat(photographer.price) : null,
       services: services,
       packages: packages,
       portfolio: portfolio,
-      availability: availabilityResult.rows, // ✅ استخدام جدول availability بدلاً من workingHours
+      availability: availabilityResult.rows,
       recent_reviews: recent_reviews
     };
     
-    // تحديث عدد المشاهدات
+    // تحديث عدد المشاهدات في جدول views
     await photograferDb.query(
       `INSERT INTO views (photographer_id, viewer_ip, viewed_at) VALUES ($1, $2, CURRENT_TIMESTAMP)`,
       [id, req.ip || req.connection.remoteAddress || 'unknown']
     ).catch(err => console.error('خطأ في تسجيل المشاهدة:', err));
     
+    // تحديث total_views في جدول photographers
     await photograferDb.query(
       'UPDATE photographers SET total_views = total_views + 1 WHERE id = $1',
       [id]
@@ -381,7 +351,7 @@ router.get('/:id', [
 });
 
 // =============================================
-// GET توفر المصور (Availability)
+// GET توفر المصور من جدول photographer_availability
 // =============================================
 router.get('/:id/availability', [
   param('id').isInt({ min: 1 })
@@ -429,7 +399,7 @@ router.get('/:id/availability', [
 });
 
 // =============================================
-// POST إضافة/تحديث توفر المصور
+// POST إضافة/تحديث توفر المصور في جدول photographer_availability
 // =============================================
 router.post('/:id/availability', [
   param('id').isInt({ min: 1 }),
@@ -500,7 +470,7 @@ router.post('/:id/availability', [
 });
 
 // =============================================
-// DELETE حذف توفر مصور
+// DELETE حذف توفر مصور من جدول photographer_availability
 // =============================================
 router.delete('/:id/availability/:availabilityId', [
   param('id').isInt({ min: 1 }),
@@ -538,7 +508,7 @@ router.delete('/:id/availability/:availabilityId', [
 });
 
 // =============================================
-// GET الباقات لمصور محدد
+// GET الباقات لمصور محدد من جدول packages
 // =============================================
 router.get('/:id/packages', [
   param('id').isInt({ min: 1 })
@@ -551,52 +521,19 @@ router.get('/:id/packages', [
       [id]
     );
     
-    if (packagesResult.rows.length > 0) {
-      const packages = packagesResult.rows.map(pkg => ({
-        id: pkg.id,
-        name: pkg.name,
-        price: parseFloat(pkg.price),
-        description: pkg.description || "باقة مميزة",
-        features: ["4 ساعات تصوير", "50 صورة معدلة", "ألبوم إلكتروني"]
-      }));
-      
+    if (packagesResult.rows.length === 0) {
       return res.json({
         success: true,
-        packages: packages
+        packages: []
       });
     }
     
-    const photographerCheck = await photograferDb.query(
-      'SELECT id, price, name FROM photographers WHERE id = $1 AND available = true',
-      [id]
-    );
-    
-    if (photographerCheck.rows.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'المصور غير موجود' 
-      });
-    }
-    
-    const photographer = photographerCheck.rows[0];
-    const basePrice = parseInt(photographer.price) || 5000;
-    
-    const packages = [
-      {
-        id: null,
-        name: "📸 الباقة الأساسية",
-        price: basePrice,
-        description: "باقة مثالية للمناسبات الصغيرة",
-        features: ["4 ساعات تصوير", "50 صورة معدلة", "ألبوم إلكتروني"]
-      },
-      {
-        id: null,
-        name: "✨ الباقة المتكاملة",
-        price: Math.floor(basePrice * 1.5),
-        description: "الباقة الأكثر طلباً",
-        features: ["8 ساعات تصوير", "100 صورة معدلة", "ألبوم إلكتروني", "فيديو Highlight"]
-      }
-    ];
+    const packages = packagesResult.rows.map(pkg => ({
+      id: pkg.id,
+      name: pkg.name,
+      price: parseFloat(pkg.price),
+      description: pkg.description
+    }));
     
     res.json({
       success: true,
@@ -605,15 +542,15 @@ router.get('/:id/packages', [
     
   } catch (error) {
     console.error('خطأ في جلب الباقات:', error);
-    res.json({
-      success: true,
-      packages: []
+    res.status(500).json({ 
+      success: false, 
+      message: 'حدث خطأ في جلب الباقات'
     });
   }
 });
 
 // =============================================
-// GET صور المصور
+// GET صور المصور من جدول photographer_images
 // =============================================
 router.get('/:id/images', [
   param('id').isInt({ min: 1 })
@@ -638,15 +575,15 @@ router.get('/:id/images', [
     
   } catch (error) {
     console.error('خطأ في جلب الصور:', error);
-    res.json({ 
-      success: true, 
-      images: []
+    res.status(500).json({ 
+      success: false, 
+      message: 'حدث خطأ في جلب الصور'
     });
   }
 });
 
 // =============================================
-// GET تقييمات المصور
+// GET تقييمات المصور من جدول reviews
 // =============================================
 router.get('/:id/reviews', [
   param('id').isInt({ min: 1 })
@@ -666,15 +603,15 @@ router.get('/:id/reviews', [
     
   } catch (error) {
     console.error('خطأ في جلب التقييمات:', error);
-    res.json({ 
-      success: true, 
-      reviews: []
+    res.status(500).json({ 
+      success: false, 
+      message: 'حدث خطأ في جلب التقييمات'
     });
   }
 });
 
 // =============================================
-// POST إضافة تقييم
+// POST إضافة تقييم في جدول reviews
 // =============================================
 router.post('/:id/reviews', [
   param('id').isInt({ min: 1 }),
@@ -686,19 +623,24 @@ router.post('/:id/reviews', [
     const { id } = req.params;
     const { user_name, rating, comment } = req.body;
     
+    // إضافة التقييم
     await photograferDb.query(
-      `INSERT INTO reviews (photographer_id, user_name, rating, comment, created_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
+      `INSERT INTO reviews (photographer_id, user_name, rating, comment, created_at) 
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
       [id, user_name, rating, comment || '']
     );
     
+    // حساب متوسط التقييمات
     const avgResult = await photograferDb.query(
-      `SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews WHERE photographer_id = $1`,
+      `SELECT AVG(rating) as avg_rating, COUNT(*) as total 
+       FROM reviews WHERE photographer_id = $1`,
       [id]
     );
     
     const avgRating = parseFloat(avgResult.rows[0].avg_rating) || 0;
     const totalReviews = parseInt(avgResult.rows[0].total) || 0;
     
+    // تحديث بيانات المصور
     await photograferDb.query(
       `UPDATE photographers SET rating = $1, total_reviews = $2 WHERE id = $3`,
       [avgRating, totalReviews, id]
@@ -719,7 +661,7 @@ router.post('/:id/reviews', [
 });
 
 // =============================================
-// POST تسجيل مشاهدة
+// POST تسجيل مشاهدة في جدول views
 // =============================================
 router.post('/:id/view', [
   param('id').isInt({ min: 1 })
@@ -727,11 +669,14 @@ router.post('/:id/view', [
   try {
     const { id } = req.params;
     
+    // تسجيل المشاهدة في جدول views
     await photograferDb.query(
-      `INSERT INTO views (photographer_id, viewer_ip, viewed_at) VALUES ($1, $2, CURRENT_TIMESTAMP)`,
+      `INSERT INTO views (photographer_id, viewer_ip, viewed_at) 
+       VALUES ($1, $2, CURRENT_TIMESTAMP)`,
       [id, req.ip || req.connection.remoteAddress || 'unknown']
     );
     
+    // تحديث total_views في جدول photographers
     await photograferDb.query(
       'UPDATE photographers SET total_views = total_views + 1 WHERE id = $1',
       [id]
@@ -744,15 +689,15 @@ router.post('/:id/view', [
     
   } catch (error) {
     console.error('خطأ في تسجيل المشاهدة:', error);
-    res.json({ 
-      success: true, 
-      message: 'تم تسجيل المشاهدة'
+    res.status(500).json({ 
+      success: false, 
+      message: 'حدث خطأ في تسجيل المشاهدة'
     });
   }
 });
 
 // =============================================
-// GET المحافظات
+// GET المحافظات من جدول photographers
 // =============================================
 router.get('/meta/governorates', async (req, res) => {
   try {
@@ -768,12 +713,16 @@ router.get('/meta/governorates', async (req, res) => {
       data: result.rows.map(row => row.governorate)
     });
   } catch (error) {
-    res.json({ success: true, data: ["القاهرة", "الإسكندرية", "الجيزة"] });
+    console.error('خطأ في جلب المحافظات:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'حدث خطأ في جلب المحافظات'
+    });
   }
 });
 
 // =============================================
-// GET المدن
+// GET المدن من جدول photographers حسب المحافظة
 // =============================================
 router.get('/meta/cities/:governorate', validateRequest, async (req, res) => {
   try {
@@ -790,12 +739,16 @@ router.get('/meta/cities/:governorate', validateRequest, async (req, res) => {
       data: result.rows.map(row => row.city)
     });
   } catch (error) {
-    res.json({ success: true, data: ["وسط البلد", "مدينة نصر", "المعادي"] });
+    console.error('خطأ في جلب المدن:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'حدث خطأ في جلب المدن'
+    });
   }
 });
 
 // =============================================
-// GET التخصصات
+// GET التخصصات من جدول photographers
 // =============================================
 router.get('/meta/specialties', async (req, res) => {
   try {
@@ -811,9 +764,10 @@ router.get('/meta/specialties', async (req, res) => {
       data: result.rows.map(row => row.specialty)
     });
   } catch (error) {
-    res.json({ 
-      success: true, 
-      data: ["تصوير أفراح", "تصوير مناسبات", "تصوير شخصي", "تصوير عائلي"] 
+    console.error('خطأ في جلب التخصصات:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'حدث خطأ في جلب التخصصات'
     });
   }
 });
