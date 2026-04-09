@@ -35,7 +35,7 @@ const PhotographerDetailsPage = () => {
   const fetchedRef = useRef(false);
   const mountedRef = useRef(true);
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = 'https://bookera-production-89c3.up.railway.app/api';
 
   // ✅ دالة لتحويل التاريخ من UTC إلى YYYY-MM-DD فقط
   const formatDateOnly = (dateString) => {

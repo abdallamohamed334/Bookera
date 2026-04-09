@@ -68,7 +68,7 @@ const PhotographersPage = () => {
       try {
         setLoading(true);
         
-        const response = await fetch('http://localhost:5000/api/photographers', {
+        const response = await fetch('https://bookera-production-89c3.up.railway.app/api/photographers', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -275,7 +275,7 @@ const PhotographersPage = () => {
     document.head.appendChild(style);
     
     try {
-      await fetch(`http://localhost:5000/api/photographers/${photographer.id}/view`, {
+      await fetch(`https://bookera-production-89c3.up.railway.app/api/photographers/${photographer.id}/view`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

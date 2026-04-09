@@ -205,11 +205,11 @@ const WeddingHallsPage = () => {
         setError(null);
 
         const [page1Response, page2Response] = await Promise.all([
-          fetch('http://localhost:5000/api/wedding-venues/', {
+          fetch('https://bookera-production-89c3.up.railway.app/api/wedding-venues/', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           }),
-          fetch('http://localhost:5000/api/wedding-venues/?page=2', {
+          fetch('https://bookera-production-89c3.up.railway.app/api/wedding-venues/?page=2', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           })

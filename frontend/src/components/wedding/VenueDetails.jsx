@@ -88,7 +88,7 @@ const VenueDetails = () => {
         
         // جلب بيانات القاعة
         const venueResponse = await fetch(
-          `http://localhost:5000/api/wedding-venues/${id}`,
+          `https://bookera-production-89c3.up.railway.app/api/wedding-venues/${id}`,
           { 
             signal: controller.signal,
             headers: {
@@ -109,7 +109,7 @@ const VenueDetails = () => {
         // جلب الباكدجات
         try {
           const packagesResponse = await fetch(
-            `http://localhost:5000/api/wedding-venues/${id}/packages`,
+            `https://bookera-production-89c3.up.railway.app/api/wedding-venues/${id}/packages`,
             { signal: controller.signal }
           );
           
