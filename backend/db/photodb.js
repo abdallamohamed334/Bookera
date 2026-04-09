@@ -1,13 +1,18 @@
 import pkg from "pg";
 const { Pool } = pkg;
 
-// function لإنشاء pool بشكل آمن
 const createPool = (connectionString, name) => {
+  if (!connectionString) {
+    console.error(`❌ ${name} has NO connection string`);
+    return null;
+  }
+
+  console.log(`🔗 ${name} URL:`, connectionString.replace(/:.+@/, ":****@"));
+
   const pool = new Pool({
     connectionString,
-    
-    // ✅ مهم جدا في Railway
-    ssl: connectionString?.includes("localhost")
+
+    ssl: connectionString.includes("localhost")
       ? false
       : {
           rejectUnauthorized: false,
@@ -18,7 +23,6 @@ const createPool = (connectionString, name) => {
     connectionTimeoutMillis: 5000,
   });
 
-  // ✅ log عند الاتصال
   pool
     .connect()
     .then((client) => {
@@ -29,7 +33,6 @@ const createPool = (connectionString, name) => {
       console.error(`❌ ${name} connection error:`, err.message);
     });
 
-  // ✅ error handler
   pool.on("error", (err) => {
     console.error(`❌ ${name} pool error:`, err.message);
   });
@@ -37,16 +40,15 @@ const createPool = (connectionString, name) => {
   return pool;
 };
 
+// ✅ أهم تعديل هنا
+const photoDbUrl =
+  process.env.DATABASE_URL_PHOTO || process.env.DATABASE_URL;
+
+const neonDbUrl =
+  process.env.DATABASE_URL_WHEN || process.env.DATABASE_URL;
+
 // ✅ Pools
-export const photograferDb = createPool(
-  process.env.DATABASE_URL_PHOTO,
-  "Photographers DB"
-);
+export const photograferDb = createPool(photoDbUrl, "Photographers DB");
+export const neondbDb = createPool(neonDbUrl, "Neon DB");
 
-export const neondbDb = createPool(
-  process.env.DATABASE_URL_WHEN,
-  "Neon DB"
-);
-
-// default export
 export default photograferDb;
